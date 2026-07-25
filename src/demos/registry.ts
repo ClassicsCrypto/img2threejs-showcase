@@ -33,6 +33,11 @@ import {
   createBMXEnduranceBikeModel,
   createBMXEnduranceBikeLookDevLights,
 } from './bmx-endurance/createBmxEnduranceBikeModel';
+import {
+  createClassicFadeModel,
+  createClassicFadeLookDevLights,
+  makeClassicFadeBackground,
+} from './classic-fade/createClassicFadeModel';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -80,6 +85,58 @@ const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/hoainho/img2threejs-showcase/blob/main';
 
 export const demos: DemoEntry[] = [
+  {
+    id: 'classic-fade',
+    title: 'Classic Knife | Fade (Minimal Wear)',
+    subjectClass: 'object',
+    blurb:
+      'A CS2 Classic Knife rebuilt in code from a FRONT/BACK reference pair, using a dedicated ' +
+      'Classic Knife adapter. The silhouette is the alpha trace of the references, so the six ' +
+      'rounded spine scallops, the deep semicircular choil, the hammer-head crossguard with its ' +
+      'forward-canted quillon and lower spur, the five-step staircase butt plate with its ' +
+      'countersunk lanyard bore and the drop-point tip are all measured, not drawn. The Fade ' +
+      'finish is not a procedural gradient: each broad face carries the de-lit reference crop for ' +
+      'that side, projected through one shared planar UV map, so the violet tip, the magenta and ' +
+      'amber bands, the wavy lower-zone boundary, the grind tonal break, the gold beaded ferrule, ' +
+      'the diamond-quilted grip and all four bolster screws land exactly where the references put ' +
+      'them. Roughness, metalness, AO and normal are separate authored channels. Blade thickness ' +
+      'is inferred — both supplied views are broadside. Live: a slow studio rock.',
+    referenceImage: `${BASE}references/classic-fade.png`,
+    sourcePath: 'src/demos/classic-fade/createClassicFadeModel.ts',
+    sourceUrl: `${REPO}/src/demos/classic-fade/createClassicFadeModel.ts`,
+    generatedWith: 'img2threejs v1.3',
+    author: 'kokorolx',
+    authorUrl: 'https://github.com/kokorolx',
+    status: 'final',
+    // -Z side: a camera here reproduces the FRONT reference framing (tip to the left).
+    cameraPosition: [0, 0.78, -5.3],
+    cameraTarget: [0, -0.02, 0],
+    cameraFov: 30,
+    accent: '#c4426b',
+    // Calibrated against the FRONT reference at the fixed review view: with the neutral
+    // operator every material zone lands within ±10/255 of the reference. ACES matched the
+    // blade but lifted the dark handle ~+16; neutral keeps both honest.
+    toneMapping: 'neutral',
+    exposure: 1.0,
+    environmentIntensity: 1.0,
+    installLights: (scene) => {
+      scene.add(createClassicFadeLookDevLights());
+    },
+    build: (scene) => {
+      scene.background = makeClassicFadeBackground();
+      const group = createClassicFadeModel({ shadows: true });
+      scene.add(group);
+
+      // slow studio rock so the wedge grind and the anodized sheen travel across the blade
+      let t = 0;
+      group.userData.tick = (dt: number) => {
+        t += dt;
+        group.rotation.y = Math.sin(t * 0.35) * 0.32;
+        group.rotation.x = Math.sin(t * 0.23) * 0.06;
+      };
+      return group;
+    },
+  },
   {
     id: 'bmx-endurance',
     title: 'BMX Endurance Bike',
