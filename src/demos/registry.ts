@@ -38,6 +38,11 @@ import {
   createClassicFadeLookDevLights,
   makeClassicFadeBackground,
 } from './classic-fade/createClassicFadeModel';
+import {
+  createGlockGhostProtocolModel,
+  createGlockGhostProtocolLookDevLights,
+  makeGhostProtocolBackground,
+} from './glock-ghost-protocol/createGlockGhostProtocolModel';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -85,6 +90,71 @@ const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/hoainho/img2threejs-showcase/blob/main';
 
 export const demos: DemoEntry[] = [
+  {
+    id: 'glock-ghost-protocol',
+    title: 'Glock-18 | Ghost Protocol (Well-Worn)',
+    subjectClass: 'object',
+    blurb:
+      'A CS2 Glock-18 rebuilt in code from a FRONT/BACK reference pair, using a dedicated ' +
+      'Glock-18 adapter rather than a generic pistol body. The silhouette is the alpha trace ' +
+      'of the references — the two traces agree to 1.6 px — so the slide profile with its ' +
+      'rear-sight block and front-sight blade, the slide/frame parting line, the dust cover ' +
+      'and its four accessory-rail slots, the trigger-guard loop, the beavertail, the 22° grip ' +
+      'rake and the ribbed magazine extension are all measured, not drawn. The Ghost Protocol ' +
+      'finish is not a procedural circuit pattern: each broad face carries the de-lit reference ' +
+      'crop for that side through one shared planar UV frame, so the magenta and orange trace ' +
+      'bundles, "G18", "GLOCK(18)", "GHOST", "(*)", "PROTOCOL", the ">_" prompt and the ' +
+      'bar-graph glyphs land exactly where the references put them. Roughness, metalness, AO ' +
+      'and normal are separate authored channels built from the traced geometry, none derived ' +
+      'from the albedo. Because the shell is translucent polymer the internals are real ' +
+      'geometry, not paint: the barrel and its crowned muzzle, the recoil rod, the steel breech ' +
+      'block behind the right-side ejection port, the magazine body and the ribbon-cable module ' +
+      'all sit inside the shell where the references show them through it. Z thickness, the ' +
+      'internals’ depth and the rim colour are inferred — both supplied views are broadside. ' +
+      'Live: a slow studio rock.',
+    referenceImage: `${BASE}references/glock-ghost-protocol.png`,
+    sourcePath: 'src/demos/glock-ghost-protocol/createGlockGhostProtocolModel.ts',
+    sourceUrl: `${REPO}/src/demos/glock-ghost-protocol/createGlockGhostProtocolModel.ts`,
+    generatedWith: 'img2threejs v1.3',
+    author: 'kokorolx',
+    authorUrl: 'https://github.com/kokorolx',
+    status: 'final',
+    // +Z side: a camera here reproduces the FRONT reference framing (muzzle to the right).
+    cameraPosition: [0.2, 0.5, 4.85],
+    cameraTarget: [0, -0.02, 0],
+    cameraFov: 30,
+    accent: '#c02234',
+    backgroundGradient: { inner: '#2a1017', outer: '#070507' },
+    // Operator SOLVED against the reference, not assumed. Khronos-neutral subtracts the
+    // minimum channel (up to 0.04 linear) from all three, which on this deep-crimson polymer
+    // wiped out ~60% of the green and pushed both faces off-hue; no tone mapping at all
+    // washed green the other way (+28). ACES at these light levels lands the global mean on
+    // the FRONT reference within 0.6/4.7/4.9 of RGB.
+    toneMapping: 'aces',
+    exposure: 1.0,
+    environmentIntensity: 0.52,
+    installLights: (scene) => {
+      scene.add(createGlockGhostProtocolLookDevLights());
+    },
+    build: (scene) => {
+      scene.background = makeGhostProtocolBackground();
+      const group = createGlockGhostProtocolModel({ shadows: true });
+      scene.add(group);
+
+      // slow studio rock so the clearcoat travels along the slide and the translucent
+      // frame reveals the barrel and the ribbon module from changing angles
+      let t = 0;
+      group.userData.tick = (dt: number) => {
+        t += dt;
+        // Kept to +-11 deg: the light rig and the material scalars were solved against the
+        // broadside references, and past ~15 deg the environment starts to dominate the
+        // clearcoat and the crimson drifts blue.
+        group.rotation.y = Math.sin(t * 0.33) * 0.2;
+        group.rotation.x = Math.sin(t * 0.21) * 0.035;
+      };
+      return group;
+    },
+  },
   {
     id: 'classic-fade',
     title: 'Classic Knife | Fade (Minimal Wear)',
