@@ -122,7 +122,7 @@ export const demos: DemoEntry[] = [
     referenceImage: `${BASE}references/glock-ghost-protocol.png`,
     sourcePath: 'src/demos/glock-ghost-protocol/createGlockGhostProtocolModel.ts',
     sourceUrl: `${REPO}/src/demos/glock-ghost-protocol/createGlockGhostProtocolModel.ts`,
-    generatedWith: 'img2threejs v1.4',
+    generatedWith: 'v1.4.1',
     author: 'kokorolx',
     authorUrl: 'https://github.com/kokorolx',
     status: 'final',
