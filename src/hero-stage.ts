@@ -5,9 +5,12 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import type { DemoEntry } from './demos/registry';
+import { fitScale, subjectExtent, type SubjectExtent } from './framing';
 
 const CYCLE_MS = 5200; // time each demo stays on the turntable
 const MATERIALIZE_S = 1.05; // entry animation length
+/** Aspect of the hero stage in the desktop two-column layout — the framing to reproduce. */
+const STAGE_REFERENCE_ASPECT = 1.11;
 
 /**
  * Cinematic hero turntable: builds each demo in turn, orbits a camera around it
@@ -31,6 +34,12 @@ export class HeroStage {
   private orbitRadius = 3;
   private orbitAngle = 0;
   private orbitHeight = 1;
+  /** Authored orbit geometry of the active demo, before any responsive pull-back. */
+  private authoredRadius = 3;
+  private authoredHeight = 1;
+  private authoredDistance = 3;
+  private fitExtent: SubjectExtent | null = null;
+  private fogBase: { near: number; far: number } | null = null;
 
   private activeObjects: THREE.Object3D[] = [];
   private index = -1;
@@ -129,6 +138,38 @@ export class HeroStage {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h, false);
     this.composer.setSize(w, h);
+    this.applyFit();
+  }
+
+  /**
+   * Scales the turntable orbit out until the subject fits the stage on both axes. The stage is
+   * near-square on desktop but tall and narrow on a phone, where the authored radius would clip
+   * wide subjects (a bike, a shotgun) off both edges.
+   */
+  private applyFit(): void {
+    if (!this.fitExtent || this.authoredDistance <= 0) return;
+    const scale = fitScale(
+      this.fitExtent,
+      this.camera.fov,
+      this.camera.aspect,
+      this.authoredDistance,
+      STAGE_REFERENCE_ASPECT,
+    );
+    // On a phone the authored crop reads as an accident rather than a composition, and the subject
+    // collides with the source-photo inset — buy a little extra room back. Keyed to the viewport
+    // (not the stage width) so the desktop stage, which is only ~510px wide, is left alone.
+    const room = window.innerWidth <= 640 ? 1.12 : 1;
+    this.orbitRadius = this.authoredRadius * scale * room;
+    this.orbitHeight = this.authoredHeight * scale * room;
+    const reach = Math.max(this.fitExtent.horizontal, this.fitExtent.vertical);
+    this.camera.far = Math.max(100, this.authoredDistance * scale * room + reach * 6);
+    this.camera.updateProjectionMatrix();
+    // A pulled-back camera would otherwise sit outside a demo's fog range and fade the subject
+    // to nothing; scale the range with the pull-back so the look is preserved.
+    if (this.fogBase && this.scene.fog instanceof THREE.Fog) {
+      this.scene.fog.near = this.fogBase.near * scale * room;
+      this.scene.fog.far = this.fogBase.far * scale * room;
+    }
   }
 
   private clearActive(): void {
@@ -149,6 +190,8 @@ export class HeroStage {
     this.clearActive();
     const demo = this.demos[index];
     const before = new Set(this.scene.children);
+    // Reset fog so a previous demo's atmosphere doesn't leak onto this one.
+    this.scene.fog = null;
     demo.build(this.scene);
     // Some demos set an opaque scene.background; keep the hero canvas transparent
     // so the CSS aurora shows through.
@@ -160,11 +203,17 @@ export class HeroStage {
     this.target.set(tx, ty, tz);
     const dx = px - tx;
     const dz = pz - tz;
-    this.orbitRadius = Math.hypot(dx, dz);
+    this.authoredRadius = Math.hypot(dx, dz);
+    this.authoredHeight = py - ty;
+    this.authoredDistance = Math.hypot(this.authoredRadius, this.authoredHeight);
     this.orbitAngle = Math.atan2(dz, dx);
-    this.orbitHeight = py - ty;
     this.camera.fov = demo.cameraFov;
     this.camera.updateProjectionMatrix();
+
+    this.fitExtent = subjectExtent(this.activeObjects, this.target);
+    const fog = this.scene.fog as THREE.Fog | null;
+    this.fogBase = fog instanceof THREE.Fog ? { near: fog.near, far: fog.far } : null;
+    this.applyFit();
 
     this.entryStart = this.elapsed;
     this.index = index;

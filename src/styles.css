@@ -32,10 +32,12 @@ body {
 
 body {
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 #app {
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
 }
 
@@ -58,7 +60,9 @@ code,
 .home {
   position: relative;
   min-height: 100vh;
-  overflow: hidden;
+  min-height: 100dvh;
+  overflow: clip;
+  padding-top: env(safe-area-inset-top);
 }
 
 .aurora {
@@ -97,6 +101,8 @@ code,
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .brand {
@@ -214,6 +220,7 @@ code,
 
 .hero-title {
   font-size: clamp(2.1rem, 5vw, 3.5rem);
+  text-wrap: balance;
   line-height: 1.08;
   letter-spacing: -0.02em;
   margin: 0.9rem 0 0;
@@ -474,7 +481,8 @@ code,
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  /* min() keeps the track from overflowing viewports narrower than the 270px minimum */
+  grid-template-columns: repeat(auto-fit, minmax(min(270px, 100%), 1fr));
   gap: 1.4rem;
 }
 
@@ -498,12 +506,24 @@ code,
   to { opacity: 1; transform: none; }
 }
 
-.card:hover,
+/* Hover lift only where hovering exists — on touch it would stick after a tap. */
+@media (hover: hover) {
+  .card:hover {
+    border-color: transparent;
+    transform: translateY(-4px);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(124, 159, 255, 0.6),
+      0 0 30px rgba(124, 159, 255, 0.25);
+  }
+}
+
 .card.active {
   border-color: transparent;
-  transform: translateY(-4px);
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(124, 159, 255, 0.6),
     0 0 30px rgba(124, 159, 255, 0.25);
+}
+
+.card:active {
+  transform: scale(0.985);
 }
 
 .card-media {
@@ -616,14 +636,176 @@ code,
   font-family: var(--mono);
 }
 
+/* ---------- Home responsive ---------- */
+
+@media (max-width: 1024px) {
+  .nav,
+  .hero,
+  .gallery,
+  .footer {
+    padding-left: 1.15rem;
+    padding-right: 1.15rem;
+  }
+  .hero {
+    gap: 1.8rem;
+  }
+}
+
 @media (max-width: 860px) {
   .hero {
     grid-template-columns: 1fr;
-    gap: 1.6rem;
+    gap: 1.5rem;
+    padding-top: 1.9rem;
+    align-items: start;
+  }
+  /* stage first: the 3D is the pitch */
+  .hero-stage {
+    min-height: min(78vw, 420px);
+    order: -1;
+  }
+  .hero-sub {
+    font-size: 0.98rem;
+  }
+  .gallery {
+    padding-top: 2.6rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav {
+    padding: 1rem 0.95rem 0;
+    gap: 0.5rem;
+  }
+  .brand-mark {
+    width: 26px;
+    height: 26px;
+  }
+  .brand-name {
+    font-size: 0.95rem;
+  }
+  .nav-actions {
+    gap: 0.4rem;
+  }
+  .nav-star,
+  .nav-donate {
+    font-size: 0.72rem;
+    padding: 0.38rem 0.68rem;
+    white-space: nowrap;
+  }
+
+  .hero {
+    padding: 1.5rem 0.95rem 0.5rem;
+    gap: 1.3rem;
+  }
+  .hero-eyebrow {
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+  }
+  .hero-title {
+    font-size: clamp(1.8rem, 8.6vw, 2.5rem);
+    margin-top: 0.7rem;
+  }
+  .hero-sub {
+    font-size: 0.93rem;
+    line-height: 1.62;
+    margin-top: 0.85rem;
+  }
+  .cta-row {
+    margin-top: 1.25rem;
+    gap: 0.55rem;
+  }
+  .cta-row .btn {
+    flex: 1 1 9rem;
+    justify-content: center;
+    font-size: 0.82rem;
+    padding: 0.72rem 0.85rem;
+  }
+  .pipeline {
+    margin-top: 1.5rem;
+    font-size: 0.71rem;
+    gap: 0.4rem;
+  }
+  .pipeline li:not(.pip-arrow) {
+    padding: 0.34rem 0.55rem;
+  }
+  /* the chips wrap, which leaves an arrow dangling at the end of a row — numbers carry the order */
+  .pip-arrow {
+    display: none;
+  }
+
+  .hero-stage {
+    min-height: 340px;
+    border-radius: 18px;
+  }
+  .stage-input {
+    width: 72px;
+    top: 12px;
+    left: 12px;
+    border-radius: 10px;
+  }
+  /* tight enough for "source photo" to stay on one line inside a 72px inset */
+  .stage-input figcaption {
+    font-size: 0.5rem;
+    letter-spacing: 0.02em;
+  }
+  /* the beam needs the desktop gap between thumb and model to read as a beam */
+  .stage-beam {
+    display: none;
+  }
+  /* full-width caption strip so a long title can't collide with the corner hint */
+  .stage-badge {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    font-size: 0.7rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .stage-hint {
+    top: 14px;
+    right: 12px;
+    bottom: auto;
+    font-size: 0.6rem;
+  }
+
+  .gallery {
+    padding: 2.3rem 0.95rem 0.5rem;
+  }
+  .gallery-head p {
+    font-size: 0.9rem;
+    margin-bottom: 1.4rem;
+  }
+  .grid {
+    gap: 1rem;
+  }
+  .card-body {
+    padding: 0.85rem 0.9rem 1rem;
+    gap: 0.45rem;
+  }
+  /* one column — nothing left to align badges against, so drop the reserved second line */
+  .card-title {
+    min-height: 0;
+    font-size: 1rem;
+  }
+
+  .footer {
+    margin-top: 2.6rem;
+    padding: 1.2rem 0.95rem calc(1.2rem + env(safe-area-inset-bottom));
+    font-size: 0.78rem;
+    line-height: 1.7;
+    text-align: center;
+  }
+}
+
+/* Very narrow (≤360px): shed the longest labels rather than wrap the nav. */
+@media (max-width: 400px) {
+  .nav-label-long {
+    display: none;
   }
   .hero-stage {
-    min-height: 360px;
-    order: -1;
+    min-height: 300px;
   }
 }
 
@@ -644,6 +826,11 @@ code,
     opacity: 1;
     transform: none;
   }
+  .demo-panel-body,
+  .panel-toggle-chevron,
+  .hint {
+    transition: none;
+  }
 }
 
 /* ---------- Demo page ---------- */
@@ -651,53 +838,183 @@ code,
 .demo-page {
   position: relative;
   height: 100vh;
+  /* dvh tracks the collapsing mobile browser chrome; vh above is the fallback. */
+  height: 100dvh;
   width: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .demo-canvas-mount {
   position: absolute;
   inset: 0;
+  /* the canvas owns all gestures — no page pan/zoom fighting the orbit controls */
+  touch-action: none;
 }
+
+/* --- info panel: a collapsible card on desktop, a bottom sheet on a phone --- */
 
 .demo-panel {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
+  top: max(1rem, env(safe-area-inset-top));
+  left: max(1rem, env(safe-area-inset-left));
+  z-index: 4;
   width: min(320px, calc(100vw - 2rem));
-  max-height: calc(100vh - 2rem);
-  overflow-y: auto;
-  background: rgba(16, 17, 22, 0.86);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  background: rgba(16, 17, 22, 0.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.demo-panel-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 0.85rem;
+  flex: 0 0 auto;
+}
+
+.demo-panel[data-expanded='true'] .demo-panel-bar {
+  border-bottom: 1px solid var(--border);
 }
 
 .demo-panel .back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   font-family: var(--mono);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: var(--text-dim);
+  transition: color 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.demo-panel .back-link:hover {
+  color: var(--text);
+}
+
+.back-arrow {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+/* The bar only needs to name the demo while the body is folded away. */
+.demo-bar-title {
+  display: none;
+  min-width: 0;
+  flex: 1 1 auto;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel-toggle {
+  margin-left: auto;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.34rem 0.62rem;
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.panel-toggle:hover,
+.panel-toggle:focus-visible {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.panel-toggle-chevron {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  /* points up while open, flips down when folded */
+  transform: translateY(1px) rotate(-135deg);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.demo-panel[data-expanded='false'] .panel-toggle-chevron {
+  transform: translateY(-1px) rotate(45deg);
+}
+
+.demo-panel-body {
+  /* viewport minus the panel's own top/bottom inset and its header bar */
+  max-height: calc(100dvh - 6rem);
+  overflow: hidden;
+  transition: max-height 0.34s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.22s ease;
+}
+
+.demo-panel[data-expanded='true'] .demo-panel-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.demo-panel[data-expanded='false'] .demo-panel-body {
+  max-height: 0;
+  opacity: 0;
+}
+
+.demo-panel-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.9rem 0.85rem 1rem;
+}
+
+.demo-panel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.demo-kicker {
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
 }
 
 .demo-panel h2 {
-  margin: 0;
+  margin: 0.15rem 0 0;
   font-size: 1.15rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
 .demo-author {
-  margin: 0.15rem 0 0;
+  margin: 0.2rem 0 0;
   font-family: var(--mono);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-dim);
 }
 
 .demo-author a {
   color: var(--text-dim);
   text-decoration: underline;
+}
+
+.demo-ref {
+  margin: 0;
 }
 
 .demo-ref-thumb {
@@ -707,19 +1024,40 @@ code,
   display: block;
 }
 
+.demo-ref figcaption {
+  margin-top: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: center;
+}
+
 .demo-meta {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  font-size: 0.85rem;
+  gap: 0.55rem;
+  font-size: 0.84rem;
+  line-height: 1.55;
   color: var(--text-dim);
+}
+
+.demo-meta p {
+  margin: 0;
 }
 
 .demo-links {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-top: 0.4rem;
+  margin-top: 0.1rem;
+}
+
+.demo-links .btn {
+  justify-content: center;
+  font-size: 0.82rem;
+  padding: 0.65rem 0.9rem;
 }
 
 /* Explode toggle: a <button> in a list of <a class="btn">, so it needs the resets an
@@ -924,19 +1262,153 @@ code,
 
 .hint {
   position: absolute;
-  bottom: 1rem;
+  bottom: max(1rem, env(safe-area-inset-bottom));
   right: 1rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   font-family: var(--mono);
   font-size: 0.75rem;
+  white-space: nowrap;
   color: var(--text-dim);
   background: rgba(16, 17, 22, 0.7);
   padding: 0.35rem 0.6rem;
-  border-radius: 6px;
+  border-radius: 999px;
   border: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+  transition: opacity 0.5s ease;
 }
 
-@media (max-width: 640px) {
+.hint.is-gone {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hint-touch {
+  display: none;
+}
+
+/* Touch devices get the gesture wording that actually applies. */
+@media (hover: none) {
+  .hint-pointer {
+    display: none;
+  }
+  .hint-touch {
+    display: inline;
+  }
+}
+
+/* --- compact viewports: fold the description away so it can't cover the model --- */
+
+@media (max-width: 860px), (max-height: 520px) {
+  .back-text {
+    display: none;
+  }
+  /* The bar carries the title in both states, so the body header doesn't repeat it. */
+  .demo-bar-title {
+    display: block;
+    font-size: 0.95rem;
+  }
+  .demo-panel h2 {
+    display: none;
+  }
+  .demo-panel-head {
+    gap: 0.25rem;
+  }
+  .panel-toggle-label {
+    display: none;
+  }
+  .panel-toggle {
+    padding: 0.45rem 0.6rem;
+  }
+  /* the hint is a single-line pill here — this clause alone is wider than the screen */
+  .hint-extra {
+    display: none;
+  }
+  /* Let the sheet do the scrolling: a nested scroller inside it steals the pan gesture. */
+  .parts-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* Phone portrait / small tablet: bottom sheet, thumb-reachable, model gets the full screen. */
+@media (max-width: 860px) and (min-height: 521px) {
   .demo-panel {
-    width: calc(100vw - 2rem);
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: 18px 18px 0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.55);
+  }
+
+  /* grab-handle affordance */
+  .demo-panel::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 38px;
+    height: 4px;
+    margin: 0.5rem auto 0;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .demo-panel-bar {
+    padding: 0.6rem 0.9rem 0.7rem;
+    cursor: pointer;
+  }
+
+  .demo-panel-body {
+    max-height: 52dvh;
+  }
+
+  .demo-panel-inner {
+    padding: 0.9rem 0.95rem 1.4rem;
+  }
+
+  .demo-ref-thumb {
+    max-height: 22dvh;
+    object-fit: cover;
+  }
+
+  /* fade the cut-off edge so it reads as "scroll for more", not "clipped" */
+  .demo-panel[data-expanded='true']::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1.8rem;
+    background: linear-gradient(to top, rgba(16, 17, 22, 0.96), transparent);
+    pointer-events: none;
+  }
+
+  /* clear of the collapsed sheet */
+  .hint {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(4.6rem + env(safe-area-inset-bottom));
+    font-size: 0.7rem;
+  }
+}
+
+/* Phone landscape / short window: stay a side column, there is no vertical room for a sheet. */
+@media (max-height: 520px) {
+  .demo-panel {
+    width: min(300px, 54vw);
+  }
+  .demo-panel-body {
+    max-height: calc(100dvh - 5.5rem);
+  }
+  .demo-ref {
+    display: none;
   }
 }
