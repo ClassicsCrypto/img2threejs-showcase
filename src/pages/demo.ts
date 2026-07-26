@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { getDemo } from '../demos/registry';
-import { Viewer } from '../scene';
+import { Viewer, type PartInfo } from '../scene';
 import { navigate } from '../router';
 
 const GITHUB_URL = 'https://github.com/hoainho/img2threejs';
@@ -41,7 +41,19 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
           </div>
           <p>${demo.blurb}</p>
         </div>
+        <section class="demo-parts" id="demo-parts" hidden>
+          <div class="parts-head">
+            <span class="parts-title">Parts</span>
+            <span class="parts-count" id="parts-count"></span>
+          </div>
+          <div class="part-card" id="part-card" hidden></div>
+          <div class="parts-scroll"><ul class="parts-list" id="parts-list"></ul></div>
+          <p class="parts-prov" id="parts-prov" hidden></p>
+        </section>
         <div class="demo-links">
+          <button class="btn btn-explode" id="demo-explode" type="button" aria-pressed="false" hidden>
+            <span class="explode-glyph">&#10021;</span> <span class="explode-label">Explode parts</span>
+          </button>
           <a class="btn" href="${demo.sourceUrl}" target="_blank" rel="noopener noreferrer">
             &lt;/&gt; View generated source
           </a>
@@ -84,7 +96,148 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     capture,
   });
 
-  demo.build(viewer.scene);
+  const model = demo.build(viewer.scene);
+  viewer.setExplodeRoot(model);
+
+  // Part tree published for the assembly gate (forge/stage4_review/check_part_coverage.py).
+  // Set in capture mode too — that is the headless run the gate reads it from.
+  (window as unknown as Record<string, unknown>).__IMG2THREEJS_PARTS__ = {
+    model: id,
+    ...viewer.partManifest(),
+  };
+
+  // Explode control. Hidden for single-mesh demos and in capture mode, where the panel is
+  // hidden anyway and the evaluation frame must stay deterministic.
+  const explodeBtn = mount.querySelector<HTMLButtonElement>('#demo-explode');
+  if (explodeBtn && viewer.canExplode && !capture) {
+    explodeBtn.hidden = false;
+    let exploded = false;
+    explodeBtn.addEventListener('click', () => {
+      exploded = !exploded;
+      viewer.setExplode(exploded ? 1 : 0);
+      explodeBtn.setAttribute('aria-pressed', String(exploded));
+      explodeBtn.classList.toggle('is-active', exploded);
+      explodeBtn.querySelector('.explode-label')!.textContent = exploded ? 'Assemble' : 'Explode parts';
+    });
+  }
+
+  // Part inspector: click any component in the viewer (or in the list) to select, name and
+  // isolate it. Off in capture mode — the evaluation frame must show the assembled object.
+  const partsSection = mount.querySelector<HTMLElement>('#demo-parts')!;
+  const partsList = mount.querySelector<HTMLUListElement>('#parts-list')!;
+  const partCard = mount.querySelector<HTMLElement>('#part-card')!;
+
+  /** Small DOM builder. Part names and material strings go in as text, never as markup. */
+  const el = <K extends keyof HTMLElementTagNameMap>(
+    tag: K, cls?: string, text?: string,
+  ): HTMLElementTagNameMap[K] => {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+
+  const fact = (label: string, value: string): HTMLElement => {
+    const row = el('div');
+    row.append(el('dt', undefined, label), el('dd', undefined, value));
+    return row;
+  };
+
+  const renderSelection = (sel: PartInfo | null): void => {
+    for (const item of partsList.querySelectorAll<HTMLElement>('.part-item')) {
+      item.classList.toggle('is-active', !!sel && item.dataset.part === sel.name);
+    }
+    if (!sel) {
+      partCard.hidden = true;
+      partCard.replaceChildren();
+      return;
+    }
+    partCard.hidden = false;
+
+    const head = el('div', 'part-card-head');
+    head.append(el('strong', undefined, sel.name), el('span', `part-kind part-kind-${sel.kind}`, sel.kind));
+
+    const facts = el('dl', 'part-facts');
+    if (sel.module) facts.append(fact('module', sel.module));
+    facts.append(fact('triangles', sel.triangles.toLocaleString()));
+    for (const m of sel.materials) facts.append(fact('material', m));
+
+    const isolateBtn = el('button', 'btn part-btn', viewer.isolated ? 'Show all' : 'Isolate');
+    isolateBtn.type = 'button';
+    isolateBtn.setAttribute('aria-pressed', String(viewer.isolated));
+    // No manual re-render: setIsolate reports back through onSelect.
+    isolateBtn.addEventListener('click', () => viewer.setIsolate(!viewer.isolated));
+    const clearBtn = el('button', 'btn part-btn', 'Clear');
+    clearBtn.type = 'button';
+    clearBtn.addEventListener('click', () => {
+      viewer.setIsolate(false);
+      viewer.selectByName(null);
+    });
+    const actions = el('div', 'part-actions');
+    actions.append(isolateBtn, clearBtn);
+
+    partCard.replaceChildren(head, facts, actions);
+    partsList.querySelector('.part-item.is-active')?.scrollIntoView({ block: 'nearest' });
+  };
+
+  if (!capture) {
+    viewer.enableInspect({ onSelect: renderSelection });
+    const parts = viewer.parts;
+    // One nameless blob is not a part tree — leave the section hidden rather than show a list
+    // of one. This is what keeps the demos with unnamed meshes from looking broken.
+    if (parts.length > 1) {
+      partsSection.hidden = false;
+      mount.querySelector<HTMLElement>('#parts-count')!.textContent = String(parts.length);
+
+      const groups = new Map<string, PartInfo[]>();
+      for (const p of parts) {
+        const key = p.module ?? 'ungrouped';
+        let arr = groups.get(key);
+        if (!arr) groups.set(key, (arr = []));
+        arr.push(p);
+      }
+      const labelled = groups.size > 1 || !groups.has('ungrouped');
+      for (const [mod, items] of groups) {
+        if (labelled) partsList.append(el('li', 'parts-group', mod));
+        for (const p of items) {
+          const btn = el('button', 'part-item');
+          btn.type = 'button';
+          btn.dataset.part = p.name;
+          btn.append(
+            el('span', 'part-name', p.name),
+            el('span', 'part-tri', p.triangles >= 1000
+              ? `${(p.triangles / 1000).toFixed(1)}k` : String(p.triangles)),
+          );
+          const row = el('li');
+          row.append(btn);
+          partsList.append(row);
+        }
+      }
+
+      partsList.addEventListener('click', (e) => {
+        const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.part-item');
+        if (btn?.dataset.part) viewer.selectByName(btn.dataset.part);
+      });
+
+      // Model-level, not per-part: this is what the pipeline recorded about the whole
+      // reconstruction, and it is the honest caption for every number above it.
+      const prov = viewer.provenance;
+      if (prov) {
+        const provEl = mount.querySelector<HTMLElement>('#parts-prov')!;
+        provEl.hidden = false;
+        provEl.textContent = [
+          prov.route,
+          prov.exactnessTier,
+          prov.thicknessConfidence !== undefined
+            ? `z-depth confidence ${prov.thicknessConfidence}` : null,
+        ].filter(Boolean).join(' · ');
+      }
+
+      mount.querySelector<HTMLElement>('.hint')!
+        .append(' · click a part to inspect · click again to reach what is behind it');
+    }
+  }
+
   if (capture) {
     // Flat white bg + hide the UI overlay + freeze per-frame animation so the evaluation
     // frame is deterministic and shows only the object (matches the reference plate).
