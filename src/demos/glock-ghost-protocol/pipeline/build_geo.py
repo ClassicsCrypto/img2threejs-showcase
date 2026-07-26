@@ -6,6 +6,8 @@ Pixel -> world: world = (px - centre) * SCALE, with image +y flipped to world -y
 """
 import json
 from contour import mask, contours, rdp, cut_above, cut_below
+import numpy as np
+from PIL import Image, ImageDraw
 
 SCALE = 0.002
 XC, YC = 1001.0, 561.0
@@ -52,22 +54,9 @@ def ccw(poly):
     return poly if a < 0 else poly[::-1]
 
 
-# ---------------------------------------------------------------- contours
-outer_px, holes_px = contours(mask("ref_front.png"))
-outer = rdp(outer_px, 0.9)
-guard_hole = rdp(max(holes_px, key=len), 0.7)
-
-slide_px = cut_above(outer, lambda p: SPLIT_Y)
-lower_px = cut_below(outer, lambda p: SPLIT_Y)
-frame_px = cut_above(lower_px, mag_line)
-mag_px = cut_below(lower_px, mag_line)
-
-print("slide %d pts area %.0f" % (len(slide_px), area(slide_px)))
-print("frame %d pts area %.0f" % (len(frame_px), area(frame_px)))
-print("mag   %d pts area %.0f" % (len(mag_px), area(mag_px)))
-print("hole  %d pts area %.0f" % (len(guard_hole), area(guard_hole)))
-
-# ---------------------------------------------------------------- hardware, measured in px
+# ---------------------------------------------------------------- trigger footprint
+# Declared before the contours because the guard hole is traced from a mask with the trigger
+# PUNCHED OUT (see below).
 # trigger: the free right-hand (finger-facing) edge is traced off the dark-shoe component;
 # the left edge is the guard's inner rear wall, which the reference never shows uncovered.
 TRIG_RIGHT = [(975, 372), (972, 388), (965, 402), (955, 420), (947, 434), (940, 448),
@@ -80,6 +69,42 @@ TRIG_LEFT_X = 845
 
 trigger = [(TRIG_LEFT_X, 370)] + TRIG_RIGHT + [(TRIG_LEFT_X, 578)]
 
+
+def punch(m, poly, grow=2):
+    """Clear a polygon out of a boolean mask, dilated by `grow` px."""
+    img = Image.new("1", (m.shape[1], m.shape[0]), 0)
+    d = ImageDraw.Draw(img)
+    d.polygon([(int(x), int(y)) for x, y in poly], fill=1)
+    d.line([(int(x), int(y)) for x, y in poly] + [(int(poly[0][0]), int(poly[0][1]))],
+           fill=1, width=grow * 2)
+    return m & ~np.array(img, bool)
+
+
+# ---------------------------------------------------------------- contours
+src = mask("ref_front.png")
+outer_px, _ = contours(src)
+outer = rdp(outer_px, 0.9)
+
+# The trigger is opaque in the reference and joins the frame at the top, so a plain trace of
+# the enclosed void gives a guard hole that wraps AROUND the trigger — leaving the frame a
+# solid trigger-shaped tongue at full receiver thickness. The build then carries TWO triggers:
+# that tongue, and the real 3D shoe sitting on top of it. Punch the trigger footprint out of
+# the mask first, so the traced opening is the whole guard interior plus the slot the trigger
+# passes through, and the only trigger in the model is the one that is actually modelled.
+_, holes_open = contours(punch(src, trigger))
+guard_hole = rdp(max(holes_open, key=len), 0.7)
+
+slide_px = cut_above(outer, lambda p: SPLIT_Y)
+lower_px = cut_below(outer, lambda p: SPLIT_Y)
+frame_px = cut_above(lower_px, mag_line)
+mag_px = cut_below(lower_px, mag_line)
+
+print("slide %d pts area %.0f" % (len(slide_px), area(slide_px)))
+print("frame %d pts area %.0f" % (len(frame_px), area(frame_px)))
+print("mag   %d pts area %.0f" % (len(mag_px), area(mag_px)))
+print("hole  %d pts area %.0f" % (len(guard_hole), area(guard_hole)))
+
+# ---------------------------------------------------------------- hardware, measured in px
 # ---------------------------------------------------------------- assemble
 geo = {
     "meta": {

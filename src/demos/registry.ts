@@ -106,16 +106,23 @@ export const demos: DemoEntry[] = [
       'bundles, "G18", "GLOCK(18)", "GHOST", "(*)", "PROTOCOL", the ">_" prompt and the ' +
       'bar-graph glyphs land exactly where the references put them. Roughness, metalness, AO ' +
       'and normal are separate authored channels built from the traced geometry, none derived ' +
-      'from the albedo. Because the shell is translucent polymer the internals are real ' +
-      'geometry, not paint: the barrel and its crowned muzzle, the recoil rod, the steel breech ' +
-      'block behind the right-side ejection port, the magazine body and the ribbon-cable module ' +
-      'all sit inside the shell where the references show them through it. Z thickness, the ' +
-      'internals’ depth and the rim colour are inferred — both supplied views are broadside. ' +
-      'Live: a slow studio rock.',
+      'from the albedo. No part is a constant-thickness extrusion: each shell is a loft whose ' +
+      'cross-section varies with position, so the dust cover is slimmer than the receiver, the ' +
+      'trigger-guard bow is a slender loop, the slide deck breaks in above the flats and the ' +
+      'grip carries a palm swell under its raised panel. Because the shell is translucent ' +
+      'polymer the internals are real mechanism, not paint: a lathed barrel with chamber swell, ' +
+      'locking hood and bored muzzle, a coiled recoil spring on its guide rod, the striker, the ' +
+      'breech face behind a genuinely cut ejection port, the magazine with feed lips and ' +
+      'follower, and a Safe Action trigger group — a slotted curved shoe with a separate safety ' +
+      'lever set into the slot, on its own matte grey polymer, riding a bar and connector that ' +
+      'lift out of the frame as one module. Serrations and grip stria ' +
+      'are ribs with real relief, not normal-map paint. Z thickness, every cross-section ' +
+      'profile and the internals’ depth are inferred — both supplied views are broadside. ' +
+      'Live: a slow studio rock. Hit “Explode parts” to take it apart.',
     referenceImage: `${BASE}references/glock-ghost-protocol.png`,
     sourcePath: 'src/demos/glock-ghost-protocol/createGlockGhostProtocolModel.ts',
     sourceUrl: `${REPO}/src/demos/glock-ghost-protocol/createGlockGhostProtocolModel.ts`,
-    generatedWith: 'img2threejs v1.3',
+    generatedWith: 'img2threejs v1.4',
     author: 'kokorolx',
     authorUrl: 'https://github.com/kokorolx',
     status: 'final',

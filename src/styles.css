@@ -722,6 +722,206 @@ code,
   margin-top: 0.4rem;
 }
 
+/* Explode toggle: a <button> in a list of <a class="btn">, so it needs the resets an
+   anchor does not (buttons do not inherit font/colour, and default to auto width). */
+.btn-explode {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.btn-explode .explode-glyph {
+  color: var(--accent-strong);
+  transition: transform 0.35s ease;
+  display: inline-block;
+}
+
+.btn-explode.is-active {
+  border-color: var(--accent);
+  background: var(--bg-glass);
+}
+
+.btn-explode.is-active .explode-glyph {
+  transform: rotate(45deg) scale(1.15);
+}
+
+/* ---- part inspector ---- */
+
+.demo-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.7rem;
+}
+
+.parts-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.parts-title {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.parts-count {
+  color: var(--accent-strong);
+}
+
+.parts-scroll {
+  max-height: 12rem;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.parts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem;
+}
+
+.parts-group {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 0.45rem 0.4rem 0.2rem;
+}
+
+.part-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  padding: 0.28rem 0.4rem;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.part-item:hover {
+  background: var(--bg-glass);
+}
+
+.part-item.is-active {
+  background: var(--bg-glass);
+  box-shadow: inset 2px 0 0 var(--accent-strong);
+  color: var(--accent-strong);
+}
+
+.part-tri {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  flex: none;
+}
+
+.part-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.6rem;
+  background: var(--bg-glass);
+}
+
+.part-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.86rem;
+}
+
+.part-kind {
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  color: var(--text-dim);
+}
+
+.part-kind-part {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.part-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+
+.part-facts > div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.part-facts dt {
+  flex: none;
+  width: 4.6rem;
+  color: var(--text-dim);
+}
+
+.part-facts dd {
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.part-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.part-btn {
+  flex: 1;
+  justify-content: center;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  padding: 0.3rem 0.5rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.part-btn[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.parts-prov {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
 .hint {
   position: absolute;
   bottom: 1rem;
