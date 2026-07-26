@@ -5,6 +5,16 @@ import { navigate } from '../router';
 
 const GITHUB_URL = 'https://github.com/hoainho/img2threejs';
 
+/** Viewports where the info panel becomes a collapsible bottom sheet over the model. */
+const COMPACT_QUERY = '(max-width: 860px), (max-height: 520px)';
+
+/**
+ * Whether the details sheet is expanded, remembered across demo navigations within a session.
+ * `null` = untouched, so each viewport gets its own sensible default (open on desktop, collapsed
+ * on a phone, where an open panel would cover the model entirely).
+ */
+let panelExpanded: boolean | null = null;
+
 /**
  * Renders the full-viewport demo viewer + info panel for `id`.
  * Returns a cleanup function the router must call before switching routes.
@@ -17,52 +27,74 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     return () => {};
   }
 
+  const compact = window.matchMedia(COMPACT_QUERY);
+  const expanded = panelExpanded ?? !compact.matches;
+
   mount.innerHTML = `
     <div class="demo-page">
       <div class="demo-canvas-mount" id="demo-canvas-mount"></div>
-      <div class="demo-panel">
-        <a class="back-link" href="#/"><span class="back-arrow">&larr;</span> Back to gallery</a>
-        <header class="demo-panel-head">
-          <span class="demo-kicker">img2threejs · reconstruction</span>
-          <h2>${demo.title}</h2>
-          <p class="demo-author">by
-            <a href="${demo.authorUrl}" target="_blank" rel="noopener noreferrer">${demo.author}</a>
-          </p>
-        </header>
-        <figure class="demo-ref">
-          <img class="demo-ref-thumb" src="${demo.referenceImage}" alt="${demo.title} reference" />
-          <figcaption>source reference</figcaption>
-        </figure>
-        <div class="demo-meta">
-          <div class="badges">
-            <span class="badge badge-${demo.subjectClass}">${demo.subjectClass}</span>
-            <span class="badge">${demo.generatedWith}</span>
-            <span class="badge badge-status status-${demo.status}">${demo.status}</span>
-          </div>
-          <p>${demo.blurb}</p>
-        </div>
-        <section class="demo-parts" id="demo-parts" hidden>
-          <div class="parts-head">
-            <span class="parts-title">Parts</span>
-            <span class="parts-count" id="parts-count"></span>
-          </div>
-          <div class="part-card" id="part-card" hidden></div>
-          <div class="parts-scroll"><ul class="parts-list" id="parts-list"></ul></div>
-          <p class="parts-prov" id="parts-prov" hidden></p>
-        </section>
-        <div class="demo-links">
-          <button class="btn btn-explode" id="demo-explode" type="button" aria-pressed="false" hidden>
-            <span class="explode-glyph">&#10021;</span> <span class="explode-label">Explode parts</span>
+      <section class="demo-panel" id="demo-panel" data-expanded="${expanded}">
+        <div class="demo-panel-bar">
+          <a class="back-link" href="#/" aria-label="Back to gallery">
+            <span class="back-arrow" aria-hidden="true">&larr;</span>
+            <span class="back-text">Back to gallery</span>
+          </a>
+          <span class="demo-bar-title">${demo.title}</span>
+          <button class="panel-toggle" type="button" id="panel-toggle"
+                  aria-controls="demo-panel-body" aria-expanded="${expanded}">
+            <span class="panel-toggle-label">Details</span>
+            <span class="panel-toggle-chevron" aria-hidden="true"></span>
           </button>
-          <a class="btn" href="${demo.sourceUrl}" target="_blank" rel="noopener noreferrer">
-            &lt;/&gt; View generated source
-          </a>
-          <a class="btn btn-star" href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">
-            &#9733; Star img2threejs on GitHub
-          </a>
         </div>
+        <div class="demo-panel-body" id="demo-panel-body">
+          <div class="demo-panel-inner">
+            <header class="demo-panel-head">
+              <span class="demo-kicker">img2threejs · reconstruction</span>
+              <h2>${demo.title}</h2>
+              <p class="demo-author">by
+                <a href="${demo.authorUrl}" target="_blank" rel="noopener noreferrer">${demo.author}</a>
+              </p>
+            </header>
+            <figure class="demo-ref">
+              <img class="demo-ref-thumb" src="${demo.referenceImage}" alt="${demo.title} reference" />
+              <figcaption>source reference</figcaption>
+            </figure>
+            <div class="demo-meta">
+              <div class="badges">
+                <span class="badge badge-${demo.subjectClass}">${demo.subjectClass}</span>
+                <span class="badge">${demo.generatedWith}</span>
+                <span class="badge badge-status status-${demo.status}">${demo.status}</span>
+              </div>
+              <p>${demo.blurb}</p>
+            </div>
+            <section class="demo-parts" id="demo-parts" hidden>
+              <div class="parts-head">
+                <span class="parts-title">Parts</span>
+                <span class="parts-count" id="parts-count"></span>
+              </div>
+              <div class="part-card" id="part-card" hidden></div>
+              <div class="parts-scroll"><ul class="parts-list" id="parts-list"></ul></div>
+              <p class="parts-prov" id="parts-prov" hidden></p>
+            </section>
+            <div class="demo-links">
+              <button class="btn btn-explode" id="demo-explode" type="button" aria-pressed="false" hidden>
+                <span class="explode-glyph">&#10021;</span> <span class="explode-label">Explode parts</span>
+              </button>
+              <a class="btn" href="${demo.sourceUrl}" target="_blank" rel="noopener noreferrer">
+                &lt;/&gt; View generated source
+              </a>
+              <a class="btn btn-star" href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">
+                &#9733; Star img2threejs on GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+      <div class="hint" id="demo-hint">
+        <span class="hint-glyph" aria-hidden="true">&#8635;</span>
+        <span class="hint-pointer">drag to orbit &middot; scroll to zoom</span>
+        <span class="hint-touch">drag to orbit &middot; pinch to zoom</span>
       </div>
-      <div class="hint"><span class="hint-glyph">&#8635;</span> drag to orbit &middot; scroll to zoom</div>
     </div>
   `;
 
@@ -98,6 +130,9 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
 
   const model = demo.build(viewer.scene);
   viewer.setExplodeRoot(model);
+  // Responsive framing: keeps the authored desktop composition, dollies back on narrow/short
+  // viewports so the whole subject stays in frame instead of being cropped away.
+  viewer.fitToViewport(model);
 
   // Part tree published for the assembly gate (forge/stage4_review/check_part_coverage.py).
   // Set in capture mode too — that is the headless run the gate reads it from.
@@ -233,8 +268,13 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
         ].filter(Boolean).join(' · ');
       }
 
-      mount.querySelector<HTMLElement>('.hint')!
-        .append(' · click a part to inspect · click again to reach what is behind it');
+      // Wrapped in its own span so the compact layout can drop it: the hint is a single-line
+      // pill, and this clause alone is wider than a phone screen.
+      const inspectHint = document.createElement('span');
+      inspectHint.className = 'hint-extra';
+      inspectHint.textContent =
+        ' · click a part to inspect · click again to reach what is behind it';
+      mount.querySelector<HTMLElement>('.hint')!.append(inspectHint);
     }
   }
 
@@ -245,7 +285,7 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     viewer.scene.traverse((o) => {
       if ((o.userData as { tick?: unknown }).tick) delete (o.userData as { tick?: unknown }).tick;
     });
-    for (const sel of ['.demo-panel', '.hint', '.back-link']) {
+    for (const sel of ['.demo-panel', '.hint']) {
       mount.querySelector<HTMLElement>(sel)?.style.setProperty('display', 'none');
     }
     // Side-on auto-framing so the evaluation silhouette matches the side-on reference plate.
@@ -253,5 +293,41 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
   }
   viewer.start();
 
-  return () => viewer.dispose();
+  // --- collapsible details sheet ---------------------------------------------------------
+  const panel = mount.querySelector<HTMLElement>('#demo-panel')!;
+  const bar = mount.querySelector<HTMLElement>('.demo-panel-bar')!;
+  const toggle = mount.querySelector<HTMLButtonElement>('#panel-toggle')!;
+  const setExpanded = (next: boolean): void => {
+    panelExpanded = next;
+    panel.dataset.expanded = String(next);
+    toggle.setAttribute('aria-expanded', String(next));
+  };
+  // The whole bar is the hit target (the button's click bubbles up to it), so a sheet on a phone
+  // toggles from anywhere along the header — everywhere except the back link.
+  const onBarClick = (event: MouseEvent): void => {
+    if ((event.target as HTMLElement).closest('.back-link')) return;
+    setExpanded(panel.dataset.expanded !== 'true');
+  };
+  bar.addEventListener('click', onBarClick);
+
+  // Viewport changes reset an untouched panel to that viewport's default (rotating a phone to
+  // landscape, resizing a window across the breakpoint).
+  const onCompactChange = (event: MediaQueryListEvent): void => {
+    if (panelExpanded === null) setExpanded(!event.matches);
+  };
+  compact.addEventListener('change', onCompactChange);
+
+  // --- orbit hint: says its piece, then gets out of the way ------------------------------
+  const hint = mount.querySelector<HTMLElement>('#demo-hint')!;
+  const hideHint = (): void => hint.classList.add('is-gone');
+  const hintTimer = window.setTimeout(hideHint, 6000);
+  canvasMount.addEventListener('pointerdown', hideHint, { once: true });
+
+  return () => {
+    window.clearTimeout(hintTimer);
+    bar.removeEventListener('click', onBarClick);
+    compact.removeEventListener('change', onCompactChange);
+    canvasMount.removeEventListener('pointerdown', hideHint);
+    viewer.dispose();
+  };
 }

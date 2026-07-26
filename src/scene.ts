@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { fitScale, subjectExtent, type SubjectExtent } from './framing';
 
 export interface ViewerOptions {
   /** Install per-demo lights into the scene. Falls back to a neutral studio rig. */
@@ -158,6 +159,16 @@ export class Viewer {
   private camGoal: { target: THREE.Vector3; dist: number } | null = null;
   private camRest: { target: THREE.Vector3; dist: number } | null = null;
 
+  // ---- responsive framing ----
+  /** Distance the demo authored (|cameraPosition - cameraTarget|) — the desktop framing. */
+  private readonly authoredDistance: number;
+  private readonly authoredFar: number;
+  /** Subject size around the orbit target; null until fitToViewport() runs. */
+  private fitExtent: SubjectExtent | null = null;
+  /** Distance applyFit() last set, so a resize can preserve the user's own zoom. */
+  private appliedDistance = 0;
+  private fogBase: { near: number; far: number } | null = null;
+
   constructor(mount: HTMLElement, options: ViewerOptions = {}) {
     this.mount = mount;
 
@@ -205,6 +216,9 @@ export class Viewer {
     const [tx, ty, tz] = options.cameraTarget ?? [0, 0, 0];
     this.controls.target.set(tx, ty, tz);
     this.controls.update();
+
+    this.authoredDistance = this.camera.position.distanceTo(this.controls.target);
+    this.authoredFar = this.camera.far;
 
     if (options.installLights) {
       options.installLights(this.scene);
@@ -721,6 +735,76 @@ export class Viewer {
     this.camera.aspect = width / Math.max(1, height);
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
+    this.applyFit();
+  }
+
+  /**
+   * Makes the framing responsive: measures `object` around the orbit target and dollies the
+   * camera back far enough that it fits the current viewport on both axes. On a desktop-shaped
+   * viewport the authored distance already fits, so nothing moves; in portrait — where the
+   * horizontal fov collapses and the subject would fall outside the frame — the camera pulls
+   * back. Call once, AFTER the demo's build(). Re-applied automatically on resize/rotate.
+   */
+  fitToViewport(object: THREE.Object3D | THREE.Object3D[]): void {
+    // Capture mode owns its own deterministic framing (frameForCapture) — leave it alone.
+    if (this.capture) return;
+    const objects = Array.isArray(object) ? object : [object];
+    this.fitExtent = subjectExtent(objects, this.controls.target);
+    const fog = this.scene.fog;
+    this.fogBase = fog instanceof THREE.Fog ? { near: fog.near, far: fog.far } : null;
+    this.applyFit();
+  }
+
+  private applyFit(): void {
+    if (!this.fitExtent || this.authoredDistance <= 0) return;
+
+    const scale = fitScale(
+      this.fitExtent,
+      this.camera.fov,
+      this.camera.aspect,
+      this.authoredDistance,
+    );
+    const desired = this.authoredDistance * scale;
+    if (this.appliedDistance && Math.abs(desired - this.appliedDistance) < 1e-3) return;
+
+    // The camera distance is only the viewer's to keep when nothing else is driving it. While an
+    // explode or a part-focus is running, that system owns the distance, and reading it back here
+    // would fold its dolly (up to 3.4x) into the framing and leave the camera stranded once the
+    // animation settles. In that case leave the position alone and just re-base the other owners.
+    const driven = this.explodeT > 0 || this.explodeTarget > 0 || this.camGoal !== null;
+    const offset = this.camera.position.clone().sub(this.controls.target);
+    // Keep whatever zoom the user dialled in, expressed relative to the last fit distance.
+    const userZoom = !driven && this.appliedDistance
+      ? (offset.length() || 1) / this.appliedDistance
+      : 1;
+    const distance = desired * userZoom;
+    if (!driven) {
+      offset.setLength(distance);
+      this.camera.position.copy(this.controls.target).add(offset);
+    }
+
+    // Re-base the other camera-distance owners onto the new framing, so an explode or a focus
+    // that starts (or is mid-flight) across a resize dollies from the right distance instead of
+    // snapping back to the pre-resize one.
+    const framingRatio = this.appliedDistance ? desired / this.appliedDistance : 1;
+    if (framingRatio !== 1) {
+      this.explodeBaseDist *= framingRatio;
+      if (this.camRest) this.camRest.dist *= framingRatio;
+      if (this.camGoal) this.camGoal.dist *= framingRatio;
+    }
+    this.appliedDistance = desired;
+
+    // A dollied-back camera can push the subject past the authored far plane, and past a
+    // demo's fog range (which would fade it to nothing) — scale both with the pull-back.
+    const reach = Math.max(this.fitExtent.horizontal, this.fitExtent.vertical);
+    this.camera.far = Math.max(this.authoredFar, distance + reach * 6);
+    this.camera.updateProjectionMatrix();
+    if (this.fogBase && this.scene.fog instanceof THREE.Fog) {
+      const k = distance / this.authoredDistance;
+      this.scene.fog.near = this.fogBase.near * k;
+      this.scene.fog.far = this.fogBase.far * k;
+    }
+    this.controls.update();
   }
 
   start(): void {

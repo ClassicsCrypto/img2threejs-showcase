@@ -44,7 +44,7 @@ export function renderHome(mount: HTMLElement): () => void {
             &#9829; Sponsor
           </a>
           <a class="nav-star" href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">
-            &#9733; Star on GitHub
+            &#9733; Star <span class="nav-label-long">on GitHub</span>
           </a>
         </div>
       </header>
