@@ -1,0 +1,61 @@
+Drawing from the provided technical manuals, origin images, and current procedural renders, the Loop 16 visual audit of the AWP | Medusa reconstruction follows.
+
+### **Macro Proportions & Geometry**
+*   **Finding:** The receiver and stock silhouettes are **overly blocky and thick** along the Y-axis compared to the origin views [1, 2]. This aligns with the reported Tier 1 aspect delta of 0.063 [Prompt]. The barrel, currently at length 3.40, maintains a correct horizontal silhouette but appears disproportionate to the "heavy" receiver [1].
+*   **Evidence Label:** **OBSERVED** [1, 3], **SUPPORTED** [4].
+*   **Confidence:** 0.95.
+*   **Correction:** Apply a **global Y-axis scale reduction** of approximately 6% to the receiver and stock groups to thin the profile to match origin silhouettes [2, 5]. This is the smallest corrective action and preferable to manual geometry manipulation.
+
+### **Optic Assembly (Scope & Mount)**
+*   **Finding:** The scope rings are currently **primitive rectangular blocks** lacking the split-clamp and fastener detail seen in Accuracy International's standard 3-12x50 mounts [3, 6, 7]. The objective bell taper is "oversized" and lacks a readable front lens surface [3, 4].
+*   **Evidence Label:** **OBSERVED** [3], **SUPPORTED** [6, 7].
+*   **Confidence:** 0.90.
+*   **Correction:** Refine Ring geometry with a **split-top clamp profile** and M5 fastener recesses [6]; adjust objective bell `CylinderGeometry` to a steeper taper and insert a recessed reflective `CircleGeometry` for glass [8].
+
+### **Action, Action, & Magazine**
+*   **Finding:** The bolt handle is noted as **too short** for ergonomic grip and the trigger guard is "misplaced" [4]. Technical sources confirm the bolt should have a 60° opening and a prominent firing pin cocking indicator protruding from the shroud [9, 10].
+*   **Evidence Label:** **INFERRED** [1, 4], **SUPPORTED** [9].
+*   **Confidence:** 0.85.
+*   **Correction:** Extend the bolt handle lever along its local X-axis; translate the trigger guard and shoe group to align with the stock thumbhole transition [2, 11].
+
+### **Muzzle & Bipod**
+*   **Finding:** The muzzle brake shell is present, and a **silver metallic ring lip** is visible, but the internal bore lacks depth readability [12]. The bipod coil springs and feet are **disproportionately thick**, obscuring the "true helix" readability of the spring [1, 12].
+*   **Evidence Label:** **OBSERVED** [12], **SUPPORTED** [4].
+*   **Confidence:** 0.80.
+*   **Correction:** Extend the internal `TubeGeometry` bore deeper into the brake; **reduce the radius** of the bipod leg and foot components by ~20% to increase silhouette transparency [1].
+
+### **Stickers & Authored Surfaces**
+*   **Finding:** The Crown sticker contact on the objective bell must be oriented "**crown-up, skull-down**" [4]. In the origin view, the crown points face the muzzle while the skull faces the turrets [5].
+*   **Evidence Label:** **OBSERVED** [5], **SUPPORTED** [4].
+*   **Confidence:** 0.90.
+*   **Correction:** Rotate the sticker decal on the objective bell mesh to ensure the crown peaks are muzzle-ward and the skull is receiver-ward [5].
+
+### **Finishes & Materials**
+*   **Finding:** Separation between the **navy authored surface** (nylon stock), **matte metal** (action/barrel), and **rubber** (buttpad) is required [4, 13]. Glass surfaces currently lack high-specularity reflective responses.
+*   **Evidence Label:** **SUPPORTED** [4, 13, 14].
+*   **Confidence:** 0.85.
+*   **Correction:** Assign a **high-gloss PhysicalMaterial** to the scope lenses; apply a low-gloss, high-roughness material to the stock sides to simulate reinforced nylon [14].
+
+---
+
+### **VERDICT**
+The reconstruction is non-degenerate but requires **silhouette thinning and component refinement** to move from blocky placeholders to a technical assembly. The aspect mismatch is best corrected by a **global Y proportion adjustment** rather than rebuilding geometry, as it resolves the "blocky" receiver/stock issue across all 24 angles.
+
+#### **Five Ordered Fixes**
+1.  **Global Y-Scale:** Reduce receiver/stock Y-scale by ~6% to resolve aspect delta and blocky readout.
+2.  **Scope Mounts:** Replace blocky ring primitives with chamfered split-clamp geometry.
+3.  **Bipod Slimming:** Reduce radius of leg tubes and springs to match origin proportions.
+4.  **Muzzle Bore:** Extend the internal open-bore depth for improved front-on readability.
+5.  **Sticker Orientation:** Align Crown Foil to "crown-up/skull-down" contact.
+
+#### **Gate Conflicts**
+*   **Barrel Length vs. Scale:** Increasing barrel length further may worsen the scale delta; global Y thinning is the safer path to silhouette parity.
+
+#### **Confidence Table**
+| Region | Confidence | Evidence |
+| :--- | :---: | :--- |
+| Macro Proportions | 0.95 | OBSERVED (Aspect Delta 0.063) |
+| Optic Detail | 0.90 | OBSERVED (Blocky rings vs. Manual Fig 18) |
+| Action/Magazine | 0.85 | SUPPORTED (Defect list in brief) |
+| Bipod/Muzzle | 0.80 | OBSERVED (Thick springs in render) |
+| Sticker Orientation| 0.90 | SUPPORTED (Specific directive in brief) |

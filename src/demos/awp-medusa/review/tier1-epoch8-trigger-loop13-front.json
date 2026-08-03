@@ -1,0 +1,1 @@
+{"passed":false,"checks":{"silhouetteIoU":0.8108,"aspectRatioDelta":0.0,"scaleDelta":0.0,"bilateralSymmetryError":0.1499,"renderHash":"754605e42ac2cae7","mapStrippedRender":"src/demos/awp-medusa/review/tier1-mapstripped-front.png"},"failures":["silhouette IoU 0.811 is below threshold 0.85"],"passId":"blockout"}

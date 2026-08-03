@@ -1,0 +1,10 @@
+FAIL
+warning: historical reviewHistory critical feature gates remain below 0.90
+error: reviewHistory[1] awp-silhouette=0.82
+error: reviewHistory[2] awp-thumbhole-stock=0.82
+error: reviewHistory[2] awp-scope-and-bolt=0.83
+error: reviewHistory[3] awp-thumbhole-stock=0.82
+error: reviewHistory[3] awp-scope-and-bolt=0.83
+error: reviewHistory[4] awp-medusa-pattern=0.80
+error: reviewHistory[5] awp-medusa-pattern=0.80
+reason: current scope correction is recorded as refine-code; do not erase historical failures to manufacture a strict pass.

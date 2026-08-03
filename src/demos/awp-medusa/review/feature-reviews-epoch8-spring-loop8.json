@@ -1,0 +1,9 @@
+[
+  {"id":"bipod-compression-spring","score":0.86,"threshold":0.90,"visible":true,"confidence":0.95,"notes":"The coil is a true 18-turn tube helix around a spine, with a tighter source-like radius and visible collars; it remains attached to the hinge seat."},
+  {"id":"bipod-hinge-lock-feet","score":0.84,"threshold":0.90,"visible":true,"confidence":0.93,"notes":"Mount saddle, hinge pin, locking lug, telescoping rails, foot pads, and end caps are present, but the folded profile remains an image-only approximation."},
+  {"id":"muzzle-side-barrel-band","score":0.93,"threshold":0.90,"visible":true,"confidence":0.96,"notes":"Band remains at the muzzle-side station and no longer creates a floating top-orbit oval."},
+  {"id":"bolt-receiver-placement","score":0.92,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"Bolt pivot is embedded on the receiver side wall and remains below the optic."},
+  {"id":"scope-crown-and-rings","score":0.89,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Rings remain coaxial and crown source crop remains tangent/readable, but crown foil still lacks source crispness."},
+  {"id":"macro-awp-silhouette","score":0.83,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Fresh deterministic IoU remains 0.8126 front and 0.8004 back; material-free gate remains failed."},
+  {"id":"attachment-contract-audit","score":0.99,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"11 world-space seam pairs pass at maxGap 0 and 12 attachment records pass required metadata."}
+]

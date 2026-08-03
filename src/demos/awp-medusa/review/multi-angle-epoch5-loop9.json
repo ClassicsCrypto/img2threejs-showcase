@@ -1,0 +1,20 @@
+{
+  "referenceAreaFraction": 0.11688125,
+  "angles": [
+    {
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/orbit-left-white.png",
+      "areaFraction": 0.1236375,
+      "ratio": 1.0578043954868723,
+      "degenerate": false
+    },
+    {
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/orbit-right-white.png",
+      "areaFraction": 0.22413125,
+      "ratio": 1.9175979894123307,
+      "degenerate": false
+    }
+  ],
+  "degenerate": false,
+  "collapseRatio": 0.15,
+  "note": "deterministic; zero token; a flat-plane-faking-a-volume collapses in silhouette area when orbited"
+}

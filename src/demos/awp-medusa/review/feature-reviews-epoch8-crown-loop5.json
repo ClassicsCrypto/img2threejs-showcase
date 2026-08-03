@@ -1,0 +1,9 @@
+[
+  {"id":"scope-crown-source-crop","score":0.88,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Source crown/skull sampling is tighter and the bright scan line is reduced, but the broadside mark still lacks the crisp size and foil separation of the reference."},
+  {"id":"crown-surface-contact","score":0.98,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"Conformed patch follows the tapered bell and remains tangent in back broadside and muzzle orbit; runtime seam gate passes."},
+  {"id":"scope-ring-attachment","score":0.94,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"Two coaxial clamp rings remain seated on the optic and connected through real saddles to the rail."},
+  {"id":"bolt-receiver-placement","score":0.91,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"Bolt handle remains below the scope and receiver-parented across all stress views."},
+  {"id":"trigger-magazine-bipod","score":0.81,"threshold":0.90,"visible":true,"confidence":0.93,"notes":"Trigger, magazine, hinge, helical springs, telescoping rails, and feet are attached real components, but their source silhouettes remain approximate."},
+  {"id":"macro-awp-silhouette","score":0.83,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Deterministic front/back IoU remains 0.813/0.801; the crown-only refinement does not change the macro envelope."},
+  {"id":"attachment-contract-audit","score":0.98,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"10 world-space seam pairs pass at maxGap 0 and 11 attachment records pass required metadata."}
+]

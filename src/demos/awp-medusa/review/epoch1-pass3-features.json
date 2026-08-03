@@ -1,0 +1,38 @@
+[
+  {
+    "id": "awp-silhouette",
+    "score": 0.82,
+    "visible": true,
+    "notes": "The captured front mask is stable at silhouette IoU 0.8035; the strict 0.85 Tier-1 gate remains unmet, so this feature stays a refine-code item."
+  },
+  {
+    "id": "thumbhole-stock",
+    "score": 0.93,
+    "visible": true,
+    "notes": "The source-aligned beveled stock, real near-circular thumbhole, and lower contour correction remain present in both broadside renders."
+  },
+  {
+    "id": "scope-and-rings",
+    "score": 0.94,
+    "visible": true,
+    "notes": "The optic tube, bells, turret, squared rings, saddles, mounts, and fasteners remain separate volumetric parts; the front crop stays aligned after the back capture change."
+  },
+  {
+    "id": "barrel-and-folded-bipod",
+    "score": 0.90,
+    "visible": true,
+    "notes": "The barrel and muzzle stay on the observed axis and the folded bipod remains a real hinge, rods, spring, and feet assembly; rejected group shifts were not retained."
+  },
+  {
+    "id": "medusa-pattern-placement",
+    "score": 0.93,
+    "visible": true,
+    "notes": "Front and back supplied projections remain mapped to real stock, receiver, and grip surfaces; the back render now uses the reversed view and keeps the visible face placement."
+  },
+  {
+    "id": "optic-crown-marker",
+    "score": 0.91,
+    "visible": true,
+    "notes": "Moving the real back-side crown marker along the scope axis from x=0.72 to x=1.20 places it on the source's objective/rear-left bell region in the corrected back comparison."
+  }
+]

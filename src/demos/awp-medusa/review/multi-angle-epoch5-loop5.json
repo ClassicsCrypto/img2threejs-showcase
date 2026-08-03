@@ -1,0 +1,20 @@
+{
+  "referenceAreaFraction": 0.11481875,
+  "angles": [
+    {
+      "path": "src/demos/awp-medusa/review/orbit-left-white.png",
+      "areaFraction": 0.12321875,
+      "ratio": 1.073158782864297,
+      "degenerate": false
+    },
+    {
+      "path": "src/demos/awp-medusa/review/orbit-right-white.png",
+      "areaFraction": 0.22379305555555556,
+      "ratio": 1.949098518800767,
+      "degenerate": false
+    }
+  ],
+  "degenerate": false,
+  "collapseRatio": 0.15,
+  "note": "deterministic; zero token; a flat-plane-faking-a-volume collapses in silhouette area when orbited"
+}

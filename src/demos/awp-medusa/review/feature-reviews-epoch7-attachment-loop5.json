@@ -1,0 +1,8 @@
+[
+  {"id":"bolt-receiver-placement","score":0.91,"threshold":0.9,"visible":true,"confidence":0.98,"notes":"Locked receiver-parented bolt remains unchanged."},
+  {"id":"trigger-guard-and-trigger","score":0.79,"threshold":0.9,"visible":true,"confidence":0.98,"notes":"Explicit trigger socket remains valid; visual profile still needs correction."},
+  {"id":"scope-crown-contact","score":0.78,"threshold":0.9,"visible":true,"confidence":0.96,"notes":"Conformed objective-bell decal and thin gold overlay remain attached; artwork scale remains approximate."},
+  {"id":"bipod-hinge-and-compression-spring","score":0.79,"threshold":0.9,"visible":true,"confidence":0.92,"notes":"Connected hinge, telescoping legs, spring, and feet remain visually stable."},
+  {"id":"fastener-owner-contact","score":0.82,"threshold":0.9,"visible":true,"confidence":0.97,"notes":"Fasteners are split into stock-fasteners and receiver-fasteners, each with its own owner/socket metadata and surface-contact endpoints."},
+  {"id":"attachment-contract-audit","score":0.95,"threshold":0.9,"visible":true,"confidence":0.99,"notes":"Eight attachment nodes pass metadata completeness; all eight explicit seam pairs have maxGap 0.0000."}
+]

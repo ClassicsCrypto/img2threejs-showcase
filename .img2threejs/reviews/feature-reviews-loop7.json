@@ -1,0 +1,10 @@
+[
+  {"id":"awp-silhouette","score":0.70,"visible":true,"notes":"The long barrel now reaches the reference proportion more closely, but the deterministic front comparison still has IoU 0.4997 with framing/aspect mismatch; stock and receiver remain too blocky."},
+  {"id":"scope-and-rings","score":0.86,"visible":true,"notes":"Two seated collars, rail saddles, top fasteners and turret are readable from front/top; rings remain heavier and more primitive than the reference."},
+  {"id":"scope-glass","score":0.82,"visible":true,"notes":"Recessed physical eyepiece/objective glass reads as reflective in orbit, but the objective face remains too dark/flat and the taper is still oversized."},
+  {"id":"bolt-handle","score":0.84,"visible":true,"notes":"Bolt is now receiver-parented and longer, with a usable bent grip below the scope; its broadside profile and shaft transition remain approximate."},
+  {"id":"trigger-guard-thumbhole","score":0.76,"visible":true,"notes":"Guard contacts the receiver/stock junction and the thumbhole remains open, but the guard is blocky and the trigger/guard placement is not yet reference-correct."},
+  {"id":"bipod-spring-attachment","score":0.83,"visible":true,"notes":"A true helix, hinge, lock, telescoping legs and feet are present; the helix is less crowded after reduction, but the folded assembly still needs closer reference fitting."},
+  {"id":"medusa-orbit-continuity","score":0.78,"visible":true,"notes":"Front and orbit renders retain the real side-face artwork on the stock/receiver, but grazing views still show a weak seam/stretch at the thumbhole/receiver transition."},
+  {"id":"crown-sticker","score":0.86,"visible":true,"notes":"Crown-up/skull-down orientation and tangent attachment hold in top/orbit views; foil detail remains simplified and compresses at grazing angles."}
+]

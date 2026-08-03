@@ -1,0 +1,10 @@
+epoch=7
+loop=2
+pass=blockout
+command=python3 forge/stage3_build/orchestrate_passes.py sync src/demos/awp-medusa/object-sculpt-spec.json --in-place
+status=blocked-by-ledger-disagreement
+reason=The historical review ledger contains uncredited later passes because blockout remains below its visual and CS2 gates. This is expected while the current pass is still refine-code; no pass was falsely credited.
+current_review=src/demos/awp-medusa/review/feature-reviews-epoch7-attachment-loop2.json
+current_metrics=front_silhouette_iou=0.8115 back_silhouette_iou=0.8011 orbit_left_ratio=1.0252545448952597 orbit_right_ratio=1.9552677720015996
+attachment_gate=all_eight_pairs_max_gap_0.0000_under_0.015
+next_action=refine-code

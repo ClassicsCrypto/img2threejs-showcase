@@ -1,0 +1,42 @@
+[
+  {
+    "id": "scope-proportion-fit",
+    "score": 0.93,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.97,
+    "notes": "Tight 500x180 crop aligns source/model optic bbox, ocular taper, objective flare, endpoint band, and main axis; remaining difference is hidden cross-section."
+  },
+  {
+    "id": "scope-rings-and-mount",
+    "score": 0.91,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.95,
+    "notes": "Rear/front clamp frames, attached posts, saddles, fasteners, and shortened Picatinny rail are separate named components; machining microdetail remains approximate."
+  },
+  {
+    "id": "scope-turrets-and-marking",
+    "score": 0.91,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.93,
+    "notes": "Central housing, elevation turret/knurl, side inset, and 3 2 5 6 7 marking now match the tight crop placement and scale."
+  },
+  {
+    "id": "optic-crown-foil",
+    "score": 0.91,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.95,
+    "notes": "Back crop crown decal is enlarged and raised to the source bell location; the source projection remains the finish authority."
+  },
+  {
+    "id": "scope-orbit-attachment",
+    "score": 0.9,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.9,
+    "notes": "Orbit views preserve attached tube/rings/turrets/rail/crown and report degenerate=false; hidden underside is inferred."
+  }
+]

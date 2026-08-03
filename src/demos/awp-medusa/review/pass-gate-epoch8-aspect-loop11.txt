@@ -1,0 +1,6 @@
+pass=blockout
+epoch=8
+loop=11
+status=blocked
+reason=Preserve-aspect comparison is valid and non-degenerate, but scope clamp detail, trigger/magazine, bipod assembly, crown exactness, and strict IoU remain below 0.90.
+next_action=refine-code

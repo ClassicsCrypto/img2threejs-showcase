@@ -1,0 +1,7 @@
+epoch=8
+loop=4
+pass=blockout
+status=blocked-by-ledger-disagreement
+reason=Blockout remains below visual gates; no later pass is credited.
+attachment_gate=10 required world-space seam pairs passed with maxGap=0; 11 attachment metadata records passed.
+next_required_work=Improve crown source crop scale/segmentation and refine trigger, magazine, and bipod silhouette before another side-by-side and CS2 review.

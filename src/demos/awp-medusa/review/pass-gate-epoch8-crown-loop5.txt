@@ -1,0 +1,6 @@
+pass=blockout
+epoch=8
+loop=5
+status=blocked
+reason=Crown source crop is clearer and remains attached, but deterministic front/back silhouette 0.813/0.801 and strict CS2 crown/bipod/envelope gates remain below 0.90.
+next_action=refine-code

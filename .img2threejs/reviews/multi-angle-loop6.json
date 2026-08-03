@@ -1,0 +1,11 @@
+{
+  "referenceAreaFraction": 0.09336527777777778,
+  "angles": [
+    {"path": ".img2threejs/renders/epoch-current/orbit-left-white.png", "ratio": 1.0930336343215863, "degenerate": false},
+    {"path": ".img2threejs/renders/epoch-current/orbit-right-white.png", "ratio": 1.9806241911250613, "degenerate": false},
+    {"path": ".img2threejs/renders/epoch-current/orbit-top-white.png", "ratio": 1.1136664534459932, "degenerate": false},
+    {"path": ".img2threejs/renders/epoch-current/orbit-muzzle-white.png", "ratio": 1.5438986656352736, "degenerate": false}
+  ],
+  "degenerate": false,
+  "collapseRatio": 0.15
+}

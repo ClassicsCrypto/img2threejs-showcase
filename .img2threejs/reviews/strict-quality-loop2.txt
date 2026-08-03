@@ -1,0 +1,10 @@
+command: python3 forge/stage2_spec/validate_sculpt_spec.py .img2threejs/spec/object-sculpt-spec-review-loop1.json --strict-quality
+status: FAIL
+
+Historical critical feature gates remain below 0.90:
+- awp-silhouette: 0.82
+- awp-thumbhole-stock: 0.82
+- awp-scope-and-bolt: 0.83
+- awp-medusa-pattern: 0.80
+
+This loop remains refine-code. Do not advance the blockout pass.

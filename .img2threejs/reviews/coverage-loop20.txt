@@ -1,0 +1,186 @@
+note  component-folded: fastener-system
+      no mesh of its own — folded into 'root', which is built. Correct for relief; a real gap only if this needed to be separable.
+note  part-not-specified: bipod-foot
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-foot-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-foot-back-end-cap
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-foot-back-pad
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-foot-end-cap
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-foot-pad
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-hinge
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-hinge-pin
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-hinge-plate
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-hinge-washer-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-hinge-washer-front
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-left-inner
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-left-sleeve
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-locking-lug
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-lock-pin
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-mount-saddle
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-right-inner
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-right-sleeve
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-spring
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-spring-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-spring-collar-1-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-spring-collar-1-front
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-spring-collar-2-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-spring-collar-2-front
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-spring-joint
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-spring-spine
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bipod-spring-spine-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bolt-handle-ball
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bolt-pivot-boss
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: bolt-shroud
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-floorplate
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-floorplate-detent-1
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-floorplate-detent-2
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-rib-1
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-rib-2
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-rib-3
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-stamp-back-1
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-stamp-back-2
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-stamp-back-3
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-stamp-front-1
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-stamp-front-2
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: magazine-stamp-front-3
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: minimal-wear-receiver-edge
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: muzzle-bore-crown
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: muzzle-bore-depth
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: muzzle-bore-inner-wall
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: muzzle-bore-lip
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: receiver-ejection-port-lip
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: receiver-ejection-recess
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: receiver-fasteners
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-eyepiece
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-eyepiece-glass
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-objective-glass
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-objective-taper
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-ocular-band
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-side-turret
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-side-turret-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-side-turret-cap
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-side-turret-cap-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-side-turret-face
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-side-turret-face-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-side-turret-face-ring
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-side-turret-face-ring-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-base
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-cap
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-housing
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-1
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-10
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-11
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-12
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-2
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-3
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-4
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-5
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-6
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-7
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-8
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: scope-turret-knurl-9
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: stock-buttpad
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: stock-buttpad-screw-back-1
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: stock-buttpad-screw-back-2
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: stock-buttpad-screw-front-1
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: stock-buttpad-screw-front-2
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: stock-buttpad-seam
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: stock-fasteners
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: stock-thumbhole-bevel-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: stock-thumbhole-bevel-front
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: trigger-guard-pin-back
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: trigger-guard-pin-back-right
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: trigger-guard-pin-front
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+note  part-not-specified: trigger-guard-pin-front-right
+      built part has no matching component in the spec (fine for detail groups; a sign of spec drift for anything larger)
+
+check_part_coverage: 23 specified, 113 built, 0 error(s), 0 warning(s)

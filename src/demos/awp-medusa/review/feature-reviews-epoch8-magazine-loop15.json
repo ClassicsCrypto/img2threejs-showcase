@@ -1,0 +1,42 @@
+[
+  {
+    "id": "magazine-envelope-regression-check",
+    "score": 0.79,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.99,
+    "notes": "A vertical-only deeper magazine was tested with the accepted X station and top seam, but front IoU fell 0.8101→0.8076. The change was rolled back; the original socket-fit body, ribs, and floorplate remain."
+  },
+  {
+    "id": "bipod-spring-helix",
+    "score": 0.86,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.98,
+    "notes": "The true helix and collars remain visible and connected after rollback; no spring regression."
+  },
+  {
+    "id": "trigger-guard-and-bolt",
+    "score": 0.86,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.98,
+    "notes": "Rounded receiver-embedded guard and below-optic bolt placement remain stable from broadside and orbit."
+  },
+  {
+    "id": "scope-crown-attachment",
+    "score": 0.88,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.98,
+    "notes": "Scope collars and crown remain seated on actual tube/bell meshes; crown source mark remains softer than target."
+  },
+  {
+    "id": "attachment-contract-audit",
+    "score": 0.99,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.99,
+    "notes": "11 actual-mesh seam pairs pass at maxGap 0 and 12 attachment metadata records pass."
+  }
+]

@@ -1,0 +1,10 @@
+[
+  {"id":"awp-silhouette","score":0.70,"visible":true,"notes":"The fixed render still has the known broadside framing/aspect mismatch and the stock/receiver remain blocky; this scope-only correction does not claim a macro pass."},
+  {"id":"scope-and-rings","score":0.89,"visible":true,"notes":"Front crop now shows two coaxial seated collars with explicit vertical hex heads and washers; rail saddles remain physically overlapped in the orbit."},
+  {"id":"scope-glass","score":0.88,"visible":true,"notes":"Objective and eyepiece remain recessed physical lens faces; stronger teal coating, clearcoat, and environment response improve the mirror/glass read in the orbit."},
+  {"id":"bolt-handle","score":0.84,"visible":true,"notes":"Bolt remains receiver-parented below the scope; unchanged in this scope correction and still needs a later local fit review."},
+  {"id":"trigger-guard-thumbhole","score":0.76,"visible":true,"notes":"Unchanged in this scope correction; guard and thumbhole remain a later receiver pass."},
+  {"id":"bipod-spring-attachment","score":0.83,"visible":true,"notes":"Unchanged in this scope correction; the real helix/hinge assembly remains present for the later spigot fit pass."},
+  {"id":"medusa-orbit-continuity","score":0.78,"visible":true,"notes":"Unchanged in this scope correction; side-face artwork remains bound to authored receiving surfaces."},
+  {"id":"crown-sticker","score":0.86,"visible":true,"notes":"The source crown remains on the tangent objective-bell surface with crown-up/skull-down orientation; unchanged in this scope hardware pass."}
+]

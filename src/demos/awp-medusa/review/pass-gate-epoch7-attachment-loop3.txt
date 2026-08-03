@@ -1,0 +1,9 @@
+pass=blockout
+epoch=7
+loop=3
+status=blocked
+reason=front and back tier-1 silhouette gates remain below 0.85; visual target remains below 0.90.
+front=0.8115
+back=0.8007
+multi_angle=non-degenerate across left,right,top,muzzle
+next_action=refine-code

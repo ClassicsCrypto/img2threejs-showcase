@@ -1,0 +1,42 @@
+[
+  {
+    "id": "bipod-spring-helix",
+    "score": 0.86,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.98,
+    "notes": "The zig-zag artifact is replaced by a continuous 18-turn TubeGeometry helix with 0.017 radius, 0.052 radial amplitude, straight spine, and visible collars at both seats. It now reads as a compressed coil in broadside and muzzle orbit, but source-specific hidden articulation remains inferred."
+  },
+  {
+    "id": "bipod-hinge-lock-feet",
+    "score": 0.80,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.95,
+    "notes": "Hinge plate, pin/washers, locking lug/pin, telescoping outer/inner tubes, sleeves, housing, pad, and end caps remain connected. The source hinge plate and foot silhouette are still more substantial than this procedural assembly."
+  },
+  {
+    "id": "trigger-guard-and-bolt",
+    "score": 0.86,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.98,
+    "notes": "The shortened rounded trigger guard is receiver-embedded and the bolt handle remains below the optic with a receiver socket; both survive orbit without floating. The source lower assembly still has a fuller envelope."
+  },
+  {
+    "id": "scope-crown-attachment",
+    "score": 0.88,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.98,
+    "notes": "Scope rings/collars and crown remain seated on actual tube/bell meshes. Crown artwork is source-grounded and tangent but remains softer than the reference foil."
+  },
+  {
+    "id": "attachment-contract-audit",
+    "score": 0.99,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.99,
+    "notes": "11 actual-mesh seam pairs pass at maxGap 0 and 12 attachment metadata records pass."
+  }
+]

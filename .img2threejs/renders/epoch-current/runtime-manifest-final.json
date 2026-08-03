@@ -1,0 +1,2450 @@
+{
+  "model": "awp-medusa",
+  "parts": [
+    {
+      "name": "receiver",
+      "module": "receiver",
+      "kind": "part",
+      "triangles": 138,
+      "materials": [
+        "mapped surface · metal 0.18 · rough map",
+        "matte polymer · metal 0.12 · rough 0.60"
+      ]
+    },
+    {
+      "name": "receiver-ejection-port",
+      "module": "receiver",
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.86 · rough 0.35"
+      ]
+    },
+    {
+      "name": "receiver-ejection-port-lip",
+      "module": "receiver",
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "receiver-ejection-recess",
+      "module": "receiver",
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "polymer · metal 0.04 · rough 0.48"
+      ]
+    },
+    {
+      "name": "trigger-guard",
+      "module": "boltAction",
+      "kind": "part",
+      "triangles": 640,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "trigger",
+      "module": "boltAction",
+      "kind": "part",
+      "triangles": 600,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "trigger-guard-pin-front",
+      "module": null,
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "trigger-guard-pin-front-right",
+      "module": null,
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "trigger-guard-pin-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "trigger-guard-pin-back-right",
+      "module": null,
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "bolt",
+      "module": "boltAction",
+      "kind": "part",
+      "triangles": 96,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "bolt-shroud",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.86 · rough 0.35"
+      ]
+    },
+    {
+      "name": "bolt-pivot-boss",
+      "module": null,
+      "kind": "part",
+      "triangles": 96,
+      "materials": [
+        "steel · metal 0.86 · rough 0.35"
+      ]
+    },
+    {
+      "name": "bolt-handle",
+      "module": "boltAction",
+      "kind": "part",
+      "triangles": 576,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "bolt-handle-ball",
+      "module": "boltAction",
+      "kind": "part",
+      "triangles": 396,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "stock",
+      "module": "stock",
+      "kind": "part",
+      "triangles": 1136,
+      "materials": [
+        "mapped surface · metal 0.18 · rough map",
+        "matte polymer · metal 0.12 · rough 0.60"
+      ]
+    },
+    {
+      "name": "stock-thumbhole-bevel-front",
+      "module": null,
+      "kind": "part",
+      "triangles": 864,
+      "materials": [
+        "mapped surface · metal 0.18 · rough map"
+      ]
+    },
+    {
+      "name": "stock-thumbhole-bevel-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 864,
+      "materials": [
+        "mapped surface · metal 0.18 · rough map"
+      ]
+    },
+    {
+      "name": "stock-buttpad",
+      "module": "stock",
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "polymer · metal 0.04 · rough 0.48"
+      ]
+    },
+    {
+      "name": "stock-buttpad-seam",
+      "module": "stock",
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.86 · rough 0.35"
+      ]
+    },
+    {
+      "name": "stock-buttpad-screw-front-1",
+      "module": null,
+      "kind": "part",
+      "triangles": 24,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "stock-buttpad-screw-front-2",
+      "module": null,
+      "kind": "part",
+      "triangles": 24,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "stock-buttpad-screw-back-1",
+      "module": null,
+      "kind": "part",
+      "triangles": 24,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "stock-buttpad-screw-back-2",
+      "module": null,
+      "kind": "part",
+      "triangles": 24,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "stock-cheek-rest",
+      "module": "stock",
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "polymer · metal 0.04 · rough 0.48"
+      ]
+    },
+    {
+      "name": "grip",
+      "module": "stock",
+      "kind": "part",
+      "triangles": 108,
+      "materials": [
+        "mapped surface · metal 0.18 · rough map",
+        "matte polymer · metal 0.12 · rough 0.60"
+      ]
+    },
+    {
+      "name": "magazine",
+      "module": "boltAction",
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "magazine-rib-1",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "magazine-rib-2",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "magazine-rib-3",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "magazine-stamp-front-1",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "magazine-stamp-front-2",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "magazine-stamp-front-3",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "magazine-stamp-back-1",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "magazine-stamp-back-2",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "magazine-stamp-back-3",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "magazine-floorplate",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "magazine-floorplate-detent-1",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.86 · rough 0.35"
+      ]
+    },
+    {
+      "name": "magazine-floorplate-detent-2",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.86 · rough 0.35"
+      ]
+    },
+    {
+      "name": "barrel",
+      "module": "barrelAssembly",
+      "kind": "part",
+      "triangles": 128,
+      "materials": [
+        "gunmetal · metal 0.58 · rough 0.38"
+      ]
+    },
+    {
+      "name": "fore-end-band",
+      "module": "barrelAssembly",
+      "kind": "part",
+      "triangles": 480,
+      "materials": [
+        "steel · metal 0.86 · rough 0.35"
+      ]
+    },
+    {
+      "name": "muzzle",
+      "module": "barrelAssembly",
+      "kind": "part",
+      "triangles": 64,
+      "materials": [
+        "steel · metal 0.86 · rough 0.35"
+      ]
+    },
+    {
+      "name": "muzzle-bore-crown",
+      "module": null,
+      "kind": "part",
+      "triangles": 560,
+      "materials": [
+        "steel · metal 0.92 · rough 0.20"
+      ]
+    },
+    {
+      "name": "muzzle-bore-lip",
+      "module": null,
+      "kind": "part",
+      "triangles": 480,
+      "materials": [
+        "steel · metal 0.86 · rough 0.35"
+      ]
+    },
+    {
+      "name": "muzzle-bore-inner-wall",
+      "module": null,
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "polymer · metal 0.35 · rough 0.24"
+      ]
+    },
+    {
+      "name": "muzzle-bore-depth",
+      "module": null,
+      "kind": "part",
+      "triangles": 96,
+      "materials": [
+        "matte polymer · metal 0.02 · rough 0.82"
+      ]
+    },
+    {
+      "name": "rail",
+      "module": "receiver",
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope",
+      "module": "optic",
+      "kind": "part",
+      "triangles": 128,
+      "materials": [
+        "gunmetal · metal 0.52 · rough 0.52"
+      ]
+    },
+    {
+      "name": "scope-objective-taper",
+      "module": "optic",
+      "kind": "part",
+      "triangles": 128,
+      "materials": [
+        "gunmetal · metal 0.52 · rough 0.52"
+      ]
+    },
+    {
+      "name": "scope-eyepiece",
+      "module": "optic",
+      "kind": "part",
+      "triangles": 128,
+      "materials": [
+        "gunmetal · metal 0.52 · rough 0.52"
+      ]
+    },
+    {
+      "name": "scope-ocular-band",
+      "module": null,
+      "kind": "part",
+      "triangles": 128,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "scope-turret-base",
+      "module": "optic",
+      "kind": "part",
+      "triangles": 96,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "scope-turret",
+      "module": "optic",
+      "kind": "part",
+      "triangles": 80,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-cap",
+      "module": "optic",
+      "kind": "part",
+      "triangles": 80,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-1",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-2",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-3",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-4",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-5",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-6",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-7",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-8",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-9",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-10",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-11",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-turret-knurl-12",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "scope-side-turret",
+      "module": "optic",
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "steel · metal 0.88 · rough 0.40"
+      ]
+    },
+    {
+      "name": "scope-side-turret-face",
+      "module": null,
+      "kind": "part",
+      "triangles": 64,
+      "materials": [
+        "gunmetal · metal 0.52 · rough 0.52"
+      ]
+    },
+    {
+      "name": "scope-side-turret-face-ring",
+      "module": null,
+      "kind": "part",
+      "triangles": 384,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "scope-side-turret-cap",
+      "module": null,
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "scope-side-turret-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "steel · metal 0.88 · rough 0.40"
+      ]
+    },
+    {
+      "name": "scope-turret-housing",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.40"
+      ]
+    },
+    {
+      "name": "scope-side-turret-face-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 64,
+      "materials": [
+        "gunmetal · metal 0.52 · rough 0.52"
+      ]
+    },
+    {
+      "name": "scope-side-turret-face-ring-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 384,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "scope-side-turret-cap-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "scope-ring-rear",
+      "module": "optic",
+      "kind": "detail",
+      "triangles": 3544,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "scope-ring-front",
+      "module": "optic",
+      "kind": "detail",
+      "triangles": 3544,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "scope-objective-band",
+      "module": null,
+      "kind": "part",
+      "triangles": 128,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "scope-objective-glass",
+      "module": null,
+      "kind": "part",
+      "triangles": 128,
+      "materials": [
+        "translucent polymer · metal 0.78 · rough 0.02 · transmission 0.06"
+      ]
+    },
+    {
+      "name": "scope-eyepiece-glass",
+      "module": null,
+      "kind": "part",
+      "triangles": 128,
+      "materials": [
+        "translucent polymer · metal 0.78 · rough 0.02 · transmission 0.06"
+      ]
+    },
+    {
+      "name": "bipod-hinge-plate",
+      "module": null,
+      "kind": "part",
+      "triangles": 92,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "bipod-hinge",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "bipod-mount-saddle",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "bipod-left",
+      "module": null,
+      "kind": "part",
+      "triangles": 80,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "bipod-right",
+      "module": null,
+      "kind": "part",
+      "triangles": 80,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "bipod-left-inner",
+      "module": null,
+      "kind": "part",
+      "triangles": 80,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "bipod-right-inner",
+      "module": null,
+      "kind": "part",
+      "triangles": 80,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "bipod-left-sleeve",
+      "module": null,
+      "kind": "part",
+      "triangles": 80,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "bipod-right-sleeve",
+      "module": null,
+      "kind": "part",
+      "triangles": 80,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "bipod-hinge-pin",
+      "module": null,
+      "kind": "part",
+      "triangles": 80,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "bipod-hinge-washer-front",
+      "module": null,
+      "kind": "part",
+      "triangles": 80,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "bipod-hinge-washer-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 80,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "bipod-locking-lug",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "bipod-lock-pin",
+      "module": null,
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "bipod-spring",
+      "module": null,
+      "kind": "part",
+      "triangles": 2304,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "bipod-spring-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 2304,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "bipod-spring-spine",
+      "module": null,
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "bipod-spring-spine-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 48,
+      "materials": [
+        "steel · metal 0.88 · rough 0.28"
+      ]
+    },
+    {
+      "name": "bipod-foot",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "bipod-foot-pad",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "bipod-foot-end-cap",
+      "module": null,
+      "kind": "part",
+      "triangles": 72,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "bipod-foot-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "bipod-foot-back-pad",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "bipod-foot-back-end-cap",
+      "module": null,
+      "kind": "part",
+      "triangles": 72,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "bipod-spring-joint",
+      "module": null,
+      "kind": "part",
+      "triangles": 588,
+      "materials": [
+        "steel · metal 0.88 · rough 0.34"
+      ]
+    },
+    {
+      "name": "bipod-spring-collar-1-front",
+      "module": null,
+      "kind": "part",
+      "triangles": 480,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "bipod-spring-collar-1-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 480,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "bipod-spring-collar-2-front",
+      "module": null,
+      "kind": "part",
+      "triangles": 480,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "bipod-spring-collar-2-back",
+      "module": null,
+      "kind": "part",
+      "triangles": 480,
+      "materials": [
+        "steel · metal 0.88 · rough 0.22"
+      ]
+    },
+    {
+      "name": "stock-fasteners",
+      "module": null,
+      "kind": "part",
+      "triangles": 64,
+      "materials": [
+        "gunmetal · metal 0.78 · rough 0.24"
+      ]
+    },
+    {
+      "name": "receiver-fasteners",
+      "module": null,
+      "kind": "part",
+      "triangles": 64,
+      "materials": [
+        "gunmetal · metal 0.78 · rough 0.24"
+      ]
+    },
+    {
+      "name": "minimal-wear-receiver-edge",
+      "module": "finish",
+      "kind": "part",
+      "triangles": 288,
+      "materials": [
+        "gunmetal · metal 0.78 · rough 0.24"
+      ]
+    },
+    {
+      "name": "medusa-projection",
+      "module": null,
+      "kind": "logical",
+      "triangles": 0,
+      "materials": []
+    }
+  ],
+  "unnamedMeshes": 0,
+  "integralMeshes": 62,
+  "runtime": {
+    "model": "awp-medusa",
+    "hasTick": true,
+    "pivotNames": [
+      "root",
+      "bolt",
+      "trigger",
+      "magazine",
+      "scope",
+      "bipod"
+    ],
+    "socketNames": [
+      "magazineSocket",
+      "muzzleFlash",
+      "shellEject",
+      "scopeZoom",
+      "scopeRingRearStation",
+      "scopeRingFrontStation",
+      "bipodPivot",
+      "triggerPivot",
+      "boltHandle",
+      "bipodFold"
+    ],
+    "actionAnchors": {
+      "boltCycle": {
+        "pivot": "bolt",
+        "socket": "shellEject"
+      },
+      "triggerPull": {
+        "pivot": "trigger",
+        "socket": "triggerPivot"
+      },
+      "magazineInsert": {
+        "pivot": "magazine",
+        "socket": "magazineSocket"
+      },
+      "bipodFold": {
+        "pivot": "bipod",
+        "socket": "bipodFold"
+      },
+      "scopeZoom": {
+        "pivot": "scope",
+        "socket": "scopeZoom"
+      }
+    },
+    "colliderCount": 1,
+    "adjacencyCount": 5,
+    "attachmentGate": {
+      "contractVersion": "world-contact-v1",
+      "maxVisibleGap": 0.015,
+      "requiredSeamOverlap": 0.02,
+      "pairs": [
+        {
+          "id": "stock-to-receiver",
+          "overlap": [
+            0.0964,
+            0.3804,
+            0.4992
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              -2.4159200912475587,
+              -0.6638719845581055,
+              -0.24959999442100525
+            ],
+            [
+              -0.8240319507598878,
+              0.13100799438476562,
+              0.24960001766681672
+            ]
+          ],
+          "bBounds": [
+            [
+              -0.920399977684021,
+              -0.24938526635169983,
+              -0.25
+            ],
+            [
+              1.4716000347137452,
+              0.14100610058784485,
+              0.25
+            ]
+          ]
+        },
+        {
+          "id": "receiver-to-barrel",
+          "overlap": [
+            0.4108,
+            0.1005,
+            0.23
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              -0.920399977684021,
+              -0.24938526635169983,
+              -0.25
+            ],
+            [
+              1.4716000347137452,
+              0.14100610058784485,
+              0.25
+            ]
+          ],
+          "bBounds": [
+            [
+              1.0607999504089352,
+              0.04047999846458408,
+              -0.11500000208616257
+            ],
+            [
+              4.596800049591065,
+              0.20976000153541594,
+              0.11500000208616257
+            ]
+          ]
+        },
+        {
+          "id": "receiver-to-bolt",
+          "overlap": [
+            0.3536,
+            0.0958,
+            0.06
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              -0.920399977684021,
+              -0.24938526635169983,
+              -0.25
+            ],
+            [
+              1.4716000347137452,
+              0.14100610058784485,
+              0.25
+            ]
+          ],
+          "bBounds": [
+            [
+              -0.3848000018596649,
+              -0.10885440020399094,
+              0.18999999642372134
+            ],
+            [
+              -0.031199998140335056,
+              -0.013027199796009067,
+              0.3700000035762787
+            ]
+          ]
+        },
+        {
+          "id": "receiver-to-trigger-guard",
+          "overlap": [
+            0.2662,
+            0.081,
+            0.5
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              -0.920399977684021,
+              -0.24938526635169983,
+              -0.25
+            ],
+            [
+              1.4716000347137452,
+              0.14100610058784485,
+              0.25
+            ]
+          ],
+          "bBounds": [
+            [
+              -0.9027200063228608,
+              -0.32994144171352385,
+              -0.27399998903274536
+            ],
+            [
+              -0.6364799936771394,
+              -0.16840416073436737,
+              0.27399998903274536
+            ]
+          ]
+        },
+        {
+          "id": "receiver-to-magazine",
+          "overlap": [
+            0.2588,
+            0.0339,
+            0.31
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              -0.920399977684021,
+              -0.24938526635169983,
+              -0.25
+            ],
+            [
+              1.4716000347137452,
+              0.14100610058784485,
+              0.25
+            ]
+          ],
+          "bBounds": [
+            [
+              -0.35819535119219786,
+              -0.5352040506751361,
+              -0.1550000011920929
+            ],
+            [
+              -0.09940464880780214,
+              -0.2155159493248639,
+              0.1550000011920929
+            ]
+          ]
+        },
+        {
+          "id": "receiver-to-bipod",
+          "overlap": [
+            0.2049,
+            0.0515,
+            0.3
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              -0.920399977684021,
+              -0.24938526635169983,
+              -0.25
+            ],
+            [
+              1.4716000347137452,
+              0.14100610058784485,
+              0.25
+            ]
+          ],
+          "bBounds": [
+            [
+              1.2667199933052062,
+              -0.21344000010967257,
+              -0.15000000596046448
+            ],
+            [
+              1.6036800066947938,
+              -0.16191999989032746,
+              0.15000000596046448
+            ]
+          ]
+        },
+        {
+          "id": "scope-ring-rear-to-rail",
+          "overlap": [
+            0.0629,
+            0.0313,
+            0.15
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              -0.5148415986461639,
+              0.16559999956130975,
+              -0.07500000298023224
+            ],
+            [
+              -0.451942401353836,
+              0.3716800004386901,
+              0.07500000298023224
+            ]
+          ],
+          "bBounds": [
+            [
+              -0.9256000099182129,
+              0.12696000043869018,
+              -0.14000000059604645
+            ],
+            [
+              0.09360000991821288,
+              0.19687999956130983,
+              0.14000000059604645
+            ]
+          ]
+        },
+        {
+          "id": "scope-ring-front-to-rail",
+          "overlap": [
+            0.0629,
+            0.0313,
+            0.15
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              -0.09551359864616385,
+              0.16559999956130975,
+              -0.07500000298023224
+            ],
+            [
+              -0.032614401353835955,
+              0.3716800004386901,
+              0.07500000298023224
+            ]
+          ],
+          "bBounds": [
+            [
+              -0.9256000099182129,
+              0.12696000043869018,
+              -0.14000000059604645
+            ],
+            [
+              0.09360000991821288,
+              0.19687999956130983,
+              0.14000000059604645
+            ]
+          ]
+        },
+        {
+          "id": "scope-ring-rear-to-tube",
+          "overlap": [
+            0.1485,
+            0.265,
+            0.36
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              -0.5576480007810592,
+              0.14352000065803527,
+              -0.1900000001490116
+            ],
+            [
+              -0.40913599921894067,
+              0.694047999791622,
+              0.1900000001490116
+            ]
+          ],
+          "bBounds": [
+            [
+              -0.745471985420227,
+              0.3606399947357176,
+              -0.18000000715255737
+            ],
+            [
+              0.2679039854202272,
+              0.6256000052642823,
+              0.18000000715255737
+            ]
+          ]
+        },
+        {
+          "id": "scope-ring-front-to-tube",
+          "overlap": [
+            0.1485,
+            0.265,
+            0.36
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              -0.13832000078105916,
+              0.14352000065803527,
+              -0.1900000001490116
+            ],
+            [
+              0.010192000781059377,
+              0.694047999791622,
+              0.1900000001490116
+            ]
+          ],
+          "bBounds": [
+            [
+              -0.745471985420227,
+              0.3606399947357176,
+              -0.18000000715255737
+            ],
+            [
+              0.2679039854202272,
+              0.6256000052642823,
+              0.18000000715255737
+            ]
+          ]
+        },
+        {
+          "id": "crown-to-objective-bell",
+          "overlap": [
+            0.2708,
+            0.287,
+            0.0674
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              0.14123199895858762,
+              0.41215999780654894,
+              -0.25566890835762024
+            ],
+            [
+              0.41204800104141237,
+              0.7065600021934508,
+              -0.12759284675121307
+            ]
+          ],
+          "bBounds": [
+            [
+              -0.02911999479293831,
+              0.415840005264282,
+              -0.19499999284744263
+            ],
+            [
+              0.5823999947929384,
+              0.7028799947357177,
+              0.19499999284744263
+            ]
+          ]
+        },
+        {
+          "id": "barrel-to-muzzle",
+          "overlap": [
+            0.2496,
+            0.1693,
+            0.23
+          ],
+          "maxGap": 0,
+          "tolerance": 0.015,
+          "passed": true,
+          "aBounds": [
+            [
+              1.0607999504089352,
+              0.04047999846458408,
+              -0.11500000208616257
+            ],
+            [
+              4.596800049591065,
+              0.20976000153541594,
+              0.11500000208616257
+            ]
+          ],
+          "bBounds": [
+            [
+              4.347199998140335,
+              0.029440003509521473,
+              -0.12999999523162842
+            ],
+            [
+              4.700800001859665,
+              0.22079999649047855,
+              0.12999999523162842
+            ]
+          ]
+        }
+      ]
+    },
+    "attachmentAudit": {
+      "contractVersion": "joint-attachment-v1",
+      "requiredFields": [
+        "parent",
+        "parentId",
+        "parentSocket",
+        "contactType",
+        "localStart",
+        "localEnd",
+        "gapTolerance",
+        "evidenceRefs"
+      ],
+      "metadataPass": true,
+      "attachedNodeCount": 42,
+      "nodes": [
+        {
+          "node": "trigger-guard",
+          "parent": "receiver",
+          "parentId": "receiver",
+          "parentSocket": "receiver.trigger-guard-socket",
+          "contactType": "embedded",
+          "localStart": [
+            -0.495,
+            -0.19,
+            0
+          ],
+          "localEnd": [
+            -0.495,
+            -0.335,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "triggerPivot",
+          "parent": "trigger-guard",
+          "parentId": "trigger-guard",
+          "parentSocket": "trigger-guard.trigger-pin",
+          "contactType": "hinge",
+          "localStart": [
+            0,
+            0.02,
+            0
+          ],
+          "localEnd": [
+            0,
+            0.02,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "boltPivot",
+          "parent": "receiver",
+          "parentId": "receiver",
+          "parentSocket": "receiver.bolt-pivot-socket",
+          "contactType": "socket",
+          "localStart": [
+            0.08,
+            0.22,
+            0.255
+          ],
+          "localEnd": [
+            0.08,
+            0.02,
+            0.255
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "receiver-medusa-front",
+          "parent": "receiver",
+          "parentId": "receiver",
+          "parentSocket": "receiver.painted-surface",
+          "contactType": "surface-contact",
+          "localStart": [
+            -0.55,
+            0.24,
+            0.27
+          ],
+          "localEnd": [
+            1.68,
+            -0.18,
+            0.27
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "receiver-medusa-back",
+          "parent": "receiver",
+          "parentId": "receiver",
+          "parentSocket": "receiver.painted-surface",
+          "contactType": "surface-contact",
+          "localStart": [
+            -0.55,
+            0.24,
+            -0.27
+          ],
+          "localEnd": [
+            1.68,
+            -0.18,
+            -0.27
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "back-broadside",
+            "back-medusa.webp"
+          ]
+        },
+        {
+          "node": "stock",
+          "parent": "receiver",
+          "parentId": "receiver",
+          "parentSocket": "receiver.stock-shoulder-socket",
+          "contactType": "overlap",
+          "localStart": [
+            -0.9,
+            0.18,
+            0
+          ],
+          "localEnd": [
+            -0.55,
+            0.2,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "stock-medusa-front",
+          "parent": "stock",
+          "parentId": "stock",
+          "parentSocket": "stock.painted-surface",
+          "contactType": "surface-contact",
+          "localStart": [
+            -2.49,
+            0.09,
+            0.34
+          ],
+          "localEnd": [
+            -1.11,
+            -0.93,
+            0.34
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "stock-medusa-back",
+          "parent": "stock",
+          "parentId": "stock",
+          "parentSocket": "stock.painted-surface",
+          "contactType": "surface-contact",
+          "localStart": [
+            -2.49,
+            0.09,
+            -0.34
+          ],
+          "localEnd": [
+            -1.11,
+            -0.93,
+            -0.34
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "back-broadside",
+            "back-medusa.webp"
+          ]
+        },
+        {
+          "node": "grip",
+          "parent": "stock",
+          "parentId": "stock",
+          "parentSocket": "stock.grip-shoulder-socket",
+          "contactType": "overlap",
+          "localStart": [
+            -0.78,
+            -0.04,
+            0
+          ],
+          "localEnd": [
+            -0.58,
+            -0.16,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "grip-medusa-front",
+          "parent": "grip",
+          "parentId": "grip",
+          "parentSocket": "grip.painted-surface",
+          "contactType": "surface-contact",
+          "localStart": [
+            -0.78,
+            -0.04,
+            0.31
+          ],
+          "localEnd": [
+            -0.51,
+            -0.31,
+            0.31
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "grip-medusa-back",
+          "parent": "grip",
+          "parentId": "grip",
+          "parentSocket": "grip.painted-surface",
+          "contactType": "surface-contact",
+          "localStart": [
+            -0.78,
+            -0.04,
+            -0.31
+          ],
+          "localEnd": [
+            -0.51,
+            -0.31,
+            -0.31
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "back-broadside",
+            "back-medusa.webp"
+          ]
+        },
+        {
+          "node": "magazine",
+          "parent": "receiver",
+          "parentId": "receiver",
+          "parentSocket": "receiver.magazine-well",
+          "contactType": "socket",
+          "localStart": [
+            -0.22,
+            -0.25,
+            0
+          ],
+          "localEnd": [
+            -0.25,
+            -0.72,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "rail",
+          "parent": "receiver",
+          "parentId": "receiver",
+          "parentSocket": "receiver.scope-rail-socket",
+          "contactType": "embedded",
+          "localStart": [
+            0.04,
+            0.63,
+            0
+          ],
+          "localEnd": [
+            0.82,
+            0.63,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "scope-ring-rear",
+          "parent": "scope",
+          "parentId": "scope",
+          "parentSocket": "scope.scope-ring-rear-station",
+          "contactType": "embedded",
+          "localStart": [
+            0.28,
+            0.67,
+            0
+          ],
+          "localEnd": [
+            0.28,
+            0.53,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "scope-mount-rear",
+          "parent": "rail",
+          "parentId": "rail",
+          "parentSocket": "rail.scope-ring-rear-station",
+          "contactType": "overlap",
+          "localStart": [
+            0.28,
+            0.45,
+            0
+          ],
+          "localEnd": [
+            0.28,
+            0.455,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "scope-ring-front",
+          "parent": "scope",
+          "parentId": "scope",
+          "parentSocket": "scope.scope-ring-front-station",
+          "contactType": "embedded",
+          "localStart": [
+            0.76,
+            0.67,
+            0
+          ],
+          "localEnd": [
+            0.76,
+            0.53,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "scope-mount-front",
+          "parent": "rail",
+          "parentId": "rail",
+          "parentSocket": "rail.scope-ring-front-station",
+          "contactType": "overlap",
+          "localStart": [
+            0.76,
+            0.45,
+            0
+          ],
+          "localEnd": [
+            0.76,
+            0.455,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "optic-crown-source-projection",
+          "parent": "scope-objective-taper",
+          "parentId": "scope-objective-taper",
+          "parentSocket": "scope-objective-taper.crown-decal-land",
+          "contactType": "surface-contact",
+          "localStart": [
+            0.86,
+            0.98,
+            -0.21
+          ],
+          "localEnd": [
+            1.44,
+            0.98,
+            -0.21
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "back-broadside",
+            "back-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod",
+          "parent": "receiver",
+          "parentId": "receiver",
+          "parentSocket": "receiver.bipod-fore-end-socket",
+          "contactType": "socket",
+          "localStart": [
+            1.22,
+            -0.07,
+            0
+          ],
+          "localEnd": [
+            1.58,
+            -0.3,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-hinge-plate",
+          "parent": "receiver",
+          "parentId": "receiver",
+          "parentSocket": "receiver.bipod-fore-end-socket",
+          "contactType": "embedded",
+          "localStart": [
+            1.22,
+            -0.07,
+            0
+          ],
+          "localEnd": [
+            1.58,
+            -0.2,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-hinge",
+          "parent": "bipod-hinge-plate",
+          "parentId": "bipod-hinge-plate",
+          "parentSocket": "bipod-hinge-plate.axle",
+          "contactType": "hinge",
+          "localStart": [
+            1.39,
+            -0.1,
+            0
+          ],
+          "localEnd": [
+            1.39,
+            -0.22,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-mount-saddle",
+          "parent": "bipod-hinge",
+          "parentId": "bipod-hinge",
+          "parentSocket": "bipod-hinge.saddle",
+          "contactType": "embedded",
+          "localStart": [
+            1.4,
+            -0.035,
+            0
+          ],
+          "localEnd": [
+            1.4,
+            -0.1,
+            0
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-left",
+          "parent": "bipod-hinge",
+          "parentId": "bipod-hinge",
+          "parentSocket": "bipod-hinge.left-leg-seat",
+          "contactType": "overlap",
+          "localStart": [
+            1.37,
+            -0.23,
+            0.16
+          ],
+          "localEnd": [
+            2.1,
+            -0.22,
+            0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-right",
+          "parent": "bipod-hinge",
+          "parentId": "bipod-hinge",
+          "parentSocket": "bipod-hinge.right-leg-seat",
+          "contactType": "overlap",
+          "localStart": [
+            1.37,
+            -0.23,
+            -0.16
+          ],
+          "localEnd": [
+            2.1,
+            -0.22,
+            -0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-left-inner",
+          "parent": "bipod-left-sleeve",
+          "parentId": "bipod-left-sleeve",
+          "parentSocket": "bipod-left-sleeve.telescoping-joint",
+          "contactType": "overlap",
+          "localStart": [
+            2.04,
+            -0.22,
+            0.16
+          ],
+          "localEnd": [
+            2.62,
+            -0.19,
+            0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-right-inner",
+          "parent": "bipod-right-sleeve",
+          "parentId": "bipod-right-sleeve",
+          "parentSocket": "bipod-right-sleeve.telescoping-joint",
+          "contactType": "overlap",
+          "localStart": [
+            2.04,
+            -0.22,
+            -0.16
+          ],
+          "localEnd": [
+            2.62,
+            -0.19,
+            -0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-left-sleeve",
+          "parent": "bipod-hinge",
+          "parentId": "bipod-hinge",
+          "parentSocket": "bipod-hinge.bipod-left-sleeve-seat",
+          "contactType": "overlap",
+          "localStart": [
+            1.66,
+            -0.22,
+            0.16
+          ],
+          "localEnd": [
+            1.8399999999999999,
+            -0.22,
+            0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-right-sleeve",
+          "parent": "bipod-hinge",
+          "parentId": "bipod-hinge",
+          "parentSocket": "bipod-hinge.bipod-right-sleeve-seat",
+          "contactType": "overlap",
+          "localStart": [
+            1.66,
+            -0.22,
+            -0.16
+          ],
+          "localEnd": [
+            1.8399999999999999,
+            -0.22,
+            -0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-hinge-pin",
+          "parent": "bipod-hinge",
+          "parentId": "bipod-hinge",
+          "parentSocket": "bipod-hinge.axle",
+          "contactType": "hinge",
+          "localStart": [
+            1.42,
+            -0.22,
+            -0.21
+          ],
+          "localEnd": [
+            1.42,
+            -0.22,
+            0.21
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-locking-lug",
+          "parent": "bipod-hinge",
+          "parentId": "bipod-hinge",
+          "parentSocket": "bipod-hinge.lock-lug",
+          "contactType": "hinge",
+          "localStart": [
+            1.27,
+            -0.27,
+            0.22
+          ],
+          "localEnd": [
+            1.34,
+            -0.27,
+            0.22
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-lock-pin",
+          "parent": "bipod-locking-lug",
+          "parentId": "bipod-locking-lug",
+          "parentSocket": "bipod-locking-lug.pin",
+          "contactType": "hinge",
+          "localStart": [
+            1.29,
+            -0.27,
+            0.22
+          ],
+          "localEnd": [
+            1.29,
+            -0.27,
+            0.22
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-spring",
+          "parent": "bipod-hinge",
+          "parentId": "bipod-hinge",
+          "parentSocket": "bipod-hinge.spring-seat",
+          "contactType": "surface-contact",
+          "localStart": [
+            1.48,
+            -0.22,
+            0.16
+          ],
+          "localEnd": [
+            2.1,
+            -0.22,
+            0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-spring-back",
+          "parent": "bipod-hinge",
+          "parentId": "bipod-hinge",
+          "parentSocket": "bipod-hinge.spring-seat",
+          "contactType": "surface-contact",
+          "localStart": [
+            1.48,
+            -0.22,
+            -0.16
+          ],
+          "localEnd": [
+            2.1,
+            -0.22,
+            -0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-foot",
+          "parent": "bipod-left-inner",
+          "parentId": "bipod-left-inner",
+          "parentSocket": "bipod-leg.foot-seat",
+          "contactType": "overlap",
+          "localStart": [
+            2.64,
+            -0.25,
+            0.16
+          ],
+          "localEnd": [
+            2.75,
+            -0.25,
+            0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-foot-pad",
+          "parent": "bipod-foot",
+          "parentId": "bipod-foot",
+          "parentSocket": "bipod-foot.foot-pad-seat",
+          "contactType": "overlap",
+          "localStart": [
+            2.7350000000000003,
+            -0.25,
+            0.16
+          ],
+          "localEnd": [
+            2.83,
+            -0.25,
+            0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-foot-end-cap",
+          "parent": "bipod-foot-pad",
+          "parentId": "bipod-foot-pad",
+          "parentSocket": "bipod-foot-pad.end-cap",
+          "contactType": "embedded",
+          "localStart": [
+            2.8200000000000003,
+            -0.25,
+            0.16
+          ],
+          "localEnd": [
+            2.8600000000000003,
+            -0.25,
+            0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-foot-back",
+          "parent": "bipod-right-inner",
+          "parentId": "bipod-right-inner",
+          "parentSocket": "bipod-leg.foot-seat",
+          "contactType": "overlap",
+          "localStart": [
+            2.64,
+            -0.25,
+            -0.16
+          ],
+          "localEnd": [
+            2.75,
+            -0.25,
+            -0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-foot-back-pad",
+          "parent": "bipod-foot-back",
+          "parentId": "bipod-foot-back",
+          "parentSocket": "bipod-foot-back.foot-pad-seat",
+          "contactType": "overlap",
+          "localStart": [
+            2.7350000000000003,
+            -0.25,
+            -0.16
+          ],
+          "localEnd": [
+            2.83,
+            -0.25,
+            -0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-foot-back-end-cap",
+          "parent": "bipod-foot-back-pad",
+          "parentId": "bipod-foot-back-pad",
+          "parentSocket": "bipod-foot-back-pad.end-cap",
+          "contactType": "embedded",
+          "localStart": [
+            2.8200000000000003,
+            -0.25,
+            -0.16
+          ],
+          "localEnd": [
+            2.8600000000000003,
+            -0.25,
+            -0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "bipod-spring-joint",
+          "parent": "bipod-left-inner",
+          "parentId": "bipod-left-inner",
+          "parentSocket": "bipod-left-inner.joint",
+          "contactType": "overlap",
+          "localStart": [
+            2.18,
+            -0.22,
+            0.16
+          ],
+          "localEnd": [
+            2.18,
+            -0.22,
+            0.16
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "stock-fasteners",
+          "parent": "stock",
+          "parentId": "stock",
+          "parentSocket": "stock.visible-fastener-land",
+          "contactType": "surface-contact",
+          "localStart": [
+            -2.16,
+            -0.14,
+            0.285
+          ],
+          "localEnd": [
+            -1.2,
+            -0.1,
+            -0.285
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        },
+        {
+          "node": "receiver-fasteners",
+          "parent": "receiver",
+          "parentId": "receiver",
+          "parentSocket": "receiver.visible-fastener-land",
+          "contactType": "surface-contact",
+          "localStart": [
+            -0.35,
+            -0.08,
+            0.245
+          ],
+          "localEnd": [
+            1.25,
+            -0.08,
+            -0.245
+          ],
+          "gapTolerance": 0.015,
+          "evidenceRefs": [
+            "front-broadside",
+            "front-medusa.webp"
+          ]
+        }
+      ],
+      "note": "Metadata audit is paired with attachmentGate world-space seam measurements; neither gate alone proves source silhouette placement."
+    },
+    "destructionGroupNames": [
+      "stock",
+      "receiver",
+      "optic",
+      "boltAction",
+      "barrelAssembly",
+      "finish"
+    ]
+  }
+}

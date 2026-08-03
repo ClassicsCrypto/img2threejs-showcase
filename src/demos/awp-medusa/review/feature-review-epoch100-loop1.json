@@ -1,0 +1,13 @@
+[
+  {"id":"awp-silhouette","score":0.81,"threshold":0.90,"confidence":0.98,"note":"Long rifle envelope is recognizable, but lower assembly and stock/receiver contour still differ in both broadside views."},
+  {"id":"thumbhole-stock","score":0.92,"threshold":0.90,"confidence":0.96,"note":"Real extruded thumbhole and rounded return read correctly in front and back."},
+  {"id":"scope-and-rings","score":0.88,"threshold":0.90,"confidence":0.94,"note":"Two coaxial rings, collars, mounts and screws are present and attached; source clamp proportions and optic taper remain simplified."},
+  {"id":"bolt-handle","score":0.88,"threshold":0.90,"confidence":0.88,"note":"Receiver-parented bolt handle is below the optic and no longer floats on top of the scope, but its source-side profile and station remain approximate."},
+  {"id":"trigger-guard","score":0.78,"threshold":0.90,"confidence":0.95,"note":"Guard is a real through-body rounded loop with trigger pivot, but broadside profile/height and lower assembly relationship are not source-accurate yet."},
+  {"id":"magazine","score":0.82,"threshold":0.90,"confidence":0.92,"note":"Attached magazine and floorplate are present; compact envelope remains visibly different from the reference."},
+  {"id":"folded-bipod-and-coil-spring","score":0.86,"threshold":0.90,"confidence":0.86,"note":"Hinge, lock, continuous tubes, feet and true helix coils are attached; folded support proportions remain inferred."},
+  {"id":"crown-sticker-attachment","score":0.78,"threshold":0.90,"confidence":0.96,"note":"Crown uses source pixels on a tangent conical surface with depth writing, but the orbit foil read is still small/soft and not yet convincingly bonded."},
+  {"id":"muzzle-and-barrel","score":0.88,"threshold":0.90,"confidence":0.97,"note":"Continuous barrel and muzzle seam pass; muzzle brake silhouette and source band detail remain simplified."},
+  {"id":"rail-and-scope-mount","score":0.86,"threshold":0.90,"confidence":0.94,"note":"Rail teeth and separate mounts are attached; mount geometry still differs from the source clamp plates."},
+  {"id":"medusa-pattern-placement","score":0.84,"threshold":0.90,"confidence":0.93,"note":"Front projection aligns strongly; reverse receiver region is visibly weaker than source."}
+]

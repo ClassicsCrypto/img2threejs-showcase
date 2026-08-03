@@ -1,0 +1,8 @@
+epoch=7
+loop=4
+pass=blockout
+status=blocked-by-ledger-disagreement
+reason=Blockout remains incomplete, so later historical pass reviews are not credited.
+attachment_audit=joint-attachment-v1 metadataPass=true attachedNodeCount=6
+attachment_gate=all_eight_pairs_max_gap_0.0000_under_0.015
+next_action=refine-code

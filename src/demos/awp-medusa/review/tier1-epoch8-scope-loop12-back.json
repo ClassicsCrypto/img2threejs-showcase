@@ -1,0 +1,15 @@
+{
+  "passed": false,
+  "checks": {
+    "silhouetteIoU": 0.8004,
+    "aspectRatioDelta": 0.0045,
+    "scaleDelta": 0.0045,
+    "bilateralSymmetryError": 0.1509,
+    "renderHash": "6fa14c6b82a1ffe0",
+    "mapStrippedRender": "src/demos/awp-medusa/review/tier1-mapstripped-back.png"
+  },
+  "failures": [
+    "silhouette IoU 0.800 is below threshold 0.85"
+  ],
+  "passId": "blockout"
+}

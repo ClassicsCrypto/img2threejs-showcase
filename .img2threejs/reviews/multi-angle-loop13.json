@@ -1,0 +1,26 @@
+{
+  "referenceAreaFraction": 0.08595069444444445,
+  "angles": [
+    {
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/.img2threejs/renders/epoch-current/orbit-right-white.png",
+      "areaFraction": 0.18323263888888888,
+      "ratio": 2.1318343042280374,
+      "degenerate": false
+    },
+    {
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/.img2threejs/renders/epoch-current/orbit-top-white.png",
+      "areaFraction": 0.10282013888888888,
+      "ratio": 1.1962688556908434,
+      "degenerate": false
+    },
+    {
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/.img2threejs/renders/epoch-current/orbit-muzzle-white.png",
+      "areaFraction": 0.14297847222222224,
+      "ratio": 1.6634940897963142,
+      "degenerate": false
+    }
+  ],
+  "degenerate": false,
+  "collapseRatio": 0.15,
+  "note": "deterministic; zero token; a flat-plane-faking-a-volume collapses in silhouette area when orbited"
+}

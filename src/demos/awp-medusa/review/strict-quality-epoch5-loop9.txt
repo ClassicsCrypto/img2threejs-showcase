@@ -1,0 +1,6 @@
+FAIL
+command: python3 forge/stage2_spec/validate_sculpt_spec.py object-sculpt-spec.json --strict-quality
+reason: historical review feature gates remain below 0.90; current loop9 also remains refine-code.
+current loop9 evidence: front silhouetteIoU=0.8063, back silhouetteIoU=0.8042, finishMaterialResponse=0.88.
+failed current features: awp-silhouette=0.81, thumbhole-stock=0.88, bolt-handle=0.89, orbit-side-finish=0.88.
+passed current feature evidence: scope-and-rings=0.92, bipod-spring=0.92, medusa-pattern-placement=0.93, optic-crown-foil=0.94, trigger-guard=0.91.

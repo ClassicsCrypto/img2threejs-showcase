@@ -1,0 +1,6 @@
+pass=blockout
+epoch=8
+loop=9
+status=blocked
+reason=Trigger profile is closer and back IoU rises to 0.8011, but front/back strict IoU 0.8121/0.8011 and bipod/crown gates remain below 0.90.
+next_action=refine-code

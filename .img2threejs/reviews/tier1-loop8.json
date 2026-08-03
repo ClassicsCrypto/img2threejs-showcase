@@ -1,0 +1,17 @@
+{
+  "passId": "blockout",
+  "renderHash": "6da9148e35684e10",
+  "passed": false,
+  "silhouetteIoU": 0.4943,
+  "aspectRatioDelta": 0.2333,
+  "scaleDelta": 0.1892,
+  "bilateralSymmetryError": 0.1246,
+  "colorMaxDeltaE": 15.32,
+  "failures": [
+    "silhouette IoU 0.494 is below threshold 0.85",
+    "aspect-ratio delta 0.233 exceeds threshold 0.05",
+    "scale delta 0.189 exceeds threshold 0.08"
+  ],
+  "render": ".img2threejs/renders/epoch-current/blockout-front.png",
+  "mapStrippedRender": ".img2threejs/renders/epoch-current/tier1-mapstripped-front.png"
+}

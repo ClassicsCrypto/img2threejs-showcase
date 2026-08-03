@@ -110,6 +110,10 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
   // background with a frozen camera for the Divine Eye reference loop. Default off (normal viewing).
   const capture = /[?&]capture=1\b/.test(window.location.hash) ||
     new URLSearchParams(window.location.search).get('capture') === '1';
+  const backCapture = new URLSearchParams(window.location.search).get('back') === '1';
+  const cameraPosition: [number, number, number] = backCapture
+    ? [-demo.cameraPosition[0], demo.cameraPosition[1], -demo.cameraPosition[2]]
+    : demo.cameraPosition;
 
   // Per-demo tone-mapping (optional on the entry; read structurally so demo.ts is independent of
   // the DemoEntry field being declared). AgX preserves the Ruby-Doppler crimson that ACES washes.
@@ -117,7 +121,7 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
 
   const canvasMount = mount.querySelector<HTMLDivElement>('#demo-canvas-mount')!;
   const viewer = new Viewer(canvasMount, {
-    cameraPosition: demo.cameraPosition,
+    cameraPosition,
     cameraTarget: demo.cameraTarget,
     cameraFov: demo.cameraFov,
     backgroundGradient: demo.backgroundGradient,
@@ -130,15 +134,53 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
 
   const model = demo.build(viewer.scene);
   viewer.setExplodeRoot(model);
+  // QA capture scripts may place a diagnostic camera on a named socket. This
+  // is not part of the demo UI or model geometry; it exposes only the existing
+  // viewer instance to the local evidence harness.
+  (window as unknown as Record<string, unknown>).__IMG2THREEJS_VIEWER__ = viewer;
+  const modelRuntime = model.userData.sculptRuntime as {
+    pivots?: Record<string, unknown>;
+    sockets?: Record<string, unknown>;
+    actionAnchors?: Record<string, unknown>;
+    colliders?: unknown[];
+    adjacency?: unknown[];
+    attachmentGate?: unknown;
+    attachmentAudit?: unknown;
+    destructionGroups?: Record<string, unknown>;
+    logicalComponents?: Record<string, { kind?: string; binding?: string; boundMeshes?: string[] }>;
+  } | undefined;
+  (window as unknown as Record<string, unknown>).__IMG2THREEJS_RUNTIME__ = {
+    model: id,
+    hasTick: typeof model.userData.tick === 'function',
+    pivotNames: Object.keys(modelRuntime?.pivots ?? model.userData.pivots ?? {}),
+    socketNames: Object.keys(modelRuntime?.sockets ?? {}),
+    actionAnchors: modelRuntime?.actionAnchors ?? model.userData.actionAnchors ?? {},
+    colliderCount: modelRuntime?.colliders?.length ?? 0,
+    adjacencyCount: modelRuntime?.adjacency?.length ?? 0,
+    attachmentGate: modelRuntime?.attachmentGate ?? null,
+    attachmentAudit: modelRuntime?.attachmentAudit ?? null,
+    destructionGroupNames: Object.keys(modelRuntime?.destructionGroups ?? {}),
+  };
   // Responsive framing: keeps the authored desktop composition, dollies back on narrow/short
   // viewports so the whole subject stays in frame instead of being cropped away.
   viewer.fitToViewport(model);
 
   // Part tree published for the assembly gate (forge/stage4_review/check_part_coverage.py).
   // Set in capture mode too — that is the headless run the gate reads it from.
+  const partManifest = viewer.partManifest();
+  const logicalParts = Object.entries(modelRuntime?.logicalComponents ?? {}).map(([name, value]) => ({
+    name,
+    module: null,
+    kind: value.kind ?? 'logical',
+    triangles: 0,
+    materials: [],
+  }));
+  // Logical entries describe a coverage binding only; they do not add
+  // geometry, selectable meshes, or a camera-facing surface to the model.
   (window as unknown as Record<string, unknown>).__IMG2THREEJS_PARTS__ = {
     model: id,
-    ...viewer.partManifest(),
+    ...(partManifest ?? { parts: [], unnamedMeshes: 0, integralMeshes: 0 }),
+    parts: [...(partManifest?.parts ?? []), ...logicalParts],
   };
 
   // Explode control. Hidden for single-mesh demos and in capture mode, where the panel is
@@ -289,7 +331,16 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
       mount.querySelector<HTMLElement>(sel)?.style.setProperty('display', 'none');
     }
     // Side-on auto-framing so the evaluation silhouette matches the side-on reference plate.
-    viewer.frameForCapture();
+    const captureOffsetX = backCapture
+      ? demo.captureTargetOffsetXBack ?? demo.captureTargetOffsetX
+      : demo.captureTargetOffsetX;
+    if (captureOffsetX !== undefined) model.position.x += captureOffsetX;
+    viewer.frameForCapture(
+      20,
+      demo.captureMargin ?? 1.12,
+      backCapture ? -1 : 1,
+      backCapture ? demo.captureTargetOffsetYBack ?? demo.captureTargetOffsetY ?? 0 : demo.captureTargetOffsetY ?? 0,
+    );
   }
   viewer.start();
 

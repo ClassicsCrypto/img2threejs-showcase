@@ -1,0 +1,8 @@
+pass=blockout
+epoch=8
+loop=2
+status=blocked
+reason=Crown identity improved but the silhouette gate remains below 0.85 and strict visual target is 0.90.
+front=0.8105
+back=0.7984
+next_action=refine-code

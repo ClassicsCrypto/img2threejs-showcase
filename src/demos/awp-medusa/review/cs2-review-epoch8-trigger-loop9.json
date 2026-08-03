@@ -1,0 +1,180 @@
+{
+  "verdict": "reject",
+  "action": "refine-code",
+  "family": "rifle",
+  "subtype": "awp",
+  "exactnessTier": "image-only",
+  "route": "reference-projection",
+  "reviewScene": {
+    "version": 1,
+    "fixtureId": "cs2-rifle-awp-front-v1",
+    "camera": {
+      "projection": "perspective",
+      "fovDegrees": 30,
+      "azimuthDegrees": 0,
+      "elevationDegrees": 0,
+      "rollDegrees": 0,
+      "target": [
+        0.72,
+        0.25,
+        0
+      ]
+    },
+    "transform": {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotationDegrees": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "environment": {
+      "hash": "awp-medusa-neutral-lookdev-v1",
+      "exposure": 0.85,
+      "toneMapping": "ACESFilmic"
+    },
+    "resolution": {
+      "width": 1600,
+      "height": 900
+    },
+    "background": "#03050a",
+    "rendererVersion": "three-r170",
+    "calibration": {
+      "status": "provisional-not-metric",
+      "positiveFixtures": [],
+      "negativeFixtures": []
+    }
+  },
+  "metrics": {
+    "silhouetteIoU": 0.8121,
+    "backSilhouetteIoU": 0.8011,
+    "aspectRatioDelta": 0.0045,
+    "scaleDelta": 0.0045,
+    "finishMaterialResponse": 0.9,
+    "identityDetail": 0.92,
+    "projection": {
+      "required": true,
+      "coverage": 0.96,
+      "sourceViews": 2
+    },
+    "paintedRegions": [
+      {
+        "id": "front-stock-receiver",
+        "score": 0.93,
+        "confidence": 0.96
+      },
+      {
+        "id": "back-receiver",
+        "score": 0.72,
+        "confidence": 0.93
+      },
+      {
+        "id": "optic-crown",
+        "score": 0.88,
+        "confidence": 0.96
+      }
+    ],
+    "criticalFeatures": [
+      {
+        "id": "awp-silhouette",
+        "score": 0.83,
+        "threshold": 0.9
+      },
+      {
+        "id": "thumbhole-stock",
+        "score": 0.92,
+        "threshold": 0.9
+      },
+      {
+        "id": "scope-and-rings",
+        "score": 0.94,
+        "threshold": 0.9
+      },
+      {
+        "id": "bolt-handle",
+        "score": 0.9,
+        "threshold": 0.9
+      },
+      {
+        "id": "medusa-pattern-placement",
+        "score": 0.93,
+        "threshold": 0.9
+      }
+    ],
+    "multiAngle": {
+      "degenerate": false,
+      "collapseRatio": 0.15,
+      "angles": [
+        {
+          "id": "orbit-left",
+          "areaRatio": 1.0182669353588591
+        },
+        {
+          "id": "orbit-right",
+          "areaRatio": 1.9485413114245855
+        }
+      ]
+    },
+    "approximationNotes": [
+      "Two broadside images do not metrically determine hidden thickness or internal bolt geometry.",
+      "Strict CS2 silhouette target 0.90 is not yet met; the current front/back masks are 0.8121/0.8011. The source-fit magazine envelope is retained while the receiver-parented bolt and muzzle-side barrel band are locked.",
+      "Scope loop 4 replaces the floating-looking rectangular clamp frames with two coaxial torus rings, clamp tops, saddles, and rail mounts. The rings are now independently attached and included in the world-space seam gate; hidden clamp machining remains inferred.",
+      "The crown decal now conforms to the objective bell in both x taper and y circular section. A tighter source crop/mask makes the crown/skull clearer, and it passes the AABB seam gate, but foil separation remains below the target identity score from orbit/side-by-side review.",
+      "Trigger and telescoping bipod remain real attached components; visual review still finds the trigger/magazine proportions, crown artwork scale, bipod silhouette, and global envelope below 0.90.",
+      "Medusa paint is a shell-only curved projection from supplied pixels; it is not used as structural geometry.",
+      "The thumbhole is a real extruded stock cut with a projection cutout; hidden thickness and interior hardware remain inferred."
+    ],
+    "confidence": {
+      "hiddenRegions": 0.25,
+      "finishMaterial": 0.78,
+      "minimalWear": 0.55
+    }
+  },
+  "paintedRegions": [
+    {
+      "id": "front-stock-receiver",
+      "score": 0.93,
+      "confidence": 0.96
+    },
+    {
+      "id": "back-receiver",
+      "score": 0.72,
+      "confidence": 0.93
+    },
+    {
+      "id": "optic-crown",
+      "score": 0.88,
+      "confidence": 0.96
+    }
+  ],
+  "perRegionConfidence": {
+    "front-stock-receiver": 0.96,
+    "back-receiver": 0.93,
+    "optic-crown": 0.96
+  },
+  "hiddenRegionConfidence": 0.25,
+  "approximationNotes": [
+    "Two broadside images do not metrically determine hidden thickness or internal bolt geometry.",
+    "Strict CS2 silhouette target 0.90 is not yet met; the current front/back masks are 0.8121/0.8011. The source-fit magazine envelope is retained while the receiver-parented bolt and muzzle-side barrel band are locked.",
+    "Scope loop 4 replaces the floating-looking rectangular clamp frames with two coaxial torus rings, clamp tops, saddles, and rail mounts. The rings are now independently attached and included in the world-space seam gate; hidden clamp machining remains inferred.",
+    "The crown decal now conforms to the objective bell in both x taper and y circular section. A tighter source crop/mask makes the crown/skull clearer, and it passes the AABB seam gate, but foil separation remains below the target identity score from orbit/side-by-side review.",
+    "Trigger and telescoping bipod remain real attached components; visual review still finds the trigger/magazine proportions, crown artwork scale, bipod silhouette, and global envelope below 0.90.",
+    "Medusa paint is a shell-only curved projection from supplied pixels; it is not used as structural geometry.",
+    "The thumbhole is a real extruded stock cut with a projection cutout; hidden thickness and interior hardware remain inferred."
+  ],
+  "failedGates": [
+    "silhouetteIoU",
+    "painted-region:back-receiver",
+    "painted-region:optic-crown",
+    "critical-feature:awp-silhouette"
+  ]
+}

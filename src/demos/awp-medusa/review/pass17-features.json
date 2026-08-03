@@ -1,0 +1,32 @@
+[
+  {
+    "id": "awp-silhouette",
+    "score": 0.81,
+    "visible": true,
+    "notes": "The fixed front silhouette improved to IoU 0.7853 after making the thumbhole closer to the observed circular projection; the strict 0.85 gate remains unmet."
+  },
+  {
+    "id": "thumbhole-stock",
+    "score": 0.93,
+    "visible": true,
+    "notes": "The stock is a beveled extrusion with a real cut. Pixel review favored x=-1.21, y=-0.27 with rx=.18 and ry=.26 on the model, paired with the matching projection cutout."
+  },
+  {
+    "id": "scope-and-rings",
+    "score": 0.93,
+    "visible": true,
+    "notes": "Optic tube, bells, turret, squared ring bars, saddles, mounts, and screws remain separate named geometry."
+  },
+  {
+    "id": "barrel-and-folded-bipod",
+    "score": 0.90,
+    "visible": true,
+    "notes": "The barrel/muzzle remain on the observed fore-end axis; folded bipod geometry stays a real hinge, rods, spring, and feet assembly."
+  },
+  {
+    "id": "medusa-pattern-placement",
+    "score": 0.93,
+    "visible": true,
+    "notes": "Front and back supplied projections remain shell-only and are mapped to the real stock, receiver, and grip surfaces."
+  }
+]

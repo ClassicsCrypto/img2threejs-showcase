@@ -1,0 +1,23 @@
+{
+  "pass": "blockout",
+  "loop": 1,
+  "reference": ".img2threejs/renders/epoch-current/blockout-front.png",
+  "orbits": [
+    ".img2threejs/renders/epoch-current/orbit-left-white.png",
+    ".img2threejs/renders/epoch-current/orbit-right-white.png",
+    ".img2threejs/renders/epoch-current/orbit-top-white.png",
+    ".img2threejs/renders/epoch-current/orbit-edge-right-white.png",
+    ".img2threejs/renders/epoch-current/orbit-edge-left-white.png"
+  ],
+  "referenceAreaFraction": 0.107875,
+  "angles": [
+    {"path": ".img2threejs/renders/epoch-current/orbit-left-white.png", "areaFraction": 0.11276527777777778, "ratio": 1.0453328183339772, "degenerate": false},
+    {"path": ".img2threejs/renders/epoch-current/orbit-right-white.png", "areaFraction": 0.217825, "ratio": 2.0192352259559674, "degenerate": false},
+    {"path": ".img2threejs/renders/epoch-current/orbit-top-white.png", "areaFraction": 0.11083125, "ratio": 1.027404403244496, "degenerate": false},
+    {"path": ".img2threejs/renders/epoch-current/orbit-edge-right-white.png", "areaFraction": 0.1592513888888889, "ratio": 1.476258529676838, "degenerate": false},
+    {"path": ".img2threejs/renders/epoch-current/orbit-edge-left-white.png", "areaFraction": 0.15590416666666668, "ratio": 1.445229818462727, "degenerate": false}
+  ],
+  "degenerate": false,
+  "collapseRatio": 0.15,
+  "note": "The procedural assembly retains volume under all captured orbit angles; this is not a pixel-fidelity pass."
+}

@@ -1,0 +1,6 @@
+FAIL
+command: python3 forge/stage2_spec/validate_sculpt_spec.py object-sculpt-spec.json --strict-quality
+reason: current blockout silhouette remains below 0.90 and historical feature-gate failures remain recorded.
+current loop16 evidence: front silhouetteIoU=0.8190, back silhouetteIoU=0.8155, aspectRatioDelta=0.0469, scaleDelta=0.0448.
+current CS2 failed gate: awp-silhouette=0.81.
+current passed feature evidence: thumbhole-stock=0.93, scope-and-rings=0.92, bolt-handle=0.91, bipod-spring=0.93, medusa-pattern-placement=0.93, optic-crown-foil=0.94, trigger-guard=0.91, orbit-side-finish=0.90.

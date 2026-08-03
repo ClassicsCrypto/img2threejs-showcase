@@ -1,0 +1,7 @@
+[
+  {"id":"awp-silhouette","score":0.81,"threshold":0.9,"visible":true,"notes":"Two-view contour remains below target; current front mask is 0.8081 after the optic-ring and rearward bolt-handle correction."},
+  {"id":"thumbhole-stock","score":0.92,"threshold":0.9,"visible":true,"notes":"Real extruded stock cut remains recognizable."},
+  {"id":"scope-and-rings","score":0.89,"threshold":0.9,"visible":true,"notes":"Matte graphite scope, source-grounded crown foil, turret, ocular marking, and thin mirrored volumetric clamp faces are present; exact ring proportions remain approximate."},
+  {"id":"bolt-handle","score":0.89,"threshold":0.9,"visible":true,"notes":"The real curved handle and ball are now rearward of the optic turret and remain attached to the exposed bolt pivot; hidden action depth is inferred."},
+  {"id":"medusa-pattern-placement","score":0.93,"threshold":0.9,"visible":true,"notes":"Front/back projection remains source-bound on real shell geometry."}
+]

@@ -1,0 +1,4 @@
+FAIL
+command: python3 forge/stage3_build/orchestrate_passes.py sync object-sculpt-spec.json
+reason: review history contains uncredited later pass entries because the locked-sequential blockout pass is still incomplete.
+next required work: continue blockout correction until silhouette, side finish, thumbhole, bolt-handle, comparison, and CS2 gates are accepted.

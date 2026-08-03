@@ -1,0 +1,7 @@
+[
+  {"id":"awp-silhouette","score":0.84,"threshold":0.90,"visible":true,"notes":"Long low bolt-action envelope, thumbhole stock, receiver/barrel axis and folded support are recognizable; exact stock/receiver/bipod contour still differs."},
+  {"id":"thumbhole-stock","score":0.92,"threshold":0.90,"visible":true,"notes":"Real extruded stock cut and shell projection preserve the visible negative space."},
+  {"id":"scope-and-rings","score":0.89,"threshold":0.90,"visible":true,"notes":"Source-traced shorter tube and longer objective taper improve the crop; mount/ring silhouette remains approximate."},
+  {"id":"bolt-handle","score":0.87,"threshold":0.90,"visible":true,"notes":"Named bolt, handle and ball are volumetric; the broadside cannot determine hidden action depth."},
+  {"id":"medusa-pattern-placement","score":0.93,"threshold":0.90,"visible":true,"notes":"Front and back supplied projections are bound to real painted shell surfaces."}
+]

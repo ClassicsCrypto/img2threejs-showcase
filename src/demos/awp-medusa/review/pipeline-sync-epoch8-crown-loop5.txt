@@ -1,0 +1,7 @@
+epoch=8
+loop=5
+pass=blockout
+status=blocked-by-ledger-disagreement
+reason=Crown local refinement is recorded, but blockout remains below visual gates; no later pass is credited.
+attachment_gate=10 required world-space seam pairs passed with maxGap=0; 11 attachment metadata records passed.
+next_required_work=Refine source-traced trigger/magazine lower assembly and bipod hinge/foot envelope, then repeat side-by-side, strict-quality, and rifle CS2 review.

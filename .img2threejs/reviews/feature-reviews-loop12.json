@@ -1,0 +1,11 @@
+[
+  {"id":"awp-silhouette","score":0.68,"visible":true,"notes":"Full-stock framing is now inspectable, but deterministic IoU is 0.464 with aspect delta 0.254 and scale delta 0.332; macro gate remains blocked."},
+  {"id":"scope-and-rings","score":0.88,"visible":true,"notes":"The crop and metadata show seated supports, but NotebookLM still reports an ambiguous floating read; exact contoured saddle profile remains approximate."},
+  {"id":"scope-glass","score":0.89,"visible":true,"notes":"Recessed objective/eyepiece glass exists and is low-roughness reflective; environment highlight remains weaker than a real mirror."},
+  {"id":"bolt-handle","score":0.88,"visible":true,"notes":"Receiver-parented bolt remains below the optic and the handle is longer; real-platform bend/station remains approximate."},
+  {"id":"trigger-guard-thumbhole","score":0.78,"visible":true,"notes":"Guard and thumbhole return edge are real geometry but local placement/bevel still differ from the source."},
+  {"id":"bipod-spring-attachment","score":0.86,"visible":true,"notes":"True TubeGeometry helix and connected hinge/legs/feet remain present, but distant angles still reduce the coil to overlapping highlights."},
+  {"id":"medusa-orbit-continuity","score":0.76,"visible":true,"notes":"Paint remains on authored surfaces; thumbhole/receiver grazing seam continues to stretch."},
+  {"id":"crown-sticker","score":0.84,"visible":true,"notes":"Crown-up/skull-down orientation holds; thin foil/decal contact and grazing specular response remain approximate."},
+  {"id":"muzzle-bore","score":0.88,"visible":true,"notes":"Open shell, inner wall and deeper bore surface are authored, but direct review still sees the lip/inner-wall profile as simplified."}
+]

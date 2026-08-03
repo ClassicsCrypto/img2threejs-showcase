@@ -1,0 +1,42 @@
+[
+  {
+    "id": "bolt-receiver-placement",
+    "score": 0.76,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.97,
+    "notes": "Bolt is now parented to the receiver and the handle descends below the optic, but the receiver-side shroud and handle silhouette are still too small and not yet source-proportional."
+  },
+  {
+    "id": "trigger-guard-and-trigger",
+    "score": 0.68,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.96,
+    "notes": "A real extruded loop and trigger pivot now contact the receiver, but the loop remains too large/deep and the trigger blade angle does not match the reference."
+  },
+  {
+    "id": "scope-crown-contact",
+    "score": 0.62,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.93,
+    "notes": "The decal moved onto the objective bell wall and the contact probe passes, but the visible crown/skull remains undersized and reads as a small floating mark from the back broadside."
+  },
+  {
+    "id": "bipod-hinge-and-compression-spring",
+    "score": 0.67,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.89,
+    "notes": "Hinge now overlaps the fore-end and the spring is a genuine 18-turn 3D helix, but the folded leg/foot proportions and spring seating still differ from the source."
+  },
+  {
+    "id": "attachment-gate",
+    "score": 0.84,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.92,
+    "notes": "All eight measured AABB contacts report maxGap 0.0000 against a 0.015 tolerance; this proves world-space bounding contact, not semantic silhouette agreement, so visual review remains blocking."
+  }
+]

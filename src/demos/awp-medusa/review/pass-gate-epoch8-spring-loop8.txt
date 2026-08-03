@@ -1,0 +1,6 @@
+pass=blockout
+epoch=8
+loop=8
+status=blocked
+reason=Spring is now a visible genuine helix with hinge/feet parts, but deterministic silhouette 0.8126/0.8004 and strict 0.90 trigger/bipod/crown gates remain below threshold.
+next_action=refine-code

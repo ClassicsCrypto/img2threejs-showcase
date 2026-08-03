@@ -1,0 +1,7 @@
+epoch=8
+loop=11
+pass=blockout
+status=blocked-by-ledger-disagreement
+reason=Corrected 16:9 side-by-side review exposes remaining component mismatches; no later pass is credited.
+attachment_gate=11 required world-space seam pairs passed with maxGap=0; 12 attachment metadata records passed.
+next_required_work=Refine scope clamp hardware, trigger/magazine envelope, and bipod density against the preserve-aspect comparison.

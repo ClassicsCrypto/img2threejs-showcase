@@ -1,0 +1,6 @@
+pass=blockout
+epoch=8
+loop=4
+status=blocked
+reason=Scope ring attachment and crown conformation improved, but front/back silhouette IoU (0.813/0.801) and strict 0.90 CS2 gates remain below threshold.
+next_action=refine-code

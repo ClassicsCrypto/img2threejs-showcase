@@ -1,0 +1,6 @@
+epoch=8
+loop=3
+pass=blockout
+status=blocked-by-ledger-disagreement
+reason=Blockout remains below visual gates; no later pass is credited.
+next_action=refine-code

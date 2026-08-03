@@ -1,0 +1,8 @@
+ledger disagreement: review history contains uncredited passes
+- structural-pass: reviewed but not credited because blockout is incomplete or its evidence/gates failed
+- form-refinement: reviewed but not credited because structural-pass is incomplete or its evidence/gates failed
+- material-pass: reviewed but not credited because form-refinement is incomplete or its evidence/gates failed
+- surface-pass: reviewed but not credited because material-pass is incomplete or its evidence/gates failed
+- lighting-pass: reviewed but not credited because surface-pass is incomplete or its evidence/gates failed
+- interaction-pass: reviewed but not credited because lighting-pass is incomplete or its evidence/gates failed
+STATUS pass=blockout completed=0 blocked=none next=forge/stage3_build/orchestrate_passes.py sync /Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/object-sculpt-spec.json

@@ -1,0 +1,119 @@
+{
+  "passed": false,
+  "checks": {
+    "silhouetteIoU": 0.5425,
+    "aspectRatioDelta": 0.0633,
+    "scaleDelta": 0.0676,
+    "bilateralSymmetryError": 0.1635,
+    "colorDelta": {
+      "checked": 24,
+      "maxDeltaE": 12.66,
+      "perComponent": [
+        {
+          "componentId": null,
+          "deltaE": 12.19
+        },
+        {
+          "componentId": null,
+          "deltaE": 12.66
+        },
+        {
+          "componentId": null,
+          "deltaE": 12.66
+        },
+        {
+          "componentId": null,
+          "deltaE": 12.66
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 3.75
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.1
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 12.66
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.64
+        }
+      ],
+      "gated": false
+    }
+  },
+  "failures": [
+    "silhouette IoU 0.542 is below threshold 0.85",
+    "aspect-ratio delta 0.063 exceeds threshold 0.05"
+  ],
+  "renderHash": "d56d66bea867f609",
+  "passId": "blockout",
+  "mapStrippedRender": ".img2threejs/renders/epoch-current/tier1-mapstripped-front.png"
+}

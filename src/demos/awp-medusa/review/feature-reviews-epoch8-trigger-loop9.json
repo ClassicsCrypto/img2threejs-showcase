@@ -1,0 +1,8 @@
+[
+  {"id":"trigger-guard-profile","score":0.88,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"Moderately enlarged rounded U profile and trigger now read closer to the source while staying receiver-parented and through-depth."},
+  {"id":"bipod-compression-spring","score":0.86,"threshold":0.90,"visible":true,"confidence":0.95,"notes":"18-turn tube helix remains continuous, visible, and seated around its spine; source folded silhouette remains approximate."},
+  {"id":"muzzle-band-and-bolt","score":0.93,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"Muzzle-side collar and receiver-embedded bolt remain correct in broadside/top/muzzle views."},
+  {"id":"scope-crown-and-rings","score":0.89,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Coaxial rings and tangent source crown remain stable; crown foil is still slightly below target."},
+  {"id":"macro-awp-silhouette","score":0.83,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Fresh IoU is 0.8121 front and 0.8011 back; trigger refinement does not clear the material-free gate."},
+  {"id":"attachment-contract-audit","score":0.99,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"11 world-space seam pairs pass at maxGap 0 and 12 attachment records pass required metadata."}
+]

@@ -1,0 +1,179 @@
+{
+  "verdict": "reject",
+  "action": "request-input",
+  "family": "rifle",
+  "subtype": "awp",
+  "exactnessTier": "image-only",
+  "route": "reference-projection",
+  "reviewScene": {
+    "version": 1,
+    "fixtureId": "cs2-knife-front-v1",
+    "camera": {
+      "projection": "orthographic",
+      "azimuthDegrees": 0,
+      "elevationDegrees": 0,
+      "rollDegrees": 0,
+      "target": [
+        0,
+        0,
+        0
+      ]
+    },
+    "transform": {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotationDegrees": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "environment": {
+      "hash": "code-generated-room-v1",
+      "exposure": 0,
+      "toneMapping": "ACESFilmic"
+    },
+    "resolution": {
+      "width": 1024,
+      "height": 1024
+    },
+    "background": "neutral-white",
+    "rendererVersion": "three-runtime-contract-v1",
+    "calibration": {
+      "status": "thresholds-frozen-awaiting-positive-negative-render-corpus",
+      "positiveFixtures": [],
+      "negativeFixtures": []
+    }
+  },
+  "metrics": {
+    "silhouetteIoU": 0.8115,
+    "backSilhouetteIoU": 0.8007,
+    "aspectRatioDelta": 0.0092,
+    "scaleDelta": 0.0179,
+    "finishMaterialResponse": 0.9,
+    "identityDetail": 0.92,
+    "projection": {
+      "required": true,
+      "coverage": 0.96,
+      "sourceViews": 2
+    },
+    "paintedRegions": [
+      {
+        "id": "front-stock-receiver",
+        "score": 0.93,
+        "confidence": 0.96
+      },
+      {
+        "id": "back-receiver",
+        "score": 0.72,
+        "confidence": 0.93
+      },
+      {
+        "id": "optic-crown",
+        "score": 0.78,
+        "confidence": 0.96
+      }
+    ],
+    "criticalFeatures": [
+      {
+        "id": "awp-silhouette",
+        "score": 0.82,
+        "threshold": 0.9
+      },
+      {
+        "id": "thumbhole-stock",
+        "score": 0.92,
+        "threshold": 0.9
+      },
+      {
+        "id": "scope-and-rings",
+        "score": 0.92,
+        "threshold": 0.9
+      },
+      {
+        "id": "bolt-handle",
+        "score": 0.9,
+        "threshold": 0.9
+      },
+      {
+        "id": "medusa-pattern-placement",
+        "score": 0.93,
+        "threshold": 0.9
+      }
+    ],
+    "multiAngle": {
+      "degenerate": false,
+      "collapseRatio": 0.15,
+      "angles": [
+        {
+          "id": "orbit-left",
+          "areaRatio": 1.0124230871094304
+        },
+        {
+          "id": "orbit-right",
+          "areaRatio": 1.9447520617889984
+        }
+      ]
+    },
+    "approximationNotes": [
+      "Two broadside images do not metrically determine hidden thickness or internal bolt geometry.",
+      "Strict CS2 silhouette target 0.90 is not yet met; loop 3 deterministic masks are 0.8115 front and 0.8007 back after the fastener, crown, trigger, and telescoping-bipod repair while preserving the locked receiver-parented bolt.",
+      "Scope-only review: optic span and taper now fit the 500x180 reference crop; rings, turret, marking, crown, and shortened rail are separate attached real components. Clamp machining and hidden underside thickness remain procedural approximations.",
+      "Loop 3 attachment repair: fasteners and ejection-port hardware were moved back onto the receiver/stock side surfaces after the top view exposed z=±0.44 floaters; the crown is now a conformed thin decal plus restrained gold overlay; the compact trigger and telescoping bipod remain attached. Visual review still finds trigger proportions, crown artwork scale, bipod silhouette, and global proportions below 0.90.",
+      "Medusa paint is a shell-only curved projection from supplied pixels; it is not used as structural geometry.",
+      "The thumbhole is a real extruded stock cut with a projection cutout; hidden thickness and interior hardware remain inferred."
+    ],
+    "confidence": {
+      "hiddenRegions": 0.25,
+      "finishMaterial": 0.78,
+      "minimalWear": 0.55
+    }
+  },
+  "paintedRegions": [
+    {
+      "id": "front-stock-receiver",
+      "score": 0.93,
+      "confidence": 0.96
+    },
+    {
+      "id": "back-receiver",
+      "score": 0.72,
+      "confidence": 0.93
+    },
+    {
+      "id": "optic-crown",
+      "score": 0.78,
+      "confidence": 0.96
+    }
+  ],
+  "perRegionConfidence": {
+    "front-stock-receiver": 0.96,
+    "back-receiver": 0.93,
+    "optic-crown": 0.96
+  },
+  "hiddenRegionConfidence": 0.25,
+  "approximationNotes": [
+    "Two broadside images do not metrically determine hidden thickness or internal bolt geometry.",
+    "Strict CS2 silhouette target 0.90 is not yet met; loop 3 deterministic masks are 0.8115 front and 0.8007 back after the fastener, crown, trigger, and telescoping-bipod repair while preserving the locked receiver-parented bolt.",
+    "Scope-only review: optic span and taper now fit the 500x180 reference crop; rings, turret, marking, crown, and shortened rail are separate attached real components. Clamp machining and hidden underside thickness remain procedural approximations.",
+    "Loop 3 attachment repair: fasteners and ejection-port hardware were moved back onto the receiver/stock side surfaces after the top view exposed z=±0.44 floaters; the crown is now a conformed thin decal plus restrained gold overlay; the compact trigger and telescoping bipod remain attached. Visual review still finds trigger proportions, crown artwork scale, bipod silhouette, and global proportions below 0.90.",
+    "Medusa paint is a shell-only curved projection from supplied pixels; it is not used as structural geometry.",
+    "The thumbhole is a real extruded stock cut with a projection cutout; hidden thickness and interior hardware remain inferred."
+  ],
+  "failedGates": [
+    "unsupported-family:rifle",
+    "knife-adapter-missing",
+    "silhouetteIoU",
+    "painted-region:back-receiver",
+    "painted-region:optic-crown",
+    "critical-feature:awp-silhouette"
+  ]
+}

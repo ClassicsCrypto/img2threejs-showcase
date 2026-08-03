@@ -1,0 +1,20 @@
+{
+  "loop": 20,
+  "decision": "refine-code",
+  "confidence": {"macroEnvelope":0.90,"scopeContact":0.95,"sticker":0.95,"action":0.85,"muzzleBipod":0.90,"opticGlass":0.85},
+  "findings": [
+    {"id":"macro-local-profile","score":0.60,"status":"fail","note":"Use local non-linear taper/fillets; uniform scaling rejected."},
+    {"id":"scope-contact-rings","score":0.78,"status":"refine","note":"Contact visually sufficient after mount overlap; add hex-head fastener depth."},
+    {"id":"crown-medusa-projection","score":0.90,"status":"pass","note":"Orientation and authored surface binding hold."},
+    {"id":"bolt-trigger-magazine","score":0.72,"status":"refine","note":"Bolt rollback is source-fit; magazine remains coarse."},
+    {"id":"muzzle-bipod","score":0.82,"status":"refine","note":"Open bore/helix valid; expose bipod spigot."},
+    {"id":"optic-glass","score":0.74,"status":"refine","note":"Increase reflective glass response."}
+  ],
+  "evidence": [
+    ".img2threejs/research/notebooklm-loop20-24-angle-audit.md",
+    ".img2threejs/reviews/tier1-loop20.json",
+    ".img2threejs/reviews/multi-angle-loop20.json",
+    ".img2threejs/reviews/strict-quality-loop20.txt",
+    ".img2threejs/reviews/part-coverage-loop20.json"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "fixtureId": "cs2-rifle-awp-front-v1",
+  "rightsSafeStatus": "user-supplied-review-required",
+  "reference": "public/front-medusa.webp",
+  "identity": {
+    "family": "rifle",
+    "visibleRegions": ["stock", "receiver", "barrel", "bolt", "scope", "trigger", "magazine", "bipod", "muzzle"],
+    "criticalFeatures": ["awp-silhouette", "bolt-handle", "scope-and-rings", "trigger-guard", "folded-bipod", "medusa-pattern"],
+    "hiddenRegionStrategy": "infer-with-confidence",
+    "hiddenRegionConfidence": 0.25
+  },
+  "camera": {
+    "projection": "perspective",
+    "fovDegrees": 30,
+    "azimuthDegrees": 0,
+    "elevationDegrees": 0,
+    "rollDegrees": 0,
+    "target": [0.72, 0.25, 0]
+  },
+  "transform": {
+    "position": [0, 0, 0],
+    "rotationDegrees": [0, 0, 0],
+    "scale": [1, 1, 1]
+  },
+  "environment": {
+    "hash": "awp-medusa-neutral-lookdev-v1",
+    "exposure": 0.85,
+    "toneMapping": "ACESFilmic"
+  },
+  "resolution": {"width": 1600, "height": 900},
+  "background": "#03050a",
+  "rendererVersion": "three-r170",
+  "calibration": {
+    "status": "provisional-not-metric",
+    "positiveFixtures": [],
+    "negativeFixtures": []
+  },
+  "thresholds": {
+    "silhouetteIoU": 0.9,
+    "aspectRatioDelta": 0.05,
+    "scaleDelta": 0.08,
+    "finishMaterialResponse": 0.9,
+    "identityDetail": 0.9,
+    "paintedRegion": 0.9,
+    "projectionCoverage": 0.9,
+    "maxOrbitCollapseRatio": 0.15
+  }
+}

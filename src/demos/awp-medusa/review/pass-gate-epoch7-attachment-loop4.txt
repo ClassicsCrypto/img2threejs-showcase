@@ -1,0 +1,8 @@
+pass=blockout
+epoch=7
+loop=4
+status=blocked
+reason=Visual silhouette remains below tier-1 and 0.90 acceptance; attachment metadata gate passes.
+front=0.8115
+back=0.8007
+next_action=refine-code

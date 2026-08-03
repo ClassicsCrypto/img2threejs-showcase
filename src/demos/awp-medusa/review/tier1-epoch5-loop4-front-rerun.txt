@@ -1,0 +1,119 @@
+STATUS pass=blockout completed=0 blocked=none next=diagnose_render.py
+{
+  "passed": false,
+  "checks": {
+    "silhouetteIoU": 0.8179,
+    "aspectRatioDelta": 0.0376,
+    "scaleDelta": 0.0448,
+    "bilateralSymmetryError": 0.1425,
+    "colorDelta": {
+      "checked": 24,
+      "maxDeltaE": 13.81,
+      "perComponent": [
+        {
+          "componentId": null,
+          "deltaE": 12.66
+        },
+        {
+          "componentId": null,
+          "deltaE": 13.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 13.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 13.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.32
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.22
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 13.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.57
+        }
+      ],
+      "gated": false
+    }
+  },
+  "failures": [
+    "silhouette IoU 0.818 is below threshold 0.85",
+    "blockout requires --map-stripped-render evidence"
+  ],
+  "renderHash": "0f9e0d99f48d3695",
+  "passId": "blockout"
+}

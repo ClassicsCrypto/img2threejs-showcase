@@ -1,0 +1,2 @@
+ledger disagreement: blockout and later passes remain incomplete or failed their gates, so the review is retained as refine-code evidence.
+STATUS pass=blockout completed=0 blocked=none

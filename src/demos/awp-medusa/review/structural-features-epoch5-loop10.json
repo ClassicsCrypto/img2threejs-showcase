@@ -1,0 +1,11 @@
+[
+  {"id":"awp-silhouette","score":0.81,"threshold":0.9,"visible":true,"notes":"Deterministic masks are 0.8084 front and 0.8063 back; macro stock/receiver contour still needs correction."},
+  {"id":"thumbhole-stock","score":0.92,"threshold":0.9,"visible":true,"notes":"The opening is a real extruded oval cut with attached elliptical torus bevel strips on both stock walls; it no longer reads as a sharp circular drill-through."},
+  {"id":"scope-and-rings","score":0.92,"threshold":0.9,"visible":true,"notes":"Continuous-depth clamp frames, front/back fasteners, knurled turret, and coaxial cylinder collars now remain attached in orbit."},
+  {"id":"bolt-handle","score":0.89,"threshold":0.9,"visible":true,"notes":"Curved handle and ball remain on the corrected rearward exposed pivot/socket; hidden action depth is inferred."},
+  {"id":"bipod-spring","score":0.92,"threshold":0.9,"visible":true,"notes":"A continuous 12-turn TubeGeometry helix spans the source-visible spring region around the spine and terminates at a real collar/joint."},
+  {"id":"medusa-pattern-placement","score":0.93,"threshold":0.9,"visible":true,"notes":"Front/back shell projection remains source-bound on real shell geometry."},
+  {"id":"optic-crown-foil","score":0.94,"threshold":0.9,"visible":true,"notes":"Gold crown/skull uses the bounded saturation-isolated source projection on a thin objective-bell decal, with real foil/skull geometry underneath."},
+  {"id":"trigger-guard","score":0.91,"threshold":0.9,"visible":true,"notes":"Trigger and U-shaped guard remain visible as separate real geometry below the receiver."},
+  {"id":"orbit-side-finish","score":0.90,"threshold":0.9,"visible":true,"notes":"The inferred navy coated-steel side-wall material plus stronger rear fill preserves a readable gradient on Orbit Right; no source texture is claimed for hidden walls."}
+]

@@ -1,0 +1,9 @@
+{
+  "comparisonImage": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/comparison-epoch6-scope-final-front.png",
+  "referenceImage": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/assets/front-reference-projection.png",
+  "renderScreenshot": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/blockout-front.png",
+  "layout": "left=reference,right=render",
+  "panelWidth": 720,
+  "panelHeight": 720,
+  "note": "Send this image to AI vision for global, layer, and semantic feature scores; this script does not score."
+}

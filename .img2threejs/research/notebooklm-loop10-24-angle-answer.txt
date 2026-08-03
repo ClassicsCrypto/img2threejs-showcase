@@ -1,0 +1,75 @@
+This visual audit evaluates the Three.js procedural reconstruction of the CS2 AWP | Medusa (Minimal Wear) against the provided origin views and technical documentation for the Accuracy International (AI) platform.
+
+### 1. Overall Silhouette and Proportions
+*   **Finding:** The silhouette matches the general profile of an AI Arctic Warfare series rifle [1, 2]. Components appear physically joined across the orbit views (angle-01 to angle-24), though the receiver/stock transition appears more blocky than the origin views [3-5].
+*   **Evidence:** OBSERVED / SUPPORTED.
+*   **Confidence:** 0.9
+*   **Corrective Action:** Narrow the `BoxGeometry` width for the receiver to better match the "large wide square block" profile without over-scaling the stock envelope [3, 6].
+
+### 2. Scope Assembly
+*   **Finding:** The scope rings show a visible gap or ambiguous contact with the Picatinny rail in `scope-ring-contact-crop.png` [7]. Fasteners read as simple cubes rather than the hex-head or cap screws shown in reference manuals [8, 9]. The objective bell lacks the distinct taper and recessed reflective glass described in the brief [3].
+*   **Evidence:** OBSERVED / SUPPORTED.
+*   **Confidence:** 0.6
+*   **Corrective Action:** Adjust Y-offset to ensure ring bases intersect the rail; replace fasteners with `CylinderGeometry` representing cap screws [8].
+
+### 3. Crown/Skull Sticker
+*   **Finding:** The sticker appears on the objective bell as expected [4]. However, in render angle-10, it lacks the thin, integrated look of a foil decal and reads as a thicker geometry badge [10]. The orientation is correct (crown-up, skull-down) [3].
+*   **Evidence:** OBSERVED / INFERRED.
+*   **Confidence:** 0.7
+*   **Corrective Action:** Reduce the `depth` or Z-offset of the sticker decal to <0.1 units to ensure it reads as a thin attached layer.
+
+### 4. Receiver, Stock, and Bolt Assembly
+*   **Finding:** The bolt handle is correctly placed below and beside the scope [5, 11]. However, the handle length appears visually shorter than the origin views, potentially making it physically unusable for a standard grip [3, 5]. The magazine housing is present but lacks the refinement of the "double stack" profile [12, 13].
+*   **Evidence:** OBSERVED / SUPPORTED.
+*   **Confidence:** 0.8
+*   **Corrective Action:** Extend the bolt handle `CylinderGeometry` length and verify it remains parented to the bolt body during orbit.
+
+### 5. Barrel and Muzzle
+*   **Finding:** `muzzle-face-close.png` confirms the muzzle is modeled as an open shell with a reflective crown ring, but the bore itself is a flat black disk [10]. No recessed inner wall or bore depth is modeled [3].
+*   **Evidence:** OBSERVED.
+*   **Confidence:** 0.5
+*   **Corrective Action:** Use a nested `CylinderGeometry` with an inverted material or a boolean subtraction to create a recessed bore depth of at least 2.0 units.
+
+### 6. Bipod
+*   **Finding:** The coil springs in angle-10 do not read as continuous circular helixes; they appear as flat, disconnected fragments or simple zig-zags [10, 14]. The hinge plate and lock alignment are generally correct but lack technical depth [15, 16].
+*   **Evidence:** OBSERVED / SUPPORTED.
+*   **Confidence:** 0.4
+*   **Corrective Action:** Replace the current spring representation with a true Three.js `TubeGeometry` following a helical path.
+
+### 7. Medusa Paint/Projection
+*   **Finding:** The Medusa projection is correctly centered on the stock and receiver [4, 5]. Orbit views (e.g., angle-19) show the projection remaining attached, but visible stretching occurs at grazing angles near the thumbhole and safety lever housing [17].
+*   **Evidence:** OBSERVED.
+*   **Confidence:** 0.8
+*   **Corrective Action:** Refine UV unwrapping or projection masking for the stock's thumbhole region to minimize "pulling" of the Medusa texture [3].
+
+### 8. Material Classes
+*   **Finding:** The body correctly reads as a dark blue painted surface [4]. The scope glass, however, appears as an opaque matte black surface in orbit renders rather than recessed reflective glass [3, 14]. The buttpad lacks a rubberized, textured response [3, 11].
+*   **Evidence:** OBSERVED / SUPPORTED.
+*   **Confidence:** 0.7
+*   **Corrective Action:** Apply a high `metalness` and `roughness: 0` material to the scope lenses to simulate reflective glass.
+
+---
+
+**VERDICT: REFINE**
+
+**Five Highest-Priority Fixes:**
+1.  **Bipod Springs (Confidence 0.4):** Implement a continuous `TubeGeometry` helix for coil springs to replace disconnected fragments [18].
+2.  **Muzzle Bore (Confidence 0.5):** Model a physically recessed bore depth within the muzzle brake [3, 10].
+3.  **Scope Ring Contact (Confidence 0.6):** Eliminate the hover gap between the ring bases and the action rail [7].
+4.  **Scope Materials (Confidence 0.7):** Transition the opaque black scope faces to a reflective glass material class [3].
+5.  **Bolt Handle Proportions (Confidence 0.8):** Lengthen the bolt handle to match the origin view's usable grip ratio [3, 5].
+
+**Conflict Report:**
+*   *Visual Review Issue:* The current procedural metadata likely reports "attached" for the scope rings, but the visual render confirms a geometric gap at the rail contact point. This must be resolved in the geometry construction rather than the metadata layer.
+
+**Confidence by Region:**
+| Region | Confidence |
+| :--- | :--- |
+| Silhouette/Proportions | 0.9 |
+| Scope Assembly | 0.6 |
+| Crown/Skull Sticker | 0.7 |
+| Receiver/Stock/Bolt | 0.8 |
+| Barrel/Muzzle | 0.5 |
+| Bipod | 0.4 |
+| Medusa Paint | 0.8 |
+| Material Classes | 0.7 |

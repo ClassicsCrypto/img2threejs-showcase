@@ -1,0 +1,118 @@
+{
+  "passed": false,
+  "checks": {
+    "silhouetteIoU": 0.8113,
+    "aspectRatioDelta": 0.0232,
+    "scaleDelta": 0.0314,
+    "bilateralSymmetryError": 0.145,
+    "colorDelta": {
+      "checked": 24,
+      "maxDeltaE": 14.12,
+      "perComponent": [
+        {
+          "componentId": null,
+          "deltaE": 12.09
+        },
+        {
+          "componentId": null,
+          "deltaE": 14.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 14.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 14.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.16
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.52
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 14.12
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        },
+        {
+          "componentId": null,
+          "deltaE": 5.81
+        }
+      ],
+      "gated": false
+    }
+  },
+  "failures": [
+    "silhouette IoU 0.811 is below threshold 0.85"
+  ],
+  "renderHash": "af604a9586013d86",
+  "passId": "blockout",
+  "mapStrippedRender": "src/demos/awp-medusa/review/tier1-mapstripped-front.png"
+}

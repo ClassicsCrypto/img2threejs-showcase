@@ -1,0 +1,83 @@
+{
+  "ok": true,
+  "verdict": "pass",
+  "confidence": 0.87,
+  "estimatedFidelity": 0.87,
+  "targetThreshold": 0.7,
+  "materialId": "skin-finish",
+  "sourceImage": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/assets/front-paint.png",
+  "outDir": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/assets/pbr-front",
+  "palette": [
+    "#1C2737",
+    "#081220",
+    "#010205",
+    "#3F4953",
+    "#A2AFBA"
+  ],
+  "maps": {
+    "albedo": {
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/assets/pbr-front/skin-finish_albedo.png",
+      "url": "skin-finish_albedo.png",
+      "channel": "albedo",
+      "source": "reference-pixel-extraction"
+    },
+    "roughness": {
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/assets/pbr-front/skin-finish_roughness.png",
+      "url": "skin-finish_roughness.png",
+      "channel": "roughness",
+      "source": "reference-pixel-extraction"
+    },
+    "height": {
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/assets/pbr-front/skin-finish_height.png",
+      "url": "skin-finish_height.png",
+      "channel": "height",
+      "source": "reference-pixel-extraction"
+    },
+    "normal": {
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/assets/pbr-front/skin-finish_normal.png",
+      "url": "skin-finish_normal.png",
+      "channel": "normal",
+      "source": "reference-pixel-extraction"
+    },
+    "ao": {
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/assets/pbr-front/skin-finish_ao.png",
+      "url": "skin-finish_ao.png",
+      "channel": "ao",
+      "source": "reference-pixel-extraction"
+    }
+  },
+  "diagnostics": {
+    "sourceWidth": 1600,
+    "sourceHeight": 305,
+    "mapSize": 512,
+    "cropBBoxPixels": {
+      "x": 0,
+      "y": 157,
+      "width": 1600,
+      "height": 139
+    },
+    "mask": {
+      "backgroundColor": "#FFFFFF",
+      "backgroundNoise": 0.0,
+      "transparentPixelFraction": 0.6994,
+      "foregroundCoverage": 0.3022
+    },
+    "mapStats": {
+      "valueRange": 0.3255,
+      "heightP90Gradient": 0.12807,
+      "roughnessBase": 0.716,
+      "roughnessVariation": 0.201,
+      "normalStrength": 0.306,
+      "blurRadius": 10
+    },
+    "palette": [
+      "#1C2737",
+      "#081220",
+      "#010205",
+      "#3F4953",
+      "#A2AFBA"
+    ]
+  },
+  "warnings": [],
+  "limitation": "single-image PBR extraction is an estimate; 70%+ extraction confidence still needs render screenshot review"
+}

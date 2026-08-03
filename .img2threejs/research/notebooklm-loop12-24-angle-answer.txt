@@ -1,0 +1,78 @@
+### Loop 12 AWP | Medusa Visual Audit
+
+This audit evaluates the procedural Three.js reconstruction of the CS2 AWP | Medusa (Minimal Wear) against origin images (`front-medusa.webp`, `back-medusa.webp`), technical references, and focused QA renders.
+
+---
+
+#### 1. Macro Silhouette/Proportions
+*   **Finding:** The overall silhouette is compromised by a **truncated barrel** and a **blocky stock/receiver** profile that lacks the characteristic ergonomic tapering of the Accuracy International (AI) platform [1, 2]. The wider framing experiment is **VALID** for geometry verification as it ensures the stock and muzzle are fully visible, which was a failure point in previous loops [3, 4].
+*   **Evidence:** OBSERVED (Renders vs. `front-medusa.webp`).
+*   **Confidence:** 0.9
+*   **Corrective Action:** Increase `barrel.scale.z` by ~15% and refine the stock's Three.js `ShapeGeometry` to include the rounded ergonomic contours documented in the user manual [2].
+
+#### 2. Scope Construction
+*   **Finding:** The scope assembly is the most significant failure. The **mount is floating** above the rail, and the **rings are blocky primitives** rather than the contoured saddles seen in technical references [5, 6]. The objective bell lacks a recessed lens; it reads as a flat, dark cap [7, 8].
+*   **Evidence:** OBSERVED (`scope-ring-contact-crop.png`, `angle-10-white.png`).
+*   **Confidence:** 1.0
+*   **Corrective Action:** Re-parent rings to scope body and rail; replace box primitives with a custom `ExtrudeGeometry` profile matching the AI one-piece mount [5, 9]. Add a reflective `MeshStandardMaterial` with `envMap` to a recessed disk at the objective/eyepiece [3].
+
+#### 3. Crown/Skull Sticker
+*   **Finding:** The sticker on the objective bell is correctly oriented **crown-up/skull-down** [10]. However, it reads as a flat decal with no foil-like specular response to the grazing angles in the orbit [7, 11-33].
+*   **Evidence:** OBSERVED (Renders vs. `back-medusa.webp`).
+*   **Confidence:** 0.8
+*   **Corrective Action:** Apply a `foil` texture to the `MetalnessMap` of the sticker material to allow foil response during orbit.
+
+#### 4. Receiver/Stock Details
+*   **Finding:** The **thumbhole lacks the required bevel**, reading as a sharp boolean cut [1, 4]. The **trigger guard is floating** or misaligned with the trigger shoe parent [6]. The magazine is missing its structural side-ribbing [34, 35].
+*   **Evidence:** OBSERVED (`scope-ring-contact-crop.png`).
+*   **Confidence:** 0.9
+*   **Corrective Action:** Apply a `Bevel` parameter to the thumbhole's Three.js `Shape` and snap the trigger guard mesh to the receiver-chassis socket [36, 37].
+
+#### 5. Barrel/Muzzle
+*   **Finding:** The muzzle is an **open shell** rather than a solid component. The inner bore surface is not modeled, and the silver muzzle lip appears as a **floating, unparented ring** in the close-up [8].
+*   **Evidence:** OBSERVED (`muzzle-face-close.png`).
+*   **Confidence:** 1.0
+*   **Corrective Action:** Model the muzzle as a solid cylinder with a `boolean` operation for the bore; weld the silver lip geometry to the muzzle face parent [38, 39].
+
+#### 6. Bipod Assembly
+*   **Finding:** While `TubeGeometry` is used for the springs, they do not read as a **continuous 3D helix**. Instead, they appear as a series of disconnected fragments or overlapping rings [7, 8]. The hinge plate is undersized compared to the real AI bipod [40, 41].
+*   **Evidence:** OBSERVED (`angle-10-white.png`, `muzzle-face-close.png`).
+*   **Confidence:** 0.9
+*   **Corrective Action:** Re-calculate the `Curve` for the `TubeGeometry` to ensure a continuous helical path; scale the hinge plate to match the forend width [42].
+
+#### 7. Medusa Paint
+*   **Finding:** The paint continuity is generally high, but there is visible **stretching** around the thumbhole's interior faces where the procedural projection meets the sharp edge [7, 11-33].
+*   **Evidence:** OBSERVED (`angle-10-white.png`).
+*   **Confidence:** 0.7
+*   **Corrective Action:** Adjust UV mapping for the thumbhole region to utilize a tri-planar projection to eliminate edge stretching.
+
+#### 8. Materials
+*   **Finding:** The **dark blue paint** lacks the semi-gloss finish associated with "Minimal Wear" items, reading more like matte polymer. The **reflective glass** is missing entirely [3, 4].
+*   **Evidence:** OBSERVED (Renders).
+*   **Confidence:** 0.8
+*   **Corrective Action:** Increase `roughness` to ~0.3 for the blue body and decrease to ~0.05 for scope glass surfaces.
+
+---
+
+### VERDICT: **BLOCKED**
+
+The audit is blocked by **Macro Silhouette Gate Failure** (short barrel, blocky stock) and **Mechanical Attachment Failure** (floating scope and muzzle components). The wider framing experiment should be **RETAINED** but the camera distance must be calibrated to a fixed AWP length to resolve the barrel proportion issue.
+
+#### Five Ordered Fixes:
+1.  **SNAP COMPONENTS:** Snap scope rings to rail and muzzle lip to muzzle face; fix the floating trigger guard.
+2.  **BARREL PROPORTIONS:** Extend barrel length and implement a deep boolean bore opening at the muzzle.
+3.  **SCOPE SADDLES:** Replace box-primitive rings with contoured saddle geometry matching technical references.
+4.  **STOCK ERGONOMICS:** Apply bevels to the thumbhole and round the receiver/stock edges using refined `Shape` paths.
+5.  **CONTINUOUS HELIX:** Repair the bipod spring `TubeGeometry` path to ensure it reads as a single helical coil.
+
+#### Confidence Table
+| Region | Label | Confidence |
+| :--- | :--- | :--- |
+| Silhouette/Proportions | OBSERVED | 0.90 |
+| Scope Assembly | OBSERVED | 1.00 |
+| Sticker Orientation | OBSERVED | 0.85 |
+| Receiver/Stock | SUPPORTED | 0.90 |
+| Barrel/Muzzle | OBSERVED | 1.00 |
+| Bipod Mechanism | SUPPORTED | 0.90 |
+| Medusa Texture | OBSERVED | 0.75 |
+| Material Response | INFERRED | 0.80 |

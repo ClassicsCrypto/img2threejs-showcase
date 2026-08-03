@@ -1,0 +1,11 @@
+[
+  {"id":"awp-silhouette","score":0.70,"visible":true,"notes":"Macro silhouette remains identifiable but unchanged; deterministic IoU 0.4946 and aspect delta 0.2333 remain hard failures."},
+  {"id":"scope-and-rings","score":0.91,"visible":true,"notes":"Loop11 contact crop shows the lowered ring saddles and mounts physically meeting/intersecting the rail/tooth region; fasteners remain separate machined components."},
+  {"id":"scope-glass","score":0.89,"visible":true,"notes":"Glass material is brighter, low-roughness and reflective with recessed objective/eyepiece faces; exact studio reflection remains approximate."},
+  {"id":"bolt-handle","score":0.88,"visible":true,"notes":"Bolt remains receiver-parented below the optic and the handle/knob is visibly longer and usable; exact real-platform bend/station remains approximate."},
+  {"id":"trigger-guard-thumbhole","score":0.80,"visible":true,"notes":"Guard reads as a bright beveled metal loop at the receiver/stock junction; trigger shape and stock transition remain approximate."},
+  {"id":"bipod-spring-attachment","score":0.89,"visible":true,"notes":"Higher TubeGeometry sampling plus a lighter spring material makes the true circular helix readable; hinge, telescoping rails and feet remain attached, but source-specific folded proportions need refinement."},
+  {"id":"medusa-orbit-continuity","score":0.78,"visible":true,"notes":"Medusa remains on authored stock/receiver surfaces; grazing seam at the thumbhole/receiver boundary is still visible."},
+  {"id":"crown-sticker","score":0.86,"visible":true,"notes":"Crown-up/skull-down orientation and conforming objective placement hold in the current orbit set; thin foil contact remains approximate."},
+  {"id":"muzzle-bore","score":0.93,"visible":true,"notes":"Direct muzzle-face close-up now shows the open shell, crown/lip, open inner wall and a deeper back surface; exact brake slot profile remains approximate."}
+]

@@ -1,0 +1,7 @@
+epoch=8
+loop=8
+pass=blockout
+status=blocked-by-ledger-disagreement
+reason=Blockout remains below visual gates; spring refinement is recorded without advancing the pass.
+attachment_gate=11 required world-space seam pairs passed with maxGap=0; 12 attachment metadata records passed.
+next_required_work=Refine bipod hinge/lock/feet and trigger profile against source crops, then repeat strict and CS2 rifle gates.

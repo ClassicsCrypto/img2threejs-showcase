@@ -1,0 +1,7 @@
+[
+  {"id":"awp-silhouette","score":0.81,"threshold":0.9,"visible":true,"notes":"Two-view contour remains below target."},
+  {"id":"thumbhole-stock","score":0.92,"threshold":0.9,"visible":true,"notes":"Real extruded stock cut remains recognizable."},
+  {"id":"scope-and-rings","score":0.88,"threshold":0.9,"visible":true,"notes":"Matte scope response and envelope-preserving ocular taper improved from crop evidence; ring silhouette remains approximate."},
+  {"id":"bolt-handle","score":0.88,"threshold":0.9,"visible":true,"notes":"Curved volumetric handle and ball are attached; hidden action depth is inferred."},
+  {"id":"medusa-pattern-placement","score":0.93,"threshold":0.9,"visible":true,"notes":"Front/back projection remains source-bound on real shell geometry."}
+]

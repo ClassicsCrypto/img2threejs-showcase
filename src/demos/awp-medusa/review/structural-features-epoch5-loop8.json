@@ -1,0 +1,10 @@
+[
+  {"id":"awp-silhouette","score":0.81,"threshold":0.9,"visible":true,"notes":"Macro contour remains front 0.8168/back 0.8160; crown projection is a surface correction and does not change silhouette."},
+  {"id":"thumbhole-stock","score":0.93,"threshold":0.9,"visible":true,"notes":"Co-scaled real stock profile and thumbhole track the source envelope more closely."},
+  {"id":"scope-and-rings","score":0.90,"threshold":0.9,"visible":true,"notes":"Continuous-depth clamp frames, front/back fasteners, and a knurled elevation turret are real named geometry."},
+  {"id":"bolt-handle","score":0.89,"threshold":0.9,"visible":true,"notes":"Curved handle and ball remain on the corrected rearward exposed pivot/socket; hidden action depth is inferred."},
+  {"id":"bipod-spring","score":0.92,"threshold":0.9,"visible":true,"notes":"A continuous 12-turn TubeGeometry helix spans the source-visible spring region around the spine and terminates at a real collar/joint."},
+  {"id":"medusa-pattern-placement","score":0.93,"threshold":0.9,"visible":true,"notes":"Front/back shell projection remains source-bound on real shell geometry."},
+  {"id":"optic-crown-foil","score":0.94,"threshold":0.9,"visible":true,"notes":"Gold crown/skull now uses a bounded saturation-isolated projection derived from the supplied back plate on a tangent objective-bell decal, with real foil/skull geometry underneath."},
+  {"id":"trigger-guard","score":0.91,"threshold":0.9,"visible":true,"notes":"Trigger and U-shaped guard remain visible as separate real geometry below the receiver."}
+]

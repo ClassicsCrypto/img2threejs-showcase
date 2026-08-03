@@ -1,0 +1,132 @@
+{
+  "count": 18,
+  "generatedAt": "2026-08-02T14:28:24.030Z",
+  "views": [
+    {
+      "id": "01-front-broadside",
+      "url": "?capture=1#/demo/awp-medusa",
+      "dx": 0,
+      "dy": 0,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/01-front-broadside.png"
+    },
+    {
+      "id": "02-back-broadside",
+      "url": "?capture=1&back=1#/demo/awp-medusa",
+      "dx": 0,
+      "dy": 0,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/02-back-broadside.png"
+    },
+    {
+      "id": "03-orbit-left-low",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": -0.64,
+      "dy": -0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/03-orbit-left-low.png"
+    },
+    {
+      "id": "04-orbit-left-low",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": -0.48,
+      "dy": -0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/04-orbit-left-low.png"
+    },
+    {
+      "id": "05-orbit-left-low",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": -0.32,
+      "dy": -0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/05-orbit-left-low.png"
+    },
+    {
+      "id": "06-orbit-left-low",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": -0.16,
+      "dy": -0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/06-orbit-left-low.png"
+    },
+    {
+      "id": "07-orbit-right-low",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": 0.16,
+      "dy": -0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/07-orbit-right-low.png"
+    },
+    {
+      "id": "08-orbit-right-low",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": 0.32,
+      "dy": -0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/08-orbit-right-low.png"
+    },
+    {
+      "id": "09-orbit-right-low",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": 0.48,
+      "dy": -0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/09-orbit-right-low.png"
+    },
+    {
+      "id": "10-orbit-right-low",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": 0.64,
+      "dy": -0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/10-orbit-right-low.png"
+    },
+    {
+      "id": "11-orbit-left-high",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": -0.64,
+      "dy": 0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/11-orbit-left-high.png"
+    },
+    {
+      "id": "12-orbit-left-high",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": -0.48,
+      "dy": 0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/12-orbit-left-high.png"
+    },
+    {
+      "id": "13-orbit-left-high",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": -0.32,
+      "dy": 0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/13-orbit-left-high.png"
+    },
+    {
+      "id": "14-orbit-left-high",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": -0.16,
+      "dy": 0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/14-orbit-left-high.png"
+    },
+    {
+      "id": "15-orbit-right-high",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": 0.16,
+      "dy": 0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/15-orbit-right-high.png"
+    },
+    {
+      "id": "16-orbit-right-high",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": 0.32,
+      "dy": 0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/16-orbit-right-high.png"
+    },
+    {
+      "id": "17-orbit-right-high",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": 0.48,
+      "dy": 0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/17-orbit-right-high.png"
+    },
+    {
+      "id": "18-orbit-right-high",
+      "url": "?reviewWhite=1#/demo/awp-medusa",
+      "dx": 0.64,
+      "dy": 0.22,
+      "path": "/Users/tamlh/workspaces/self/AI/img2threejs-org/img2threejs-showcase/src/demos/awp-medusa/review/audit-18/18-orbit-right-high.png"
+    }
+  ]
+}

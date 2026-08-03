@@ -1,0 +1,6 @@
+pass=blockout
+epoch=8
+loop=6
+status=blocked
+reason=Forward magazine shift was rejected by side-by-side IoU and rolled back; source-fit magazine now passes attachment contact, but front/back silhouette and trigger/bipod/crown identity gates remain below 0.90.
+next_action=refine-code

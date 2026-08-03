@@ -1,0 +1,73 @@
+### Loop 14 AWP | Medusa Visual Audit Report
+
+This audit evaluates the procedural Three.js reconstruction against origin views (`front-medusa.webp`, `back-medusa.webp`) and technical specifications.
+
+---
+
+#### 1. Overall Proportions (Stock/Receiver/Barrel/Muzzle/Optic)
+*   **Visible Finding**: The barrel assembly appears significantly elongated relative to the receiver/stock mass compared to origin images [1, 2]. While loop 14 corrected the root vertical scale to 0.736, the longitudinal ratio is skewed.
+*   **Evidence Label**: **OBSERVED** (Visual comparison of `angle-24-white.png` vs `front-medusa.webp`).
+*   **Confidence**: 0.85
+*   **Smallest Corrective Action**: Reduce barrel Z-scale and check if stock/receiver requires a slight longitudinal increase to meet the documented 1120mm overall length [3]. **Assessment**: Remaining macro mismatch is primarily **barrel over-length**.
+
+#### 2. Scope & Mounting (Rail/Rings/Turrets/Glass)
+*   **Visible Finding**: Scope rings are modeled as thin vertical posts lacking the robust "one-piece" saddle geometry seen in AI technical references [4-6]. Turret knobs appear undersized and lack the "ultra-slim" but functional profile of the Schmidt & Bender High Power series [7]. The objective taper lacks a recessed front lens mesh.
+*   **Evidence Label**: **OBSERVED** (`scope-ring-contact-crop.png`, `angle-01-white.png`).
+*   **Confidence**: 0.95
+*   **Smallest Corrective Action**: Re-model rings with curved internal saddles and hex-head fasteners; add a recessed refractive disc for the objective lens.
+
+#### 3. Sticker Contact & Foil (Crown/Medusa)
+*   **Visible Finding**: The crown sticker on the objective bell is present but its orientation requires verification for "crown-up, skull-down" correctness as per the brief [1, 8]. Medusa continuity across the thumbhole and receiver seams shows visible breaks in the procedural wrap.
+*   **Evidence Label**: **OBSERVED** (`angle-10-white.png` showing wrap seams).
+*   **Confidence**: 0.75
+*   **Smallest Corrective Action**: Re-project Medusa texture using authored UV coordinate offsets to bridge the thumbhole bevel and receiver gaps.
+
+#### 4. Thumbhole/Trigger/Bolt/Magazine
+*   **Visible Finding**: The bolt handle is significantly under-scaled, providing insufficient visual "grip" area compared to the real 20mm bolt body [2, 9]. The trigger guard appears blocky and lacks the "winter trigger guard" refined curvature [6, 10].
+*   **Evidence Label**: **OBSERVED** (`scope-ring-contact-crop.png`, `front-medusa.webp`).
+*   **Confidence**: 0.90
+*   **Smallest Corrective Action**: Increase bolt handle spherical diameter and stem thickness; apply a radius bevel to the trigger guard edges.
+
+#### 5. Muzzle & Bore
+*   **Visible Finding**: The muzzle brake is currently a thin, open-ended shell with no internal wall or modeled deep bore [11]. It lacks the match-grade crown/lip geometry essential for realism.
+*   **Evidence Label**: **OBSERVED** (`muzzle-face-close.png`).
+*   **Confidence**: 1.0
+*   **Smallest Corrective Action**: Boolean a deep cylinder for the bore and add an internal wall mesh within the brake shell.
+
+#### 6. Bipod Assembly
+*   **Visible Finding**: The compression coil spring is rendered as a simple tube or flat texture, lacking "true helix readability" [2, 12]. Bipod feet are floating or simplified into flat discs rather than the documented telescoping foot units [13, 14].
+*   **Evidence Label**: **OBSERVED** (`angle-10-white.png`).
+*   **Confidence**: 0.85
+*   **Smallest Corrective Action**: Replace spring mesh with a Three.js `TubeGeometry` helix; add collar geometry to the telescoping leg joins.
+
+#### 7. Surface Responses (Navy/Metal/Glass/Foil)
+*   **Visible Finding**: Metallic parts (bolt, barrel) and painted navy stock have similar specular responses in white-room renders, failing to distinguish between the matte scuff-resistant reinforced nylon and the match-grade stainless steel [5, 15].
+*   **Evidence Label**: **INFERRED** (Based on flat response in `angle-01` through `angle-24`).
+*   **Confidence**: 0.70
+*   **Smallest Corrective Action**: Increase Metalness/Roughness delta between the receiver (high metallic) and stocksides (high roughness).
+
+---
+
+### VERDICT: REFINE
+
+The deterministic aspect/scale now passes, but silhouette IoU remains low (0.532) due to internal component coarseness and barrel elongation.
+
+#### Five Ordered Fixes:
+1.  **Macro**: Reduce barrel Z-length to match `front-medusa.webp` profile.
+2.  **Muzzle**: Model internal bore and brake wall thickness.
+3.  **Optic**: Re-model scope rings into robust saddles with fasteners.
+4.  **Action**: Scale up bolt handle and refine trigger guard curvature.
+5.  **Bipod**: Implement true helix geometry for the compression spring.
+
+#### Conflicts with Gates:
+*   **Pivot Gate**: Scaling the bolt handle may conflict with the current receiver-parented rotation pivot if not re-centered.
+*   **Tick Gate**: Muzzle bore depth must be limited to prevent Z-fighting with internal barrel geometry.
+
+#### Confidence Table:
+| Region | Status | Confidence | Evidence |
+| :--- | :--- | :--- | :--- |
+| Macro Silhouette | REFINE | 0.85 | `angle-24` vs origin views |
+| Scope Mounting | REFINE | 0.95 | `scope-ring-contact-crop.png` |
+| Muzzle/Bore | BLOCKED | 1.0 | `muzzle-face-close.png` |
+| Bipod Spring | REFINE | 0.85 | `angle-10` |
+| Bolt/Handle | REFINE | 0.90 | `scope-ring-contact-crop.png` |

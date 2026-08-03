@@ -1,0 +1,39 @@
+**Status: REFINE**
+**Confidence: 0.9**
+
+The Loop 20 audit of the Three.js AWP | Medusa reconstruction confirms a successful restoration of the bolt handle proportions, but the model requires further local geometric refinement to meet Tier-1 silhouette and symmetry thresholds. While the build is non-degenerate and parts coverage is complete (113 parts), the current `silhouetteIoU=0.5425` and `aspectRatioDelta=0.0633` indicate that macro-scale blockiness remains a primary obstacle [1].
+
+### 1. Macro Receiver, Stock, and Barrel Profile
+*   **OBSERVED:** The procedural renders (Angles 01–24) confirm the receiver and stock still exhibit a "blocky" read compared to the tapered, organic transitions seen in the origin front/back images [2, 3].
+*   **SUPPORTED:** Technical specifications for the Accuracy International AWP/AW series define an overall length of 1120mm with a 24" barrel [4, 5]. The current `aspectRatioDelta` suggests the model is slightly compressed or over-volumed in the Y-axis.
+*   **REFINE PLAN:** Rather than uniform thinning (rejected in Loop 17), implement a non-linear taper on the receiver’s upper shoulders and the stock’s thumbhole-to-buttpad transition to better match the origin silhouette [1, 3].
+
+### 2. Scope, Rings, and Mount Physical Contact
+*   **OBSERVED:** The focused scope-ring-contact crop [6] and orbit renders (e.g., Angle 01, Angle 07) show the mount effectively overlapping the Picatinny rail with the Loop 18 clamp split seam visible [7, 8].
+*   **SUPPORTED:** Technical manuals emphasize that the mount’s recoil pin must rest against the front edge of the recoil pocket to prevent zero shift [9, 10].
+*   **INFERRED:** The current overlap is visually sufficient for a game-item reconstruction, though the ring fasteners (screws) lack the distinct hex-head depth seen in technical diagrams [6, 11].
+
+### 3. Crown and Medusa Decal Integrity
+*   **OBSERVED:** The crown decal on the objective bell is correctly orientated (crown-up, skull-down) and follows the objective taper [2]. The Medusa skin remains source-bound on authored shell meshes across all 24 angles [7, 8, 12-33].
+*   **SUPPORTED:** The brief mandates that the decal must remain attached across front, back, and orbit views without floating [1].
+*   **INFERRED:** Material separation between the matte scope body and the reflective glass surfaces is present but needs higher specular intensity to read as "reflective glass" in Three.js renders [1, 34].
+
+### 4. Bolt, Trigger, and Magazine Relationships
+*   **OBSERVED:** Loop 20 has successfully rolled back the bolt handle length to source-fit proportions, preventing the "trigger bow" misread seen in Loop 19 [1, 3].
+*   **SUPPORTED:** The bolt handle is correctly receiver-parented, consistent with the Accuracy International 60° short-throw action [4, 35].
+*   **INFERRED:** The magazine geometry, while present, reads as "coarse" in the orbits; adding a slight fillet to the baseplate and a visible magazine release catch (Part H) would improve the macro profile [35-37].
+
+### 5. Muzzle Bore and Bipod Readability
+*   **OBSERVED:** The muzzle-face crop [38] and Angle 10 [39] show a clearly modeled open bore with an inner wall and deeper back, a significant improvement over previous loops.
+*   **SUPPORTED:** The bipod features a true TubeGeometry helix for the spring and correctly placed feet [1, 3].
+*   **INFERRED:** While the hinge and lock are readable, the "spigot" attachment point into the forend socket (Part J) is visually submerged; increasing the longitudinal gap between the hinge plate and the forend would enhance mechanical readability [36, 40].
+
+### 6. Unknowable Defects and Tier-1 Deficiencies
+*   **UNKNOWN:** Internal chamber geometry, the exact underside of the trigger housing, and the top-down rail channel dimensions cannot be verified from the two broadside source images [2, 3].
+*   **OBSERVED:** Remaining deficiencies that contribute to the failed Tier-1 metrics include the high `bilateralSymmetryError=0.1635`, likely caused by asymmetric decal shells or the bolt handle pivot offset not being compensated for in the symmetry calculation.
+
+**Recommended Safe Plan:** 
+1.  **Refine** the stock thumbhole and receiver shoulder fillets to reduce "blockiness" and lower `aspectRatioDelta`.
+2.  **Increase** specular/metalness on the objective and ocular lens meshes.
+3.  **Adjust** the bipod spigot depth to make the attachment point more distinct. 
+4.  **Do not** claim Tier-1 PASS until `silhouetteIoU` exceeds 0.60.

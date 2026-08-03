@@ -1,0 +1,42 @@
+[
+  {
+    "id": "scope-rings-hardware",
+    "score": 0.86,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.99,
+    "notes": "Two rings now read as machined collars with rounded torus edges, clamp tops, saddles, rail mounts, and screws. They are seated on the tube, but the source clamp plates and screw scale remain more substantial."
+  },
+  {
+    "id": "scope-crown-surface-contact",
+    "score": 0.88,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.98,
+    "notes": "The source gold/skull projection follows the objective bell in x and y curvature and survives right/top orbit without an air gap. It is clearer after the 1.08x scale, but still softer and less foil-detailed than the source."
+  },
+  {
+    "id": "attachment-contract-audit",
+    "score": 0.99,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.99,
+    "notes": "11 world-space seam pairs pass at maxGap 0; the gate now measures actual meshes instead of parent groups that contain their children. 12 attachment records pass required metadata."
+  },
+  {
+    "id": "front-back-macro-silhouette",
+    "score": 0.81,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.99,
+    "notes": "Full 16:9 comparison remains recognizable, but receiver, lower assembly, bipod, and stock/receiver envelope still diverge from the supplied broadside silhouettes; deterministic IoU is 0.8113 front and 0.8004 back."
+  },
+  {
+    "id": "bolt-trigger-bipod-assembly",
+    "score": 0.78,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.95,
+    "notes": "Bolt is below the optic and trigger guard is attached under the receiver; the bipod has a real helix, hinge, lock, telescoping tubes, and feet. All remain mechanically sparse or proportionally off versus the source and are queued for isolated correction loops."
+  }
+]

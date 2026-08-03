@@ -1,0 +1,6 @@
+pass=blockout
+epoch=8
+loop=3
+status=blocked
+reason=Trigger profile improved but magazine underfills silhouette; front/back remain below 0.85 and strict target 0.90.
+next_action=refine-code

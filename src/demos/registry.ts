@@ -43,6 +43,11 @@ import {
   createGlockGhostProtocolLookDevLights,
   makeGhostProtocolBackground,
 } from './glock-ghost-protocol/createGlockGhostProtocolModel';
+import {
+  createAwpMedusaModel,
+  createAwpMedusaLookDevLights,
+  makeAwpMedusaBackground,
+} from './awp-medusa/createAwpMedusaModel';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -84,12 +89,70 @@ export interface DemoEntry {
   installLights?: (scene: THREE.Scene) => void;
   /** Adds the model (and any demo-specific lights) to the scene, returns the group. */
   build: (scene: THREE.Scene) => THREE.Group;
+  /** Optional deterministic capture framing margin for source plates with tight bounds. */
+  captureMargin?: number;
+  /** Optional vertical framing correction as a fraction of the measured subject bbox height. */
+  captureTargetOffsetY?: number;
+  /** Optional reverse-view vertical correction for asymmetric source padding. */
+  captureTargetOffsetYBack?: number;
+  /** Optional capture-only world-X correction for asymmetric transparent source padding. */
+  captureTargetOffsetX?: number;
+  /** Optional reverse-view capture correction; the back plate has different transparent padding. */
+  captureTargetOffsetXBack?: number;
 }
 
 const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/hoainho/img2threejs-showcase/blob/main';
 
 export const demos: DemoEntry[] = [
+  {
+    id: 'awp-medusa',
+    title: 'AWP | Medusa (Minimal Wear)',
+    subjectClass: 'object',
+    blurb:
+      'A procedural CS2 AWP rebuilt from opposing FRONT/BACK broadside references. The long bolt-action silhouette, thumbhole stock, receiver/barrel axis, scope and rings, bolt handle, trigger group, muzzle device, folded bipod, real fasteners, and visible seams are separate geometry. The dark navy painted shell uses shell-only de-lit reference projections for the blue-green Medusa artwork on both sides, while bare metal, optic, polymer, gloss, restrained Minimal Wear, and tone-mapping limits remain separate material responses. Hidden thickness and internals are explicitly inferred from the two-view evidence. Live: a restrained studio idle with exposed bolt, magazine, muzzle, bipod, and scope sockets.',
+    referenceImage: `${BASE}front-medusa.webp`,
+    sourcePath: 'src/demos/awp-medusa/createAwpMedusaModel.ts',
+    sourceUrl: `${REPO}/src/demos/awp-medusa/createAwpMedusaModel.ts`,
+    generatedWith: 'img2threejs v1.4.4-beta.3 · cs2-rifle-v1',
+    author: 'Codex',
+    authorUrl: 'https://github.com/hoainho/img2threejs',
+    status: 'final',
+    // Revert the loop12 wide-margin experiment: its full-object framing was
+    // visually useful, but it worsened the deterministic silhouette scale
+    // gate. Keep the acceptance camera at the prior measured fit until the
+    // geometry envelope itself is corrected.
+    cameraPosition: [0.51, 0.49, 5.8],
+    cameraTarget: [0.72, 0.25, 0],
+    cameraFov: 30,
+    captureMargin: 0.982,
+    captureTargetOffsetY: 0.083,
+    captureTargetOffsetYBack: 0.083,
+    captureTargetOffsetX: 0.03,
+    captureTargetOffsetXBack: 0.006,
+    accent: '#155c8d',
+    backgroundGradient: { inner: '#0c1727', outer: '#02030a' },
+    exposure: 0.85,
+    environmentIntensity: 0.72,
+    toneMapping: 'aces',
+    installLights: (scene) => {
+      scene.add(createAwpMedusaLookDevLights());
+    },
+    build: (scene) => {
+      scene.background = makeAwpMedusaBackground();
+      const group = createAwpMedusaModel({ shadows: true });
+      scene.add(group);
+      let t = 0;
+      group.userData.tick = (dt: number) => {
+        t += dt;
+        group.rotation.y = Math.sin(t * 0.25) * 0.08;
+        group.rotation.x = Math.sin(t * 0.17) * 0.018;
+        const boltPivot = group.getObjectByName('boltPivot');
+        if (boltPivot) boltPivot.position.x = Math.sin(t * 0.55) * 0.008;
+      };
+      return group;
+    },
+  },
   {
     id: 'glock-ghost-protocol',
     title: 'Glock-18 | Ghost Protocol (Well-Worn)',

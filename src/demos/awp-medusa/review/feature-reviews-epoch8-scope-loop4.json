@@ -1,0 +1,9 @@
+[
+  {"id":"scope-ring-attachment","score":0.94,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"Two coaxial torus clamp rings now wrap the optic tube and connect through saddles to the rail; all ring/tube seam checks pass."},
+  {"id":"scope-crown-decal","score":0.84,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"The source crown/skull crop is conformed to the objective bell surface, but the printed artwork remains too small/soft in the broadside comparison."},
+  {"id":"trigger-guard-profile","score":0.86,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"Compact through-depth guard is visible and attached to the receiver, but the lower profile and trigger proportions remain approximate."},
+  {"id":"magazine-envelope","score":0.84,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Restored envelope improves source match over loop 3, but ribs/floorplate and placement remain too subdued in the broadside render."},
+  {"id":"bolt-receiver-placement","score":0.91,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"Bolt is receiver-parented, below the optic, and remains seated through the orbit captures."},
+  {"id":"bipod-hinge-compression-spring","score":0.80,"threshold":0.90,"visible":true,"confidence":0.93,"notes":"The helix is genuine tube geometry with hinge, lock, telescoping rails, collars, and feet, but the folded silhouette is still not source-accurate."},
+  {"id":"attachment-contract-audit","score":0.98,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"10 world-space seam pairs pass at maxGap 0 and 11 attachment records pass required metadata; scope rings and crown are now covered."}
+]

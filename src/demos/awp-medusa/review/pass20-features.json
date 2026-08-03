@@ -1,0 +1,32 @@
+[
+  {
+    "id": "awp-silhouette",
+    "score": 0.81,
+    "visible": true,
+    "notes": "Final correction-epoch fixed-view IoU is 0.7864 after receiver depth 0.50; it remains below the strict 0.85 gate."
+  },
+  {
+    "id": "thumbhole-stock",
+    "score": 0.93,
+    "visible": true,
+    "notes": "The stock is a beveled real extrusion with a near-circular thumbhole calibrated to rx=.18 and ry=.26 after root Y compression."
+  },
+  {
+    "id": "scope-and-rings",
+    "score": 0.93,
+    "visible": true,
+    "notes": "Optic tube, bells, turret, squared ring bars, saddles, mounts, and screws remain separate named geometry."
+  },
+  {
+    "id": "barrel-and-folded-bipod",
+    "score": 0.90,
+    "visible": true,
+    "notes": "The barrel/muzzle remain on the observed fore-end axis; folded bipod geometry stays a real hinge, rods, spring, and feet assembly."
+  },
+  {
+    "id": "medusa-pattern-placement",
+    "score": 0.93,
+    "visible": true,
+    "notes": "Front and back supplied projections remain shell-only and are mapped to the real stock, receiver, and grip surfaces."
+  }
+]

@@ -1,0 +1,117 @@
+{
+  "passed": false,
+  "checks": {
+    "silhouetteIoU": 0.8115,
+    "aspectRatioDelta": 0.0092,
+    "scaleDelta": 0.0179,
+    "bilateralSymmetryError": 0.1512,
+    "colorDelta": {
+      "checked": 24,
+      "maxDeltaE": 14.29,
+      "perComponent": [
+        {
+          "componentId": null,
+          "deltaE": 11.63
+        },
+        {
+          "componentId": null,
+          "deltaE": 14.29
+        },
+        {
+          "componentId": null,
+          "deltaE": 14.29
+        },
+        {
+          "componentId": null,
+          "deltaE": 14.29
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 4.28
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.94
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 14.29
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        },
+        {
+          "componentId": null,
+          "deltaE": 6.9
+        }
+      ],
+      "gated": false
+    }
+  },
+  "failures": [
+    "silhouette IoU 0.811 is below threshold 0.85"
+  ],
+  "renderHash": "08ad69832eb82b56",
+  "passId": "epoch7-attachment-loop2-front"
+}

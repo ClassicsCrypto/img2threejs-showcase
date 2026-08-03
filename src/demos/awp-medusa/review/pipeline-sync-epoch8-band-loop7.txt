@@ -1,0 +1,7 @@
+epoch=8
+loop=7
+pass=blockout
+status=blocked-by-ledger-disagreement
+reason=Blockout remains below visual gates; attachment correction is recorded but no later pass is credited.
+attachment_gate=11 required world-space seam pairs passed with maxGap=0; 12 attachment metadata records passed.
+next_required_work=Keep muzzle-side band/embedded bolt, refine trigger and bipod against source silhouette, then repeat strict and CS2 rifle gates.

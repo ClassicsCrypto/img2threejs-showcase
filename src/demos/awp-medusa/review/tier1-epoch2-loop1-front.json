@@ -1,0 +1,14 @@
+{
+  "passed": false,
+  "checks": {
+    "silhouetteIoU": 0.8409,
+    "aspectRatioDelta": 0.0045,
+    "scaleDelta": 0.0045,
+    "bilateralSymmetryError": 0.1465,
+    "colorDelta": {"checked": 24, "maxDeltaE": 13.82, "gated": false}
+  },
+  "failures": ["silhouette IoU 0.841 is below threshold 0.85"],
+  "renderHash": "4af6a41e3a82b116",
+  "passId": "blockout",
+  "mapStrippedRender": "src/demos/awp-medusa/review/tier1-mapstripped-epoch2-loop1.png"
+}

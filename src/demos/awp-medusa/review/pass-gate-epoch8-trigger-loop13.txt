@@ -1,0 +1,3 @@
+STATUS pass=blockout completed=0 blocked=none
+FAIL
+Tier 1 diagnostics remain below threshold (front IoU 0.8108, back IoU 0.7989); continue refine-code.

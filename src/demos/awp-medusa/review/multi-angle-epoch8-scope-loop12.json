@@ -1,0 +1,32 @@
+{
+  "referenceAreaFraction": 0.11247222222222222,
+  "angles": [
+    {
+      "id": "orbit-left",
+      "path": "src/demos/awp-medusa/review/orbit-left-white.png",
+      "areaRatio": 1.0228389725858236,
+      "degenerate": false
+    },
+    {
+      "id": "orbit-right",
+      "path": "src/demos/awp-medusa/review/orbit-right-white.png",
+      "areaRatio": 1.9418992343788588,
+      "degenerate": false
+    },
+    {
+      "id": "orbit-top",
+      "path": "src/demos/awp-medusa/review/orbit-top-white.png",
+      "areaRatio": 1.0006174364040503,
+      "degenerate": false
+    },
+    {
+      "id": "orbit-muzzle",
+      "path": "src/demos/awp-medusa/review/orbit-muzzle-white.png",
+      "areaRatio": 1.3609101012595703,
+      "degenerate": false
+    }
+  ],
+  "degenerate": false,
+  "collapseRatio": 0.15,
+  "note": "Deterministic multi-angle check; four meaningful orbit views retain volumetric silhouette."
+}

@@ -1,0 +1,4 @@
+FAIL
+command: python3 forge/stage3_build/orchestrate_passes.py sync object-sculpt-spec.json
+reason: locked-sequential blockout remains incomplete because the macro silhouette gate is below threshold.
+next required work: correct macro stock/receiver/barrel contour, then repeat side-by-side and CS2 review.

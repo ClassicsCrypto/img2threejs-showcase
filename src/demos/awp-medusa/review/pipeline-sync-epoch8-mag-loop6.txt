@@ -1,0 +1,7 @@
+epoch=8
+loop=6
+pass=blockout
+status=blocked-by-ledger-disagreement
+reason=Blockout remains below visual gates; rollback is retained and no later pass is credited.
+attachment_gate=11 required world-space seam pairs passed with maxGap=0; 12 attachment metadata records passed.
+next_required_work=Refine source-traced trigger/bipod geometry without changing the accepted macro envelope, then repeat all review gates.

@@ -1,0 +1,417 @@
+{
+  "notebook_id": "8391cfbf-8d82-4edc-be6a-59dda24cc318",
+  "notebook_title": "AWP Medusa correction audit — 24 angles and component specs",
+  "sources": [
+    {
+      "index": 1,
+      "id": "2003c5d6-3baa-474a-bc77-ece4379d053f",
+      "title": "5-45x56 PM II High Power LP LRR-MIL 1cm ccw DT II+ MTC LT / ST II ZC LT",
+      "type": "web_page",
+      "url": "https://www.schmidtundbender.de/en/5-45x56-PM-II-High-Power-LP-LRR-MIL-1cm-ccw-DT-II-MTC-LT-ST-II-ZC-LT/666-911-41C-L7-I5",
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:47:03"
+    },
+    {
+      "index": 2,
+      "id": "7d1a6204-2924-42f9-840d-c1e5a15becab",
+      "title": "ACCURACY INTERNATIONAL AXMC - Memo-randum.net",
+      "type": "pdf",
+      "url": "https://memo-randum.net/upload/3d/PDF_Pasport/axmcdatasheetuk.pdf",
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:47:03"
+    },
+    {
+      "index": 3,
+      "id": "b6ac420b-3725-40d7-908e-73aacaef178e",
+      "title": "AWM - Gunology Wiki - Fandom",
+      "type": "web_page",
+      "url": "https://gunology.fandom.com/wiki/AWM",
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:47:03"
+    },
+    {
+      "index": 4,
+      "id": "6391eea0-7f49-49e5-858c-6e1509349f6b",
+      "title": "Accuracy International 2500 round rifle review. | Canadian Gun Nutz",
+      "type": "web_page",
+      "url": "https://www.canadiangunnutz.com/forum/threads/accuracy-international-2500-round-rifle-review.1424192/",
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:47:03"
+    },
+    {
+      "index": 5,
+      "id": "96b62d04-1fb6-4f1f-b683-c211e8d74c8a",
+      "title": "INFANTRY EQUIPMENT HANDBOOK - Shephard Media",
+      "type": "pdf",
+      "url": "https://mags.shephardmedia.com/legacy-handbooks/IEH2022.pdf",
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:47:03"
+    },
+    {
+      "index": 6,
+      "id": "42ebfa9b-6726-4f81-8a02-49aaa928681c",
+      "title": "Inside Accuracy International | thefirearmblog.com",
+      "type": "web_page",
+      "url": "https://www.thefirearmblog.com/blog/2014/10/06/inside-accuracy-international/",
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:46:11"
+    },
+    {
+      "index": 7,
+      "id": "d4e8a2aa-1b9f-47d3-9207-cdd850314610",
+      "title": "Magnum Sniper Rifle (AWP) Overview in Counter-Strike 2 - Buff Portal",
+      "type": "web_page",
+      "url": "https://portal.buff.game/games/cs/cs2-awp-wiki",
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:47:03"
+    },
+    {
+      "index": 8,
+      "id": "ed9acc2f-b267-439c-a8c0-fe350fd8cd1e",
+      "title": "User Manual - Louis Candell",
+      "type": "pdf",
+      "url": "http://www.louiscandell.com/pdf/firearms/accuracy_international_aw-50.pdf",
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:47:03"
+    },
+    {
+      "index": 9,
+      "id": "a396f9d1-2843-46a1-a592-32edcd931663",
+      "title": "angle-01-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:36:36"
+    },
+    {
+      "index": 10,
+      "id": "58615641-1d65-4f23-8ab3-80173eca4fca",
+      "title": "angle-02-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:36:43"
+    },
+    {
+      "index": 11,
+      "id": "e7a8a816-f5a2-4e93-bf4f-ea3209e9bcdb",
+      "title": "angle-03-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:36:50"
+    },
+    {
+      "index": 12,
+      "id": "6976aee9-abb4-4eb8-8823-8aca8991dcbf",
+      "title": "angle-04-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:36:56"
+    },
+    {
+      "index": 13,
+      "id": "d54f3a27-68b6-44de-982e-0beca8ea3c23",
+      "title": "angle-05-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:37:03"
+    },
+    {
+      "index": 14,
+      "id": "a88fd46f-d189-4af2-9581-0b8c265c3237",
+      "title": "angle-06-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:37:10"
+    },
+    {
+      "index": 15,
+      "id": "22236b2d-7070-45bc-bfb2-58752ab269b1",
+      "title": "angle-07-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:37:17"
+    },
+    {
+      "index": 16,
+      "id": "06f5f6a5-3deb-446b-b532-0eed931a4594",
+      "title": "angle-08-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:37:26"
+    },
+    {
+      "index": 17,
+      "id": "ba1b5726-9b1f-47ad-b0de-200a992561f8",
+      "title": "angle-09-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:37:33"
+    },
+    {
+      "index": 18,
+      "id": "a841e10b-2421-48e9-9339-66088bc0068c",
+      "title": "angle-10-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:37:40"
+    },
+    {
+      "index": 19,
+      "id": "2d96c75d-98a0-442b-8280-a4126371382d",
+      "title": "angle-11-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:37:47"
+    },
+    {
+      "index": 20,
+      "id": "c827523e-2c37-4ced-94bf-2ca150422be9",
+      "title": "angle-12-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:37:54"
+    },
+    {
+      "index": 21,
+      "id": "08ef70f6-7a56-4b70-b188-821855965926",
+      "title": "angle-13-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:38:01"
+    },
+    {
+      "index": 22,
+      "id": "f4be5d00-956d-4738-a59c-0b9e1152b0c5",
+      "title": "angle-14-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:38:08"
+    },
+    {
+      "index": 23,
+      "id": "571c5447-ea0e-4fab-99ad-850a141b4fe2",
+      "title": "angle-15-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:38:15"
+    },
+    {
+      "index": 24,
+      "id": "c73c3f83-63a9-41b1-8e94-3b419dc0a6fe",
+      "title": "angle-16-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:38:22"
+    },
+    {
+      "index": 25,
+      "id": "822de5b9-0e48-4760-8a20-c4e7677e914c",
+      "title": "angle-17-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:38:29"
+    },
+    {
+      "index": 26,
+      "id": "baf766d0-a3d7-4993-b241-f4a881dc2707",
+      "title": "angle-18-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:38:36"
+    },
+    {
+      "index": 27,
+      "id": "99c5522c-eb14-440a-bde6-96f559f64e08",
+      "title": "angle-19-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:38:42"
+    },
+    {
+      "index": 28,
+      "id": "78e0c5e7-febb-4d5e-a8d0-bcadf31602fe",
+      "title": "angle-20-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:38:50"
+    },
+    {
+      "index": 29,
+      "id": "3a168ee0-c4ab-4f38-8457-f08b2d91fc0b",
+      "title": "angle-21-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:38:57"
+    },
+    {
+      "index": 30,
+      "id": "7378d7f5-cfc8-4791-89e8-90a9d99e2f4b",
+      "title": "angle-22-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:39:03"
+    },
+    {
+      "index": 31,
+      "id": "2be51d62-b5a0-4870-8596-f3ef64e45cb7",
+      "title": "angle-23-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:39:10"
+    },
+    {
+      "index": 32,
+      "id": "c88c14f7-b45c-4676-b2f5-f7ae650ea675",
+      "title": "angle-24-white.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:39:17"
+    },
+    {
+      "index": 33,
+      "id": "35079171-3b58-4e8d-ab49-ccf30728ddd5",
+      "title": "awp-medusa-notebooklm-brief.md",
+      "type": "markdown",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:45:26"
+    },
+    {
+      "index": 34,
+      "id": "c50a5b04-fc6e-40ad-b1f3-ff5a82227902",
+      "title": "back-medusa.webp",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:45:17"
+    },
+    {
+      "index": 35,
+      "id": "9b7f1934-52a7-417d-9c6f-faa64226247d",
+      "title": "front-medusa.webp",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:45:08"
+    },
+    {
+      "index": 36,
+      "id": "2f6fd3c0-2ac4-4bd7-af22-12acd2d3e480",
+      "title": "http://www.indaginibalistiche.it/utlities/manuali/accuracy_international_aw_sniper_EN.pdf",
+      "type": "pdf",
+      "url": "http://www.indaginibalistiche.it/utlities/manuali/accuracy_international_aw_sniper_EN.pdf",
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:45:51"
+    },
+    {
+      "index": 37,
+      "id": "3d53bb97-1ffc-4204-9fd7-20a4c8f42b9b",
+      "title": "https://irp.cdn-website.com/6ac51c8a/files/uploaded/AI-15687_-_01_User_Manual_AT-XC.pdf",
+      "type": "pdf",
+      "url": "https://irp.cdn-website.com/6ac51c8a/files/uploaded/AI-15687_-_01_User_Manual_AT-XC.pdf",
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:46:01"
+    },
+    {
+      "index": 38,
+      "id": "aa3b2a88-095a-4fb1-b74c-cdeeb57197e9",
+      "title": "https://www.milehighshooting.com/content/ACCURACYINTERNATIONALMAINTENANCECOURSE.pdf",
+      "type": "pdf",
+      "url": "https://www.milehighshooting.com/content/ACCURACYINTERNATIONALMAINTENANCECOURSE.pdf",
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T00:45:42"
+    },
+    {
+      "index": 39,
+      "id": "10bbe7fb-389c-4d5a-9dea-260caab52c87",
+      "title": "https://www.scribd.com/document/145245023/Accuracy-International-Accessories-Brochure",
+      "type": "web_page",
+      "url": "https://www.scribd.com/document/145245023/Accuracy-International-Accessories-Brochure",
+      "status": "error",
+      "status_id": 3,
+      "created_at": "2026-08-03T00:47:03"
+    },
+    {
+      "index": 40,
+      "id": "87dfe8bf-16ec-435e-ad0a-f3d8916d26a5",
+      "title": "muzzle-face-close.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:39:24"
+    },
+    {
+      "index": 41,
+      "id": "e710ca45-14c6-446d-80fb-73c402328b03",
+      "title": "scope-ring-contact-crop.png",
+      "type": "image",
+      "url": null,
+      "status": "ready",
+      "status_id": 2,
+      "created_at": "2026-08-03T02:39:31"
+    }
+  ],
+  "count": 41
+}

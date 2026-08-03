@@ -1,0 +1,50 @@
+[
+  {
+    "id": "bolt-receiver-placement",
+    "score": 0.91,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.98,
+    "notes": "Locked: receiver-parented bolt remains below the rear optic, with the handle emerging from the receiver side. The idle tick now preserves the authored x=0.08 socket while adding only a small offset."
+  },
+  {
+    "id": "trigger-guard-and-trigger",
+    "score": 0.79,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.98,
+    "notes": "The loop 3 guard is compact, shallow, and attached to the receiver seam; it is closer to the source but still too dark and not yet the exact rounded rectangular trigger assembly."
+  },
+  {
+    "id": "scope-crown-contact",
+    "score": 0.78,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.96,
+    "notes": "The objective-bell patch is conformed to the tapered surface and the thin crown/skull overlay is now visibly gold and co-located with the bell. It remains a procedural approximation of the printed crown and needs tighter source-scale matching."
+  },
+  {
+    "id": "bipod-hinge-and-compression-spring",
+    "score": 0.79,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.92,
+    "notes": "Top, muzzle, broadside, and orbit views show a connected hinge, overlapping telescoping tubes, a real 18-turn spring, and blocky feet. The folded angle and source hardware silhouette are still not exact."
+  },
+  {
+    "id": "fastener-surface-contact",
+    "score": 0.68,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.94,
+    "notes": "Loop 3 moves the fastener centres from z=±0.44 to the receiver/stock side surfaces and pulls the ejection-port pieces back onto the receiver. Top view still shows some small surface hardware as visually ambiguous, so this remains below threshold."
+  },
+  {
+    "id": "attachment-gate",
+    "score": 0.9,
+    "threshold": 0.9,
+    "visible": true,
+    "confidence": 0.95,
+    "notes": "All eight explicit world-space seam pairs report maxGap 0.0000 under the 0.015 tolerance. The top/muzzle screenshots are retained because an AABB overlap alone cannot reject a wrongly placed child inside the wrong parent."
+  }
+]
