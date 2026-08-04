@@ -1,0 +1,69 @@
+{
+  "version": "awp-medusa-v2",
+  "workflowVersion": "foundation-first-v2",
+  "status": "paused-at-await-pass-transition",
+  "currentPhase": "macro-blockout",
+  "activeFamily": "receiver-stock-macro-envelope",
+  "baselinePass": "pass-128",
+  "baseline": {
+    "version": "awp-medusa-v1",
+    "state": ".img2threejs/state.json",
+    "immutable": true
+  },
+  "goal": "Rebuild AWP | Medusa (Minimal Wear) as a real procedural Three.js object from supplied 2D references, without fake depth extrusion or camera-facing geometry.",
+  "references": [
+    "public/front-medusa.webp",
+    "public/back-medusa.webp"
+  ],
+  "research": ".img2threejs/research/external-image-to-3d-brief-2026-08-03.md",
+  "requiredEvidenceBeforeGeometry": [
+    "source foreground masks and verified bounding boxes",
+    "orthographic-versus-perspective camera hypothesis",
+    "normalized 2D landmark matrix for both broadside views",
+    "3x3 or finer region matrix for stock, receiver, barrel, scope, bolt, trigger, magazine, and bipod",
+    "observed/derived/inferred/unknown label per region",
+    "component ownership and attachment hypotheses"
+  ],
+  "phaseOrder": [
+    "intake",
+    "calibration",
+    "macro-blockout",
+    "assembly",
+    "surface",
+    "final-audit"
+  ],
+  "lockedFamilies": [
+    "bolt",
+    "scope",
+    "projection",
+    "materials",
+    "micro-detail"
+  ],
+  "regionGateContract": ".img2threejs/v2/workflow/foundation-first-workflow-v2.md",
+  "acceptance": {
+    "overall": 0.9,
+    "macroSilhouetteIoU": 0.9,
+    "criticalFeatures": 0.9,
+    "hiddenRegionConfidenceRequired": true
+  },
+  "reusePolicy": {
+    "allowed": [
+      "generic Three.js utility functions after code review",
+      "external research evidence",
+      "runtime tick/pivot patterns if independently validated"
+    ],
+    "forbidden": [
+      "V1 stock/receiver/trigger/bolt geometry profiles",
+      "V1 transforms used as measurement truth",
+      "V1 review scores used as V2 evidence"
+    ]
+  },
+  "pause": {
+    "currentStep": "await-pass-transition",
+    "nextLoopStarted": false,
+    "lastCompletedReview": "pass-129",
+    "latestRetainedPass": "pass-128",
+    "latestRejectedPass": "pass-129"
+  },
+  "nextAction": "Resume with forge/next.py using state-v2.json; do not start pass-130 until a different receiver-stock macro hypothesis, target metrics, locked families, and rollback conditions are recorded."
+}
