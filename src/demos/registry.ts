@@ -43,6 +43,10 @@ import {
   createGlockGhostProtocolLookDevLights,
   makeGhostProtocolBackground,
 } from './glock-ghost-protocol/createGlockGhostProtocolModel';
+import {
+  createElectricMouseMascotLookDevLights,
+  createElectricMouseMascotModel,
+} from './electric-mouse-mascot/createElectricMouseMascotModel';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -56,6 +60,11 @@ export interface DemoEntry {
   sourcePath: string;
   sourceUrl: string;
   generatedWith: string;
+  /**
+   * The reconstruction prompt this demo was built from — the subject description handed to
+   * img2threejs, kept next to the result so the two can be read against each other.
+   */
+  prompt?: string;
   /** display name of whoever contributed this demo */
   author: string;
   /** link to the author's profile (GitHub, etc.) */
@@ -90,6 +99,67 @@ const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/hoainho/img2threejs-showcase/blob/main';
 
 export const demos: DemoEntry[] = [
+  {
+    id: 'electric-mouse-mascot',
+    title: 'Pikachu 10K Star Celebration',
+    subjectClass: 'character',
+    blurb:
+      'A code-only procedural reconstruction of the supplied stylized yellow mascot reference, ' +
+      'staged as a 10k-star celebration: rounded capsule body, dark-tipped ears, open smiling ' +
+      'mouth, red cheeks, angular tail, and a speech bubble whose counter rolls up to 10K under ' +
+      'a lightning burst. Named semantic parts and lightweight animation controls throughout.',
+    referenceImage: `${BASE}references/electric-mouse-mascot/reference.png`,
+    sourcePath: 'src/demos/electric-mouse-mascot/createElectricMouseMascotModel.ts',
+    sourceUrl: `${REPO}/src/demos/electric-mouse-mascot/createElectricMouseMascotModel.ts`,
+    generatedWith: 'img2threejs v1.5-beta · procedural character track',
+    prompt:
+      'Rebuild the stylized yellow electric-mouse mascot in the reference image as a code-only '
+      + 'procedural Three.js character, then stage it celebrating 10,000 GitHub stars.\n\n'
+      + 'SUBJECT. One rounded capsule that reads as body and head at once (Body_Head_Main), with a '
+      + 'single soft belly crease rather than a waist seam. Two tall tapered ears with dark tips '
+      + '(Ear_L/Ear_R). Two round eyes with offset specular highlights (Eye_L/Eye_R, '
+      + 'EyeHighlight_L/EyeHighlight_R), a small dark nose, and an open smiling mouth built as an '
+      + 'outer lip, a dark inner cavity and a tongue (Mouth_Outer, Mouth_Inner, Tongue). Two red '
+      + 'circular cheek patches (Cheek_L/Cheek_R) sitting flush on the body curvature, not floating '
+      + 'above it. Short teardrop arms and feet (Arm_L/Arm_R, Foot_L/Foot_R). An angular '
+      + 'lightning-bolt tail with brown flank accents at its base, hung off its own pivot so it can '
+      + 'be animated independently (Tail_Pivot, Tail_Main, Tail_Accent, Tail_Accent_Flank_Upper/Lower).\n\n'
+      + 'CELEBRATION STAGING. A speech bubble beside the head (SpeechBubble_Optional, '
+      + 'SpeechBubble_Disc, SpeechBubble_Pointer) carrying a celebration star and a star-count label '
+      + 'that rolls 9.80K → 9.86K → 9.91K → 9.95K → 9.98K → 9.99K → 9,999 → 10K and then holds on '
+      + '10K (Star_10K_Label). On the hold, fire a lightning burst of bolts with an additive glow '
+      + 'around the star (Star_Lightning_Burst) plus a lightning aura on the character '
+      + '(Celebration_Lightning_Aura), keeping the silhouette readable — the burst must not wash the '
+      + 'mascot out.\n\n'
+      + 'CONSTRAINTS. No imported meshes: every surface is generated in TypeScript. Every part is '
+      + 'named and semantically addressable so the runtime can drive it. Materials are physical, lit '
+      + 'by one bespoke look-dev rig (createElectricMouseMascotLookDevLights) rather than a generic '
+      + 'studio rig. The belly crease and its contact shadow stay parametric — the values ship as '
+      + 'DEFAULT_ELECTRIC_MOUSE_BELLY_TUNE and are editable live through the shared tune panel.',
+    author: 'Hoài Nhớ',
+    authorUrl: 'https://github.com/hoainho',
+    status: 'placeholder',
+    cameraPosition: [2.60, 2.15, 9.20],
+    cameraTarget: [0, 1.35, 0],
+    cameraFov: 30,
+    accent: '#ffd51a',
+    backgroundGradient: { inner: '#ff8499', outer: '#ee5c7b' },
+    exposure: 0.95,
+    environmentIntensity: 0.48,
+    toneMapping: 'aces',
+    installLights: (scene) => {
+      scene.add(createElectricMouseMascotLookDevLights());
+    },
+    build: (scene) => {
+      const group = createElectricMouseMascotModel({ includeSpeechBubble: true });
+      const runtime = group.userData.electricMouseMascotRuntime as ReturnType<typeof createElectricMouseMascotModel>['userData']['electricMouseMascotRuntime'];
+      // The runtime exposes getBellyTune/setBellyTune so the belly crease can be driven live.
+      // The editing UI for it is not part of this demo yet — it ships in v1.5.
+      group.userData.tick = (_dt: number, elapsed: number) => runtime.update(elapsed);
+      scene.add(group);
+      return group;
+    },
+  },
   {
     id: 'glock-ghost-protocol',
     title: 'Glock-18 | Ghost Protocol (Well-Worn)',
