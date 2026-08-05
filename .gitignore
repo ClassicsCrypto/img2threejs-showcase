@@ -5,3 +5,4 @@ dist
 sculpt
 .render-review/
 .img2threejs/
+graphify-out/
