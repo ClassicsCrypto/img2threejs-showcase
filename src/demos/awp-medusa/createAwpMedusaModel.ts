@@ -32,6 +32,10 @@ const POLYMER = 0x131b29;
 
 const FRONT_PAINT_EVIDENCE = ['front-broadside', 'front-medusa.webp'];
 const BACK_PAINT_EVIDENCE = ['back-broadside', 'back-medusa.webp'];
+const PHYSICAL_HARDWARE_EVIDENCE = [
+  '.img2threejs/research/awp-real-reference-broadside-physical-hardware.png',
+  '.img2threejs/research/awp-real-reference-bipod-spring-closeup.png',
+];
 
 function physical(
   color: THREE.ColorRepresentation,
@@ -92,7 +96,7 @@ function holeCutMaterial(
         if (medusaHoleDistance < 0.0) discard;`,
       );
   };
-  material.customProgramCacheKey = () => `medusa-stock-hole-${hole.x}-${hole.y}-${hole.rx}-${hole.ry}`;
+  material.customProgramCacheKey = () => `medusa-stock-hole-${hole.x}-${hole.y}-${hole.rx}-${hole.ry}-${radius}`;
   return material;
 }
 
@@ -133,11 +137,31 @@ function profileExtrude(
   points: Array<[number, number]>,
   depth: number,
   material: THREE.Material,
-  hole?: { x: number; y: number; rx: number; ry: number },
+  hole?: { x: number; y: number; rx: number; ry: number; radius?: number },
+  smoothProfile = false,
 ): THREE.Mesh {
   const shape = new THREE.Shape();
-  shape.moveTo(points[0][0], points[0][1]);
-  for (let i = 1; i < points.length; i += 1) shape.lineTo(points[i][0], points[i][1]);
+  if (smoothProfile) {
+    // A stock side is a molded shell, not a polygonal plate. Use quadratic
+    // corner spans for this explicitly opted-in profile so the grip throat
+    // and cheek/receiver transitions survive orbit review without changing
+    // the authored hard-edged receiver or mechanical brackets.
+    const midpoint = (a: [number, number], b: [number, number]): [number, number] => [
+      (a[0] + b[0]) * 0.5,
+      (a[1] + b[1]) * 0.5,
+    ];
+    const first = midpoint(points[points.length - 1], points[0]);
+    shape.moveTo(first[0], first[1]);
+    for (let i = 0; i < points.length; i += 1) {
+      const current = points[i];
+      const next = points[(i + 1) % points.length];
+      const end = midpoint(current, next);
+      shape.quadraticCurveTo(current[0], current[1], end[0], end[1]);
+    }
+  } else {
+    shape.moveTo(points[0][0], points[0][1]);
+    for (let i = 1; i < points.length; i += 1) shape.lineTo(points[i][0], points[i][1]);
+  }
   shape.closePath();
   if (hole) {
     const cut = new THREE.Path();
@@ -145,7 +169,7 @@ function profileExtrude(
     // drill-through. Keep the authored shell, paint layer, and rim on the
     // same rounded path so the hole cannot turn into a white oval when the
     // front/back projection is removed or viewed at an angle.
-    roundedHolePath(cut, hole.x, hole.y, hole.rx, hole.ry, Math.min(hole.rx, hole.ry) * 0.30);
+    roundedHolePath(cut, hole.x, hole.y, hole.rx, hole.ry, hole.radius ?? Math.min(hole.rx, hole.ry) * 0.30);
     shape.holes.push(cut);
   }
   const geometry = new THREE.ExtrudeGeometry(shape, {
@@ -159,6 +183,88 @@ function profileExtrude(
   geometry.translate(0, 0, -depth / 2);
   geometry.computeVertexNormals();
   return new THREE.Mesh(geometry, material);
+}
+
+/**
+ * Bind the supplied broadside pixels to the actual cap faces of an authored
+ * beveled/extruded shell. The map is not a second plane: the receiver and
+ * stock remain the only volume, and the UVs move with those components.
+ */
+function bindAuthoredShellProjection(
+  mesh: THREE.Mesh,
+  owner: THREE.Object3D,
+  basePaint: THREE.MeshPhysicalMaterial,
+  sidePaint: THREE.MeshPhysicalMaterial,
+): void {
+  const geometry = mesh.geometry as THREE.BufferGeometry;
+  const positions = geometry.getAttribute('position') as THREE.BufferAttribute;
+  const normals = geometry.getAttribute('normal') as THREE.BufferAttribute;
+  const uv = geometry.getAttribute('uv') as THREE.BufferAttribute;
+  const capGroup = geometry.groups.find((group) => group.materialIndex === 0);
+  if (!capGroup || !uv) return;
+
+  const capEnd = capGroup.start + capGroup.count;
+  let frontStart = capEnd;
+  for (let index = capGroup.start; index < capEnd; index += 3) {
+    if (normals.getZ(index) > 0.86) {
+      frontStart = index;
+      break;
+    }
+  }
+  if (frontStart === capEnd) frontStart = capGroup.start + Math.floor(capGroup.count * 0.5 / 3) * 3;
+
+  const frameXMin = -2.52;
+  const frameXMax = 4.14;
+  const frameYIntercept = 460;
+  const frameYPerUnit = 143;
+  for (let index = capGroup.start; index < capEnd; index += 1) {
+    const localX = positions.getX(index);
+    const localY = positions.getY(index);
+    const sourceX = owner.position.x + localX * owner.scale.x;
+    const sourceYWorld = owner.position.y + localY * owner.scale.y;
+    const sourceXpx = (sourceX - frameXMin) / (frameXMax - frameXMin) * 1600;
+    const sourceYpx = frameYIntercept - frameYPerUnit * sourceYWorld;
+    uv.setXY(index, sourceXpx / 1600, 1 - sourceYpx / 900);
+  }
+  uv.needsUpdate = true;
+
+  const frontTexture = loadPaint(frontReferenceProjectionUrl);
+  const backTexture = loadPaint(backReferenceProjectionUrl, true);
+  const frontPaint = basePaint.clone();
+  const backPaint = basePaint.clone();
+  for (const material of [frontPaint, backPaint]) {
+    material.color.set(0xffffff);
+    material.transparent = true;
+    material.alphaTest = 0.025;
+    material.depthWrite = true;
+    material.polygonOffset = true;
+    material.polygonOffsetFactor = -1;
+    material.polygonOffsetUnits = -1;
+    material.emissive.set(0x102235);
+    material.emissiveIntensity = 0.08;
+  }
+  frontPaint.map = frontTexture;
+  frontPaint.emissiveMap = frontTexture;
+  backPaint.map = backTexture;
+  backPaint.emissiveMap = backTexture;
+
+  // ExtrudeGeometry places both cap faces in material group 0 and bevel/side
+  // faces in material group 1. Split that cap group by its authored normal so
+  // front and back source views are real materials on the same shell.
+  const originalGroups = geometry.groups.map((group) => ({ ...group }));
+  geometry.clearGroups();
+  geometry.addGroup(capGroup.start, frontStart - capGroup.start, 1);
+  geometry.addGroup(frontStart, capEnd - frontStart, 0);
+  for (const group of originalGroups) {
+    if (group !== capGroup) geometry.addGroup(group.start, group.count, 2);
+  }
+  mesh.material = [frontPaint, backPaint, sidePaint];
+  mesh.userData.projectionBinding = 'authored-shell-cap-uv';
+  mesh.userData.projectionAssets = {
+    front: 'assets/front-reference-projection.png',
+    back: 'assets/back-reference-projection.png',
+  };
+  mesh.userData.projectionSurface = 'same-beveled-extrude-geometry';
 }
 
 function cylinderBetween(
@@ -199,6 +305,37 @@ function addSocket(parent: THREE.Object3D, id: string, position: [number, number
   socket.visible = false;
   parent.add(socket);
   return socket;
+}
+
+function attachMechanicalDetail(
+  node: THREE.Object3D,
+  parentId: string,
+  parentSocket: string,
+  localStart: [number, number, number],
+  localEnd: [number, number, number] = localStart,
+  contactType: 'embedded' | 'overlap' | 'hinge' | 'socket' | 'surface-contact' = 'surface-contact',
+): void {
+  // A projected dot is not a fastener. Every visible screw, washer, pin, or
+  // axle gets an explicit physical-geometry marker plus an owner socket so
+  // the attachment gate can audit it independently of the painted skin.
+  node.userData.mechanicalDetail = 'physical-fastener';
+  // A screw/pin/washer is real geometry, but it is not a separate macro
+  // assembly. Keep it riding its owner in the interactive exploded audit so
+  // that explode tests component ownership instead of scattering every
+  // fastener into apparent floating debris.
+  node.userData.explodeWithParent = true;
+  node.userData.attachment = {
+    parent: parentId,
+    parentId,
+    parentSocket,
+    localStart,
+    localEnd,
+    contactType,
+    embedDepth: 0.004,
+    overlap: 0.004,
+    gapTolerance: 0.015,
+    evidenceRefs: PHYSICAL_HARDWARE_EVIDENCE,
+  };
 }
 
 function loadPaint(url: string, flipX = false): THREE.Texture {
@@ -257,8 +394,14 @@ function bindEdgeMedusaProjection(material: THREE.MeshPhysicalMaterial): void {
         `#include <map_fragment>
         if (abs(medusaEdgeWorldNormal.z) < 0.86) {
           vec2 edgeUv;
-          edgeUv.x = clamp((medusaEdgeWorldPosition.x + 2.52) / 6.66, 0.0, 1.0);
-          float sourceY = 460.0 - 143.0 * medusaEdgeWorldPosition.y;
+          // The projection calibration is authored before the presentation
+          // root applies its measured proportion scale.  Undo that root scale
+          // here so grazing side faces sample the same reference pixels as
+          // the cap UVs instead of falling into transparent/flat navy regions.
+          float authoredEdgeX = medusaEdgeWorldPosition.x / 1.04;
+          float authoredEdgeY = medusaEdgeWorldPosition.y / 0.736;
+          edgeUv.x = clamp((authoredEdgeX + 2.52) / 6.66, 0.0, 1.0);
+          float sourceY = 460.0 - 143.0 * authoredEdgeY;
           edgeUv.y = clamp(1.0 - sourceY / 900.0, 0.0, 1.0);
           vec4 edgeFront = texture2D(medusaEdgeFront, edgeUv);
           vec4 edgeBack = texture2D(medusaEdgeBack, edgeUv);
@@ -370,23 +513,23 @@ function addBoundSurfaceProjection(
 function addMedusaSurfaceLayers(
   stock: THREE.Object3D,
   receiver: THREE.Object3D,
-  grip: THREE.Object3D,
 ): THREE.Mesh[] {
   const stockPoints: Array<[number, number]> = [
-    [-2.49, 0.09], [-2.48, 0.33], [-2.23, 0.35], [-1.90, 0.35], [-1.65, 0.34],
-    [-1.44, 0.28], [-1.19, 0.21], [-0.90, 0.18], [-1.04, -0.93], [-1.11, -0.93],
-    [-1.18, -0.86], [-1.39, -0.70], [-1.58, -0.57], [-1.69, -0.40], [-1.80, -0.37],
-    [-1.92, -0.44], [-2.16, -0.76], [-2.47, -0.80], [-2.49, -0.38],
+    [-2.49, 0.09], [-2.48, 0.27], [-2.23, 0.30], [-1.90, 0.30], [-1.65, 0.30],
+    [-1.44, 0.25], [-1.19, 0.19], [-0.90, 0.16], [-1.04, -0.80], [-1.11, -0.80],
+    [-1.13, -0.70], [-1.40, -0.58], [-1.58, -0.45], [-1.68, -0.32], [-1.80, -0.32],
+    [-1.92, -0.39], [-2.16, -0.68], [-2.47, -0.73], [-2.49, -0.38],
   ];
   const receiverPoints: Array<[number, number]> = [
     [-0.55, 0.24], [0.08, 0.30], [1.43, 0.27], [1.68, 0.18], [1.68, -0.18],
-    [1.68, -0.10], [-0.50, -0.20], [-0.55, -0.18], [-0.55, -0.06],
+    [1.68, -0.24], [1.36, -0.25], [1.10, -0.26], [0.72, -0.28],
+    [0.35, -0.30], [0.02, -0.34], [-0.24, -0.34], [-0.45, -0.25],
+    [-0.50, -0.15], [-0.55, -0.14], [-0.55, -0.06],
   ];
-  const gripPoints: Array<[number, number]> = [
-    [-0.78, -0.04], [-0.46, -0.04], [-0.43, -0.17], [-0.51, -0.31], [-0.68, -0.37],
-    [-0.80, -0.28], [-0.86, -0.14],
-  ];
-  const stockHole = { x: -1.31, y: -0.34, rx: 0.22, ry: 0.19, radius: 0.060 };
+  // The AW thumbhole/grip is one continuous stock-side receiving surface.
+  // Do not add a second projected grip island: it creates a false seam and
+  // makes the artwork look detached when the camera leaves broadside.
+  const stockHole = { x: -1.31, y: -0.34, rx: 0.24, ry: 0.23, radius: 0.105 };
   const layers: THREE.Mesh[] = [];
   for (const side of [1, -1] as const) {
     const texture = loadPaint(
@@ -401,11 +544,16 @@ function addMedusaSurfaceLayers(
     // artwork just outside the bevel after the depth compression; otherwise
     // the authored mesh correctly occludes its own paint layer.
     layers.push(addBoundSurfaceProjection(stock, stockPoints, texture, side, 0.34, `stock-medusa-${side === 1 ? 'front' : 'back'}`, evidence, stockHole));
-    layers.push(addBoundSurfaceProjection(receiver, receiverPoints, texture, side, 0.27, `receiver-medusa-${side === 1 ? 'front' : 'back'}`, evidence));
-    layers.push(addBoundSurfaceProjection(grip, gripPoints, texture, side, 0.31, `grip-medusa-${side === 1 ? 'front' : 'back'}`, evidence));
+    // Match the receiver's reduced authored extrusion so the front/back
+    // Medusa layers remain tangent after the edge-depth correction.
+    layers.push(addBoundSurfaceProjection(receiver, receiverPoints, texture, side, 0.235, `receiver-medusa-${side === 1 ? 'front' : 'back'}`, evidence));
   }
   return layers;
 }
+
+// Kept only as a historical source-anchor helper for old review references;
+// the active factory binds projection directly to authored shell cap UVs.
+void addMedusaSurfaceLayers;
 
 function addCrownDecal(parent: THREE.Object3D): THREE.Group {
   const group = part(new THREE.Group(), 'optic-crown-decal', 'projected-albedo', BACK_PAINT_EVIDENCE);
@@ -658,6 +806,7 @@ function addFasteners(parent: THREE.Object3D, material: THREE.Material): THREE.G
     mesh.userData.module = 'fastener-system';
     mesh.userData.materialId = 'substrate';
     mesh.userData.evidenceRefs = FRONT_PAINT_EVIDENCE;
+    mesh.userData.mechanicalDetail = 'physical-fastener';
     mesh.userData.attachment = {
       parent: owner,
       parentId: owner,
@@ -882,12 +1031,22 @@ function addScope(
     addMesh(ringAssembly, clampCollar, `${ringId}-machined-collar`, 'bare-metal');
     // A split clamp has two raised ears with a dark central seam; this keeps
     // the ring a real machined assembly instead of a single block.
-    const clampTop = roundedBox(0.12, 0.05, 0.082, 0.012, scopeClampMetal);
+    const clampTop = roundedBox(0.12, 0.05, 0.32, 0.012, scopeClampMetal);
     clampTop.position.set(x, 1.115, 0);
     addMesh(ringAssembly, clampTop, `${ringId}-clamp-top`, 'bare-metal');
     const clampSplit = roundedBox(0.018, 0.052, 0.088, 0.003, darkMetalForBipod(metal));
     clampSplit.position.set(x, 1.118, 0);
     addMesh(ringAssembly, clampSplit, `${ringId}-clamp-split`, 'bare-metal');
+    // The two cap screws must land on real raised ears.  The former narrow
+    // bridge was only 0.082 wide in Z while its screws were placed at ±0.155,
+    // so the heads visibly floated beside the cap in orbit views.  These ears
+    // overlap the bridge and give each hex head a physical screw land.
+    [-0.155, 0.155].forEach((z, earIndex) => {
+      const ear = roundedBox(0.12, 0.072, 0.062, 0.012, scopeClampMetal);
+      ear.position.set(x, 1.132, z);
+      addMesh(ringAssembly, ear, `${ringId}-clamp-ear-${earIndex + 1}`, 'bare-metal');
+      attachMechanicalDetail(ear, ringAssembly.name, `${ringId}.clamp-top-fastener-land`, [x, 1.132, z]);
+    });
     // The source crop exposes a pair of fasteners on each clamp cap.  Their
     // axis is vertical through the cap; the previous three side-facing
     // cylinders read as loose dark beads in an orbit.  Use a real hex head,
@@ -896,9 +1055,11 @@ function addScope(
       const topScrew = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.042, 6), darkMetalForBipod(metal));
       topScrew.position.set(x, 1.142, z);
       addMesh(ringAssembly, topScrew, `${ringId}-top-screw-${screwIndex + 1}`, 'bare-metal');
+      attachMechanicalDetail(topScrew, ringAssembly.name, `${ringId}.clamp-top-fastener-land`, [x, 1.142, z]);
       const topWasher = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.008, 16), scopeClampMetal);
       topWasher.position.set(x, 1.119, z);
       addMesh(ringAssembly, topWasher, `${ringId}-top-washer-${screwIndex + 1}`, 'bare-metal');
+      attachMechanicalDetail(topWasher, ringAssembly.name, `${ringId}.clamp-top-fastener-land`, [x, 1.119, z]);
     });
     const saddle = roundedBox(0.17, 0.08, 0.21, 0.015, scopeClampMetal);
     // The saddle is the lower face of the ring assembly.  It must enter the
@@ -927,14 +1088,22 @@ function addScope(
     };
     const mountScrew = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.035, 6), scopeClampMetal);
     mountScrew.rotation.x = Math.PI / 2;
-    mountScrew.position.set(x - 0.045, 0.64, 0.16);
+    // The mount is only 0.15 wide in Z; center the transverse screw on its
+    // outer face so its shank intersects the mount instead of floating beyond
+    // it by 0.06 units.
+    mountScrew.position.set(x - 0.045, 0.64, 0.075);
     addMesh(ringAssembly, mountScrew, index === 0 ? 'scope-mount-screw-rear' : 'scope-mount-screw-front', 'bare-metal');
+    attachMechanicalDetail(mountScrew, ringAssembly.name, `${ringId}.mount-fastener-land`, [x - 0.045, 0.64, 0.075]);
     [-0.115, 0.115].forEach((y, screwIndex) => {
-      [-0.17, 0.17].forEach((z, faceIndex) => {
+      // Seat each transverse clamp screw into the cylindrical collar. At
+      // these Y stations the collar surface is approximately |Z|=0.14;
+      // ±0.17 left a visible air seam around the screw shank.
+      [-0.14, 0.14].forEach((z, faceIndex) => {
         const clampScrew = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.04, 6), lightMetalForBipod(metal));
         clampScrew.rotation.x = Math.PI / 2;
         clampScrew.position.set(x, 0.86 + y, z);
         addMesh(ringAssembly, clampScrew, `${ringId}-clamp-screw-${faceIndex === 0 ? 'back' : 'front'}-${screwIndex + 1}`, 'bare-metal');
+        attachMechanicalDetail(clampScrew, ringAssembly.name, `${ringId}.clamp-side-fastener-land`, [x, 0.86 + y, z]);
       });
     });
     ringAssembly.traverse((node) => {
@@ -971,7 +1140,17 @@ function addScope(
   part(marking, 'scope-magnification-marking', 'optic-marking', FRONT_PAINT_EVIDENCE);
   marking.userData.explodeWithParent = true;
   scope.add(marking);
-  addCrownDecal(scope);
+  const crownDecal = addCrownDecal(scope);
+  // The decal is authored in scope-local coordinates for the conical solve,
+  // but its physical owner is the objective taper. Reparent it while
+  // preserving its world matrix so the interactive exploded audit moves the
+  // sticker with the bell instead of leaving it behind at the scope origin.
+  scope.updateMatrixWorld(true);
+  const crownWorldMatrix = crownDecal.matrixWorld.clone();
+  frontBell.add(crownDecal);
+  frontBell.updateMatrixWorld(true);
+  crownDecal.matrix.copy(new THREE.Matrix4().copy(frontBell.matrixWorld).invert().multiply(crownWorldMatrix));
+  crownDecal.matrixAutoUpdate = false;
   parent.add(scope);
   return scope;
 }
@@ -986,22 +1165,31 @@ function addTriggerGuard(parent: THREE.Object3D, metal: THREE.Material): THREE.G
   // junction. Keeping it receiver-parented prevents drift during refits.
   // Move the rear bow into the stock shoulder. The previous station left a
   // small but visible open seam in the three-quarter rear view.
-  group.position.set(-0.44, -0.19, 0);
+  // The previous station sat too far rearward under the thumbhole.  Move the
+  // guard toward the magazine/receiver junction so the trigger sits below the
+  // actual action, as in the broadside reference, while retaining overlap with
+  // the receiver shell.
+  // Keep the guard behind the magazine well, but pull the loop 0.04 units
+  // toward the receiver shoulder so its front edge can meet the release land
+  // instead of reading as a separate floating bow.
+  // Loop 7: seat the guard below the newly undercut receiver instead of
+  // letting its top edge disappear inside the action slab.
+  group.position.set(-0.20, -0.26, 0);
   const guardShape = new THREE.Shape();
-  guardShape.moveTo(-0.11, 0.055);
-  guardShape.lineTo(0.11, 0.055);
-  guardShape.lineTo(0.11, -0.08);
-  guardShape.quadraticCurveTo(0.11, -0.125, 0.045, -0.145);
-  guardShape.lineTo(-0.045, -0.145);
-  guardShape.quadraticCurveTo(-0.11, -0.125, -0.11, -0.08);
+  guardShape.moveTo(-0.10, 0.048);
+  guardShape.lineTo(0.10, 0.048);
+  guardShape.lineTo(0.10, -0.068);
+  guardShape.quadraticCurveTo(0.10, -0.116, 0.042, -0.132);
+  guardShape.lineTo(-0.042, -0.132);
+  guardShape.quadraticCurveTo(-0.10, -0.116, -0.10, -0.068);
   guardShape.closePath();
   const guardHole = new THREE.Path();
-  guardHole.moveTo(-0.060, 0.010);
-  guardHole.lineTo(0.060, 0.010);
-  guardHole.lineTo(0.060, -0.060);
-  guardHole.quadraticCurveTo(0.060, -0.090, 0.028, -0.105);
-  guardHole.lineTo(-0.028, -0.105);
-  guardHole.quadraticCurveTo(-0.060, -0.090, -0.060, -0.060);
+  guardHole.moveTo(-0.052, 0.006);
+  guardHole.lineTo(0.052, 0.006);
+  guardHole.lineTo(0.052, -0.040);
+  guardHole.quadraticCurveTo(0.052, -0.072, 0.026, -0.088);
+  guardHole.lineTo(-0.026, -0.088);
+  guardHole.quadraticCurveTo(-0.052, -0.072, -0.052, -0.040);
   guardHole.closePath();
   guardShape.holes.push(guardHole);
   const guardGeometry = new THREE.ExtrudeGeometry(guardShape, {
@@ -1010,13 +1198,24 @@ function addTriggerGuard(parent: THREE.Object3D, metal: THREE.Material): THREE.G
     // captures. This is a real through-body trigger bow, not a floating plate.
     depth: 0.52,
     bevelEnabled: true,
-    bevelSegments: 3,
-    bevelSize: 0.018,
-    bevelThickness: 0.014,
-    curveSegments: 8,
+    // Loop-10 NotebookLM review: stationing is correct, but the guard still
+    // reads as a sharp 90-degree extrusion. A small real edge radius gives
+    // the molded polymer bow a continuous highlight without changing its
+    // attachment station or opening silhouette.
+    bevelSegments: 5,
+    bevelSize: 0.028,
+    bevelThickness: 0.018,
+    curveSegments: 14,
   });
   guardGeometry.translate(0, 0, -0.26);
   addMesh(group, new THREE.Mesh(guardGeometry, metal), 'trigger-guard', 'bare-metal');
+  // The AW release is a separate physical catch at the forward guard land;
+  // keeping it on the guard makes the magazine/trigger relationship readable
+  // without baking a dark rectangle into the skin.
+  const magazineRelease = roundedBox(0.052, 0.035, 0.12, 0.008, metal);
+  magazineRelease.position.set(0.074, 0.052, 0);
+  addMesh(group, magazineRelease, 'trigger-guard-magazine-release', 'bare-metal');
+  attachMechanicalDetail(magazineRelease, group.name, 'trigger-guard.magazine-release-land', [0.074, 0.052, 0]);
 
   const triggerPivot = part(new THREE.Group(), 'triggerPivot', 'bare-metal');
   triggerPivot.position.set(0, 0.005, 0);
@@ -1039,22 +1238,23 @@ function addTriggerGuard(parent: THREE.Object3D, metal: THREE.Material): THREE.G
   group.add(triggerPivot);
   group.userData.pivot = triggerPivot;
   for (const [x, z, id] of [
-    [-0.078, 0.105, 'trigger-guard-pin-front'],
-    [0.078, 0.105, 'trigger-guard-pin-front-right'],
-    [-0.078, -0.105, 'trigger-guard-pin-back'],
-    [0.078, -0.105, 'trigger-guard-pin-back-right'],
+    [-0.105, 0.105, 'trigger-guard-pin-front'],
+    [0.105, 0.105, 'trigger-guard-pin-front-right'],
+    [-0.105, -0.105, 'trigger-guard-pin-back'],
+    [0.105, -0.105, 'trigger-guard-pin-back-right'],
   ] as const) {
     const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.026, 12), metal);
     pin.rotation.x = Math.PI / 2;
     pin.position.set(x, 0.07, z);
     addMesh(group, pin, id, 'bare-metal');
+    attachMechanicalDetail(pin, group.name, 'trigger-guard.trigger-pin', [x, 0.07, z], [x, 0.07, z], 'hinge');
   }
   group.userData.attachment = {
     parent: 'receiver',
     parentId: 'receiver',
     parentSocket: 'receiver.trigger-guard-socket',
-    localStart: [-0.495, -0.19, 0],
-    localEnd: [-0.495, -0.335, 0],
+    localStart: [-0.20, -0.21, 0],
+    localEnd: [-0.20, -0.35, 0],
     contactType: 'embedded',
     embedDepth: 0.03,
     overlap: 0.03,
@@ -1094,7 +1294,7 @@ function addBipod(parent: THREE.Object3D, metal: THREE.Material): THREE.Group {
   // The receiver was vertically compressed after the first bipod pass. Seat
   // the hinge plate back into its underside so the real overlap is visible,
   // not merely asserted by attachment metadata.
-  group.position.y = -0.22;
+  group.position.y = -0.213;
   // Source projection places the folded bipod root under the fore-end rather
   // than directly below the receiver centre. Move the complete tube/spring
   // assembly with its hinge as one authored component; the receiver profile
@@ -1110,6 +1310,21 @@ function addBipod(parent: THREE.Object3D, metal: THREE.Material): THREE.Group {
   ], 0.28, darkMetalForBipod(metal));
   addMesh(group, hingePlate, 'bipod-hinge-plate', 'bare-metal');
   attach(hingePlate, 'receiver', 'receiver.bipod-fore-end-socket', [1.22, -0.07, 0], [1.58, -0.20, 0], 'embedded');
+  // The hinge plate is a real stamped bracket.  The close reference exposes
+  // one fastener land on each visible side; keep those as separate hex/washer
+  // meshes seated into the plate instead of reading them from the skin map.
+  for (const [z, id] of [[0.151, 'bipod-hinge-fastener-front'], [-0.151, 'bipod-hinge-fastener-back']] as const) {
+    const washer = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.018, 20), lightMetalForBipod(metal));
+    washer.rotation.x = Math.PI / 2;
+    washer.position.set(1.285, -0.135, z);
+    addMesh(group, washer, id, 'bare-metal');
+    attachMechanicalDetail(washer, 'bipod-hinge-plate', 'bipod-hinge-plate.fastener-land', [1.285, -0.135, z], [1.285, -0.135, z], 'hinge');
+    const screw = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.032, 6), darkMetalForBipod(metal));
+    screw.rotation.x = Math.PI / 2;
+    screw.position.set(1.285, -0.135, z + (z > 0 ? 0.012 : -0.012));
+    addMesh(group, screw, `${id}-head`, 'bare-metal');
+    attachMechanicalDetail(screw, id, `${id}.head-seat`, [1.285, -0.135, z], [1.285, -0.135, z], 'embedded');
+  }
   const hinge = roundedBox(0.17, 0.10, 0.28, 0.022, metal);
   hinge.position.set(1.39, -0.10, 0);
   addMesh(group, hinge, 'bipod-hinge', 'bare-metal');
@@ -1151,6 +1366,7 @@ function addBipod(parent: THREE.Object3D, metal: THREE.Material): THREE.Group {
     washer.rotation.x = Math.PI / 2;
     washer.position.set(1.42, -0.22, z);
     addMesh(group, washer, id, 'bare-metal');
+    attachMechanicalDetail(washer, 'bipod-hinge', 'bipod-hinge.axle-washer-land', [1.42, -0.22, z]);
   }
   const lockingLug = roundedBox(0.105, 0.12, 0.13, 0.018, darkMetalForBipod(metal));
   lockingLug.position.set(1.27, -0.27, 0.22);
@@ -1162,16 +1378,75 @@ function addBipod(parent: THREE.Object3D, metal: THREE.Material): THREE.Group {
   lockPin.position.set(1.29, -0.27, 0.22);
   addMesh(group, lockPin, 'bipod-lock-pin', 'bare-metal');
   attach(lockPin, 'bipod-locking-lug', 'bipod-locking-lug.pin', [1.29, -0.27, 0.22], [1.29, -0.27, 0.22], 'hinge');
+  const springOffset = 0.18;
+  const springAxisForLeg = (z: number): number => z + (z >= 0 ? springOffset : -springOffset);
+  group.userData.springAssembly = {
+    topology: 'independent-parallel-coil',
+    springAxis: 'parallel-to-telescoping-leg',
+    authoredLateralOffset: springOffset,
+    evidenceRefs: [
+      '.img2threejs/research/awp-real-reference-bipod-spring-separate.png',
+      ...PHYSICAL_HARDWARE_EVIDENCE,
+    ],
+  };
   const addSpring = (z: number, id: string): void => {
+    const springStart = 1.48;
+    // The supplied close-up shows a compressed coil occupying the first
+    // third of the telescoping rod, ending before the long inner tube.  The
+    // former 0.62-unit run made the coil swallow the sleeve and read as a
+    // decorative stripe rather than a retained mechanical spring.
+    const springEnd = 1.94;
+    const springAxisZ = springAxisForLeg(z);
+    const outwardSign = z >= 0 ? 1 : -1;
+    addSocket(group, `${id}-proximal-seat`, [springStart, -0.22, springAxisZ]);
+    addSocket(group, `${id}-distal-seat`, [springEnd, -0.22, springAxisZ]);
+    // The coil is a separate parallel assembly. Its guide/spine is offset
+    // from the telescoping leg so the inner tube has a clear sliding path.
+    const guide = cylinderBetween(
+      new THREE.Vector3(springStart, -0.22, springAxisZ),
+      new THREE.Vector3(springEnd, -0.22, springAxisZ),
+      0.012,
+      darkMetalForBipod(metal),
+      12,
+    );
+    const guideId = `${id}-spine`;
+    addMesh(group, guide, guideId, 'bare-metal');
+    guide.userData.explodeWithParent = true;
+    attach(guide, 'bipod-hinge', 'bipod-hinge.spring-guide-seat', [springStart, -0.22, springAxisZ], [springEnd, -0.22, springAxisZ], 'overlap');
+
+    // Small real bridge/seat pieces make the lateral offset mechanical rather
+    // than a floating wire. They connect the independent spring assembly to
+    // the hinge-side and distal leg lands without moving the telescoping tubes.
+    const proximalBridge = cylinderBetween(
+      new THREE.Vector3(springStart, -0.22, z),
+      new THREE.Vector3(springStart, -0.22, springAxisZ),
+      0.016,
+      lightMetalForBipod(metal),
+      10,
+    );
+    addMesh(group, proximalBridge, `${id}-proximal-seat-bridge`, 'bare-metal');
+    proximalBridge.userData.explodeWithParent = true;
+    attach(proximalBridge, 'bipod-hinge', 'bipod-hinge.spring-proximal-seat', [springStart, -0.22, z], [springStart, -0.22, springAxisZ], 'embedded');
+    const distalBridge = cylinderBetween(
+      new THREE.Vector3(springEnd, -0.22, springAxisZ),
+      new THREE.Vector3(springEnd, -0.22, z),
+      0.016,
+      lightMetalForBipod(metal),
+      10,
+    );
+    addMesh(group, distalBridge, `${id}-distal-seat-bridge`, 'bare-metal');
+    distalBridge.userData.explodeWithParent = true;
+    attach(distalBridge, `${id}-spine`, `${id}.distal-seat`, [springEnd, -0.22, springAxisZ], [springEnd, -0.22, z], 'embedded');
+
     const springPoints = Array.from({ length: 257 }, (_, index) => {
       const t = index / 256;
-      // Fourteen readable turns preserve the compression-spring silhouette;
-      // the earlier eighteen turns collapsed into a saw-tooth at review size.
+      // Fourteen readable turns preserve the compressed-coil silhouette;
+      // the tube remains round in close and edge views.
       const phase = t * Math.PI * 28;
       return new THREE.Vector3(
-        1.48 + t * 0.62,
+        springStart + t * (springEnd - springStart),
         -0.22 + Math.sin(phase) * 0.050,
-        z + Math.cos(phase) * 0.050,
+        springAxisZ + Math.cos(phase) * 0.050,
       );
     });
     // A coil should catch a narrow highlight on every turn. Use a lighter
@@ -1186,31 +1461,50 @@ function addBipod(parent: THREE.Object3D, metal: THREE.Material): THREE.Group {
     ), lightMetalForBipod(metal));
     addMesh(group, spring, id, 'bare-metal');
     spring.userData.attachment = {
-      parent: 'bipod-hinge',
-      parentId: 'bipod-hinge',
-      parentSocket: 'bipod-hinge.spring-seat',
-      localStart: [1.48, -0.22, z],
-      localEnd: [2.10, -0.22, z],
+      parent: guideId,
+      parentId: guideId,
+      parentSocket: `${guideId}.coil-seat`,
+      localStart: [springStart, -0.22, springAxisZ],
+      localEnd: [springEnd, -0.22, springAxisZ],
       baseRadius: 0.014,
       endRadius: 0.014,
-      contactType: 'surface-contact',
+      contactType: 'overlap',
       overlap: 0.025,
       gapTolerance: 0.015,
       evidenceRefs: FRONT_PAINT_EVIDENCE,
     };
+    // Each coil end becomes a real bent retaining hook. The hooks are kept
+    // separate from the leg and overlap their own spring seats.
+    const addHook = (end: 'proximal' | 'distal'): void => {
+      const x = end === 'proximal' ? springStart : springEnd;
+      const direction = end === 'proximal' ? -1 : 1;
+      const hookCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(x - direction * 0.035, -0.22, springAxisZ + outwardSign * 0.047),
+        new THREE.Vector3(x + direction * 0.005, -0.22, springAxisZ + outwardSign * 0.058),
+        new THREE.Vector3(x + direction * 0.035, -0.17, springAxisZ + outwardSign * 0.045),
+        new THREE.Vector3(x + direction * 0.045, -0.13, springAxisZ + outwardSign * 0.012),
+      ], false, 'centripetal', 0.5);
+      const hook = new THREE.Mesh(new THREE.TubeGeometry(hookCurve, 18, 0.014, 8, false), lightMetalForBipod(metal));
+      const hookId = `${id}-${end}-retaining-hook`;
+      addMesh(group, hook, hookId, 'bare-metal');
+      hook.userData.explodeWithParent = true;
+      hook.userData.attachment = {
+        parent: id,
+        parentId: id,
+        parentSocket: `${id}.${end}-retaining-hook-seat`,
+        localStart: [x - direction * 0.035, -0.22, springAxisZ + outwardSign * 0.047],
+        localEnd: [x + direction * 0.045, -0.13, springAxisZ + outwardSign * 0.012],
+        contactType: 'overlap',
+        overlap: 0.025,
+        gapTolerance: 0.015,
+        evidenceRefs: PHYSICAL_HARDWARE_EVIDENCE,
+      };
+    };
+    addHook('proximal');
+    addHook('distal');
   };
   addSpring(0.16, 'bipod-spring');
   addSpring(-0.16, 'bipod-spring-back');
-  for (const [z, id] of [[0.16, 'bipod-spring-spine'], [-0.16, 'bipod-spring-spine-back']] as const) {
-    const spine = cylinderBetween(
-      new THREE.Vector3(1.48, -0.22, z),
-      new THREE.Vector3(2.10, -0.22, z),
-      0.012,
-      metal,
-      12,
-    );
-    addMesh(group, spine, id, 'bare-metal');
-  }
   for (const [x, z, id] of [[2.64, 0.16, 'bipod-foot'], [2.64, -0.16, 'bipod-foot-back']] as const) {
     const footHousing = roundedBox(0.22, 0.11, 0.13, 0.022, darkMetalForBipod(metal));
     footHousing.position.set(x, -0.25, z);
@@ -1242,15 +1536,11 @@ function addBipod(parent: THREE.Object3D, metal: THREE.Material): THREE.Group {
     gapTolerance: 0.015,
     evidenceRefs: FRONT_PAINT_EVIDENCE,
   };
-  const springCollars = [1.48, 2.10];
-  springCollars.forEach((x, index) => {
-    [0.16, -0.16].forEach((z, sideIndex) => {
-      const collar = new THREE.Mesh(new THREE.TorusGeometry(0.072, 0.016, 10, 24), lightMetalForBipod(metal));
-      collar.rotation.y = Math.PI / 2;
-      collar.position.set(x, -0.22, z);
-      addMesh(group, collar, `bipod-spring-collar-${index + 1}-${sideIndex === 0 ? 'front' : 'back'}`, 'bare-metal');
-    });
-  });
+  // Do not add decorative collar rings as sibling parts. The supplied close
+  // reference identifies the visible independent component as the coil with
+  // its guide and bent wire terminations; extra torus collars read as floating
+  // washers in the muzzle orbit. The real proximal/distal seats are already
+  // represented by the spring bridges and hooks above.
   parent.add(group);
   return group;
 }
@@ -1350,11 +1640,21 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
   const receiver = part(new THREE.Group(), 'receiver', 'skin-finish');
   const receiverMesh = profileExtrude([
     [-0.55, 0.24], [0.08, 0.3], [1.43, 0.27], [1.68, 0.18], [1.68, -0.18],
-    [1.68, -0.1], [-0.5, -0.2], [-0.55, -0.18], [-0.55, -0.06],
-  ], 0.44, painted);
+    [1.68, -0.24], [1.36, -0.25], [1.10, -0.26], [0.72, -0.28],
+    [0.35, -0.30], [0.02, -0.34], [-0.24, -0.34], [-0.45, -0.25],
+    [-0.5, -0.15], [-0.55, -0.14], [-0.55, -0.06],
+  // Edge/muzzle-side review shows the receiver reading too deep as a solid
+  // slab. Reduce only its authored extrusion depth; the broadside profile
+  // and locked optic/rail stations stay unchanged.
+  ], 0.38, painted);
   receiverMesh.material = [painted, sidePaint];
   addMesh(receiver, receiverMesh, 'receiver', 'skin-finish');
-  receiver.position.set(-0.3, -0.12, 0);
+  // Source-frame action crop places the receiver shoulder above the old
+  // blockout station by roughly 0.12 authored units. Lift the complete
+  // receiver-owned action datum together; stock, barrel, optic and bipod
+  // remain untouched so this experiment isolates the vertical registration
+  // error instead of changing the whole rifle framing.
+  receiver.position.set(-0.3, 0.0, 0);
   // Source-column sampling puts the broad receiver body at roughly 72 px
   // high in the 1600x900 review frame; the earlier 1.18 scale rendered a
   // visibly over-deep lower edge around the grip/trigger transition.
@@ -1375,12 +1675,16 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
   root.add(receiver);
 
   const stock = part(new THREE.Group(), 'stock', 'skin-finish');
-  const stockHole = { x: -1.31, y: -0.34, rx: 0.22, ry: 0.19, radius: 0.060 };
+  // Source-frame solve: the thumbhole centre is lower than the old blockout
+  // (about source y=536 in the 1600x900 projection plate), with a compact
+  // rounded opening rather than a tall oval.
+  const stockHole = { x: -1.29, y: -0.50, rx: 0.21, ry: 0.25, radius: 0.095 };
   const stockMesh = profileExtrude([
-    [-2.49, 0.09], [-2.48, 0.33], [-2.23, 0.35], [-1.90, 0.35], [-1.65, 0.34],
-    [-1.44, 0.28], [-1.19, 0.21], [-0.90, 0.18], [-1.04, -0.93], [-1.11, -0.93],
-    [-1.18, -0.86], [-1.39, -0.70], [-1.58, -0.57], [-1.69, -0.40], [-1.80, -0.37],
-    [-1.92, -0.44], [-2.16, -0.76], [-2.47, -0.80], [-2.49, -0.38],
+    [-2.49, 0.225], [-2.10, 0.325], [-1.79, 0.325], [-1.58, 0.238], [-1.27, 0.175],
+    [-0.98, 0.175], [-0.80, 0.16], [-0.68, 0.10], [-0.60, 0.02],
+    [-0.68, -0.18], [-0.78, -0.38], [-0.86, -0.58], [-0.88, -0.80], [-0.88, -1.275],
+    [-1.17, -1.162], [-1.27, -1.10], [-1.48, -1.10], [-1.58, -0.90], [-1.79, -0.763],
+    [-1.90, -1.038], [-2.10, -1.063], [-2.31, -1.063], [-2.49, -1.131],
   ], 0.58, holeCutMaterial(painted, stockHole), stockHole);
   stockMesh.material = [stockMesh.material as THREE.Material, sidePaint];
   addMesh(stock, stockMesh, 'stock', 'skin-finish');
@@ -1391,11 +1695,17 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
   // reduced overlap around the thumbhole/lower contour, so the stock stays at
   // its measured loop16 envelope while the next pass targets local profile
   // vertices instead of shrinking the complete assembly.
-  stock.scale.set(0.92, 0.80, 0.78);
+  // The x/y envelope is source-fitted; the edge orbit exposed excess chassis
+  // depth. Keep real thickness for the stock but narrow the hidden extrusion
+  // locally instead of shrinking the visible broadside contour.
+  // Keep the longitudinal station source-locked; only the hidden depth stays
+  // compressed. The prior x=.92 scale moved the stock shell away from the
+  // source butt/throat landmarks while leaving the separate buttpad behind.
+  stock.scale.set(1.0, 0.62, 0.64);
   // The source stock sits visibly higher against the receiver than the first
   // traced envelope; lift only this assembly so the cheek line and lower
   // thumbhole return match without moving the locked optic or receiver.
-  stock.position.y = -0.13;
+  stock.position.y = -0.08;
   stock.userData.attachment = {
     parent: 'receiver',
     parentId: 'receiver',
@@ -1420,9 +1730,9 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
     // The former scaled torus was an ellipse and visibly disagreed with the
     // rounded rectangular cut in the stock and its projected artwork.
     const frameShape = new THREE.Shape();
-    roundedHolePath(frameShape, stockHole.x, stockHole.y, stockHole.rx + 0.022, stockHole.ry + 0.022, 0.070);
+    roundedHolePath(frameShape, stockHole.x, stockHole.y, stockHole.rx + 0.022, stockHole.ry + 0.022, 0.112);
     const frameHole = new THREE.Path();
-    roundedHolePath(frameHole, stockHole.x, stockHole.y, stockHole.rx, stockHole.ry, 0.065);
+    roundedHolePath(frameHole, stockHole.x, stockHole.y, stockHole.rx, stockHole.ry, 0.105);
     frameShape.holes.push(frameHole);
     const frameGeometry = new THREE.ExtrudeGeometry(frameShape, {
       depth: 0.016,
@@ -1436,11 +1746,11 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
     const thumbholeFrame = new THREE.Mesh(frameGeometry, thumbholeFrameMaterial);
     addMesh(stock, thumbholeFrame, index === 0 ? 'stock-thumbhole-bevel-front' : 'stock-thumbhole-bevel-back', 'skin-finish');
   });
-  const buttpad = roundedBox(0.08, 0.72, 0.62, 0.035, polymer);
-  buttpad.position.set(-2.51, -0.29, 0);
+  const buttpad = roundedBox(0.08, 1.45, 0.62, 0.035, polymer);
+  buttpad.position.set(-2.51, -0.52, 0);
   addMesh(stock, buttpad, 'stock-buttpad', 'polymer');
-  const buttpadSeam = roundedBox(0.025, 0.66, 0.64, 0.008, darkMetal);
-  buttpadSeam.position.set(-2.445, -0.29, 0);
+  const buttpadSeam = roundedBox(0.025, 1.37, 0.64, 0.008, darkMetal);
+  buttpadSeam.position.set(-2.445, -0.52, 0);
   addMesh(stock, buttpadSeam, 'stock-buttpad-seam', 'bare-metal');
   for (const z of [0.255, -0.255]) {
     [-0.08, -0.50].forEach((y, index) => {
@@ -1448,6 +1758,7 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
       screw.rotation.x = Math.PI / 2;
       screw.position.set(-2.455, y, z);
       addMesh(stock, screw, `stock-buttpad-screw-${z > 0 ? 'front' : 'back'}-${index + 1}`, 'bare-metal');
+      attachMechanicalDetail(screw, stock.name, 'stock.buttpad-fastener-land', [-2.455, y, z]);
     });
   }
   const cheekRest = roundedBox(0.68, 0.09, 0.40, 0.035, polymer);
@@ -1455,30 +1766,43 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
   addMesh(stock, cheekRest, 'stock-cheek-rest', 'polymer');
   root.add(stock);
 
+  // The classic AW thumbhole contour is integrated into the stock side. Keep
+  // a named runtime component/socket for animation and attachment audits, but
+  // let the stock shell own the visible grip-throat geometry and paint. A
+  // second solid grip island was the source of the detached/blocky read.
   const grip = part(new THREE.Group(), 'grip', 'skin-finish');
-  const gripMesh = profileExtrude([
-    [-0.78, -0.04], [-0.46, -0.04], [-0.43, -0.17], [-0.51, -0.31], [-0.68, -0.37],
-    [-0.80, -0.28], [-0.86, -0.14],
-  ], 0.56, painted);
-  gripMesh.material = [painted, sidePaint];
-  addMesh(grip, gripMesh, 'grip', 'skin-finish');
-  grip.position.set(-1.02, -0.04, 0);
-  grip.scale.set(0.55, 0.65, 1);
+  grip.userData.role = 'integrated-stock-grip-throat';
+  grip.userData.geometryOwner = 'stock';
+  grip.position.set(0, 0, 0);
+  // Keep a real internal chassis/grip core for the selectable component tree.
+  // It is intentionally enclosed by the stock shell; the broadside contour
+  // and Medusa receiving surface belong to `stock`, so this cannot create a
+  // second painted island or a false seam.
+  const gripCore = roundedBox(0.28, 0.16, 0.34, 0.035, polymer);
+  gripCore.position.set(-1.08, -0.49, 0);
+  addMesh(grip, gripCore, 'grip', 'polymer');
   grip.userData.attachment = {
     parent: 'stock',
     parentId: 'stock',
     parentSocket: 'stock.grip-shoulder-socket',
-    localStart: [-0.78, -0.04, 0],
-    localEnd: [-0.58, -0.16, 0],
-    contactType: 'overlap',
-    embedDepth: 0.025,
-    overlap: 0.025,
+    localStart: [-1.10, -0.36, 0],
+    localEnd: [-0.88, -0.58, 0],
+    contactType: 'integrated',
+    embedDepth: 0.04,
+    overlap: 0.04,
     gapTolerance: 0.015,
     evidenceRefs: FRONT_PAINT_EVIDENCE,
   };
-  root.add(grip);
+  stock.add(grip);
 
   const magazine = part(new THREE.Group(), 'magazine', 'bare-metal');
+  // Loop 7: raise the complete stamped magazine into the receiver well. The
+  // visible top edge must meet the undercut shell; AABB contact alone is not
+  // sufficient because the projected side can still show a white seam.
+  // Loop 8: the previous .14 station still left a visible white seam at the
+  // top lip in the source-facing crop. Raise the complete magazine assembly
+  // until that lip is visibly embedded in the receiver magwell.
+  magazine.position.y = 0.20;
   const mag = roundedBox(0.22, 0.42, 0.31, 0.035, metal);
   // Keep the source-fit station from the last accepted envelope correction;
   // the forward shift was tested and rejected by both broadside IoU gates.
@@ -1491,28 +1815,34 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
     const rib = roundedBox(0.018, 0.31, 0.018, 0.006, lightMetal);
     rib.position.set(-0.22 + x, -0.51, 0.16);
     addMesh(magazine, rib, `magazine-rib-${index + 1}`, 'bare-metal');
+    rib.userData.explodeWithParent = true;
   });
   for (const z of [0.166, -0.166]) {
     [-0.40, -0.51, -0.62].forEach((y, index) => {
       const stamp = roundedBox(0.17, 0.022, 0.018, 0.004, lightMetal);
       stamp.position.set(-0.22, y, z);
       addMesh(magazine, stamp, `magazine-stamp-${z > 0 ? 'front' : 'back'}-${index + 1}`, 'bare-metal');
+      stamp.userData.explodeWithParent = true;
     });
   }
-  const floorplate = roundedBox(0.34, 0.045, 0.31, 0.01, metal);
+  // Keep the floorplate separate and socketed, but give its stamped/molded
+  // perimeter the same small fillet as the reference hardware.
+  const floorplate = roundedBox(0.34, 0.058, 0.31, 0.024, metal);
   floorplate.position.set(-0.25, -0.70, 0);
   addMesh(magazine, floorplate, 'magazine-floorplate', 'bare-metal');
+  floorplate.userData.explodeWithParent = true;
   [-0.09, 0.09].forEach((x, index) => {
     const detent = roundedBox(0.045, 0.022, 0.028, 0.005, darkMetal);
     detent.position.set(-0.25 + x, -0.725, 0.16);
     addMesh(magazine, detent, `magazine-floorplate-detent-${index + 1}`, 'bare-metal');
+    detent.userData.explodeWithParent = true;
   });
   magazine.userData.attachment = {
     parent: 'receiver',
     parentId: 'receiver',
     parentSocket: 'receiver.magazine-well',
-    localStart: [-0.22, -0.25, 0],
-    localEnd: [-0.25, -0.72, 0],
+    localStart: [-0.22, -0.07, 0],
+    localEnd: [-0.25, -0.54, 0],
     contactType: 'socket',
     embedDepth: 0.035,
     overlap: 0.035,
@@ -1521,7 +1851,7 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
   };
   root.add(magazine);
 
-  const triggerGroup = addTriggerGuard(receiver, lightMetal);
+  const triggerGroup = addTriggerGuard(receiver, darkMetal);
 
   const barrel = part(new THREE.Group(), 'barrel', 'bare-metal');
   // Broadside trace and loop14 review show the current barrel taking too much
@@ -1612,16 +1942,19 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
   // above the scope from an orbit and made the attachment ambiguous.
   const boltPivot = part(new THREE.Group(), 'boltPivot', 'bare-metal');
   // The handle exits the receiver side, but its pivot starts on the side wall
-  // below the receiver crown. The earlier y=.52 put the knob level with the
-  // optic rail and made it read as hardware sitting on top of the scope; the
-  // source shows the bolt handle dropping from the receiver flank.
-  boltPivot.position.set(0.08, 0.22, 0.255);
+  // below the receiver crown. The source broadside puts the knob just below
+  // the action, not down beside the trigger opening. Shift the station toward
+  // the rear-action datum and shorten only the vertical drop; the grip remains
+  // long enough to read as a usable bolt handle without becoming a second
+  // trigger bow.
+  boltPivot.position.set(0.26, 0.25, 0.255);
+  boltPivot.userData.cycleDegrees = 60;
   boltPivot.userData.attachment = {
     parent: 'receiver',
     parentId: 'receiver',
     parentSocket: 'receiver.bolt-pivot-socket',
-    localStart: [0.08, 0.22, 0.255],
-    localEnd: [0.08, 0.02, 0.255],
+    localStart: [0.26, 0.25, 0.255],
+    localEnd: [0.26, 0.05, 0.255],
     contactType: 'socket',
     embedDepth: 0.03,
     overlap: 0.03,
@@ -1630,46 +1963,50 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
   };
   const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.42, 24), lightMetal);
   bolt.rotation.z = Math.PI / 2;
-  bolt.position.set(0.18, -0.18, 0);
+  // The bolt body runs inside the receiver. Keeping it at the pivot's
+  // exterior Z station made a long silver cylinder float across the painted
+  // side; only the boss and handle should break the side wall.
+  bolt.position.set(0.18, -0.05, -0.22);
   addMesh(boltPivot, bolt, 'bolt', 'bare-metal');
-  const boltShroud = roundedBox(0.34, 0.14, 0.18, 0.025, darkMetal);
-  boltShroud.position.set(0.02, -0.18, 0.025);
+  const boltShroud = roundedBox(0.20, 0.11, 0.18, 0.025, darkMetal);
+  boltShroud.position.set(0.02, -0.05, -0.065);
   addMesh(boltPivot, boltShroud, 'bolt-shroud', 'bare-metal');
-  // The handle descends out and rearward from the pivot; the knob is below
-  // the scope/receiver top, matching the visible AWP silhouette.
+  // Loop 7: the source reads as a compact bent crank with a lower ball, not a
+  // long horizontal lever. Keep it receiver-parented and make the downward
+  // reach explicit so it cannot drift toward the optic.
   const boltBoss = new THREE.Mesh(new THREE.CylinderGeometry(0.082, 0.082, 0.065, 24), darkMetal);
   boltBoss.rotation.x = Math.PI / 2;
-  boltBoss.position.set(0, -0.18, 0);
+  boltBoss.position.set(0, -0.05, 0);
   addMesh(boltPivot, boltBoss, 'bolt-pivot-boss', 'bare-metal');
   const handleCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.0, -0.18, 0),
-    new THREE.Vector3(-0.04, -0.31, 0),
-    new THREE.Vector3(-0.22, -0.54, 0),
-    // Loop 20 rollback: the audit's 15–20% extension made the broadside
-    // handle read as a second trigger bow and worsened the envelope. The
-    // source-visible handle is shorter but still a usable bent grip.
-    new THREE.Vector3(-0.52, -0.78, 0),
+    new THREE.Vector3(0.0, -0.04, 0),
+    new THREE.Vector3(-0.02, -0.08, 0),
+    new THREE.Vector3(-0.045, -0.15, 0),
+    new THREE.Vector3(-0.12, -0.22, 0),
   ]);
-  const handle = new THREE.Mesh(new THREE.TubeGeometry(handleCurve, 24, 0.047, 12, false), lightMetal);
+  const handle = new THREE.Mesh(new THREE.TubeGeometry(handleCurve, 24, 0.036, 12, false), lightMetal);
   addMesh(boltPivot, handle, 'bolt-handle', 'bare-metal');
-  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.095, 18, 12), lightMetal);
-  knob.position.set(-0.58, -0.85, 0);
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.068, 18, 12), lightMetal);
+  knob.position.set(-0.14, -0.255, 0);
   addMesh(boltPivot, knob, 'bolt-handle-ball', 'bare-metal');
   receiver.add(boltPivot);
 
   const bipodGroup = addBipod(root, metal);
   addFasteners(root, wear);
-  const medusaLayers = addMedusaSurfaceLayers(stock, receiver, grip);
-  // Logical component registry for the adaptive spec. The actual pixels stay
-  // on the three authored receiving meshes above; this group contains no
-  // geometry and is not a projection shell or a camera-facing surface.
+  // Bind Medusa to the front/back cap faces of the authored stock and receiver
+  // shells. No detached ShapeGeometry/card is added to the scene.
+  bindAuthoredShellProjection(stockMesh, stock, painted, sidePaint);
+  bindAuthoredShellProjection(receiverMesh, receiver, painted, sidePaint);
+  const medusaLayers = ['stock', 'receiver'];
+  // Logical component registry for the adaptive spec. The group contains no
+  // geometry and records which authored meshes own the projected pixels.
   const medusaProjection = part(new THREE.Group(), 'medusa-projection', 'projected-albedo', [
     ...FRONT_PAINT_EVIDENCE,
     ...BACK_PAINT_EVIDENCE,
   ]);
   medusaProjection.userData.logicalComponent = true;
-  medusaProjection.userData.boundMeshes = medusaLayers.map((layer) => layer.name);
-  medusaProjection.userData.projectionBinding = 'conforming-decal-on-authored-components';
+  medusaProjection.userData.boundMeshes = ['stock', 'receiver'];
+  medusaProjection.userData.projectionBinding = 'authored-shell-cap-uv';
   root.add(medusaProjection);
 
   // Bare-metal edge highlights intentionally remain geometry, not an albedo cheat.
@@ -1691,8 +2028,10 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
   addSocket(sockets, 'scopeRingRearStation', [-0.54, 0.18, 0]);
   addSocket(sockets, 'scopeRingFrontStation', [-0.02, 0.18, 0]);
   addSocket(sockets, 'bipodPivot', [1.46, -0.49, 0]);
-  addSocket(sockets, 'triggerPivot', [-0.70, -0.34, 0]);
-  addSocket(sockets, 'boltHandle', [-0.53, -0.43, 0.255]);
+  addSocket(sockets, 'triggerPivot', [-0.54, -0.31, 0]);
+  // Root-space rest socket for the source-fitted ball: receiver (-0.30, 0)
+  // + bolt pivot (0.26, 0.25) + knob (-0.14, -0.255).
+  addSocket(sockets, 'boltHandle', [-0.18, -0.005, 0.255]);
   addSocket(sockets, 'bipodFold', [1.72, -0.49, 0]);
   root.add(sockets);
 
@@ -1741,7 +2080,7 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
       'medusa-projection': {
         kind: 'logical',
         binding: 'conforming-decal-on-authored-components',
-        boundMeshes: medusaLayers.map((layer) => layer.name),
+        boundMeshes: medusaLayers,
       },
     },
     pivots: root.userData.pivots,
@@ -1753,8 +2092,8 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
       scopeRingRearStation: new THREE.Vector3(-0.54, 0.18, 0),
       scopeRingFrontStation: new THREE.Vector3(-0.02, 0.18, 0),
       bipodPivot: new THREE.Vector3(1.46, -0.49, 0),
-      triggerPivot: new THREE.Vector3(-0.70, -0.34, 0),
-      boltHandle: new THREE.Vector3(-0.53, -0.43, 0.255),
+      triggerPivot: new THREE.Vector3(-0.54, -0.31, 0),
+      boltHandle: new THREE.Vector3(-0.18, -0.005, 0.255),
       bipodFold: new THREE.Vector3(1.72, -0.49, 0),
     },
     materials: root.userData.materials,
@@ -1764,7 +2103,7 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
       exactnessTier: 'image-only',
       familyAdapter: 'rifle/awp',
       projectionBinding: 'conforming-decal-on-authored-components',
-      projectionLayers: medusaLayers.map((layer) => layer.name),
+      projectionLayers: medusaLayers,
       thicknessConfidence: 0.25,
       inferred: ['receiver and stock depth', 'scope internal optics', 'bolt and bipod hidden-side construction'],
     },
@@ -1777,10 +2116,10 @@ export function createAwpMedusaModel({ shadows = true }: AwpMedusaOptions = {}):
     idleTime += dt;
     root.rotation.y = Math.sin(idleTime * 0.25) * 0.08;
     root.rotation.x = Math.sin(idleTime * 0.17) * 0.018;
-    // Keep the authored receiver socket as the rest position; the previous
-    // assignment replaced x=0.08 with a sine around zero and slowly exposed
-    // the bolt as a floating child during idle playback.
-    boltPivot.position.x = 0.08 + Math.sin(idleTime * 0.55) * 0.008;
+    // Keep the authored receiver socket as the rest position; oscillate only
+    // the small bolt-action idle offset so the handle cannot drift toward the
+    // optic or become detached from the receiver flank.
+    boltPivot.position.x = 0.26 + Math.sin(idleTime * 0.55) * 0.008;
   };
   root.traverse((node) => {
     if (node instanceof THREE.Mesh) {

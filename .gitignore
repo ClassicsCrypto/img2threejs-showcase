@@ -4,3 +4,4 @@ dist
 .omc
 sculpt
 .render-review/
+.img2threejs/

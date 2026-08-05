@@ -48,6 +48,11 @@ import {
   createAwpMedusaLookDevLights,
   makeAwpMedusaBackground,
 } from './awp-medusa/createAwpMedusaModel';
+import {
+  createAWPMedusaMinimalWearModel,
+  createAWPMedusaMinimalWearLookDevLights,
+  makeAWPMedusaMinimalWearBackground,
+} from './awp-medusa-v2/createAwpMedusaModelV2';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -150,6 +155,43 @@ export const demos: DemoEntry[] = [
         const boltPivot = group.getObjectByName('boltPivot');
         if (boltPivot) boltPivot.position.x = Math.sin(t * 0.55) * 0.008;
       };
+      return group;
+    },
+  },
+  {
+    id: 'awp-medusa-v2',
+    title: 'AWP | Medusa (Minimal Wear) · V2 rebuild',
+    subjectClass: 'object',
+    blurb:
+      'Fresh V2 procedural rebuild from the admitted front/back broadside references. Macro shell profiles, open thumbhole, receiver, coaxial barrel and muzzle bore, scope rings/turrets/glass, receiver-parented bolt, trigger group, magazine, hinge, independent springs, telescoping bipod legs, feet, fasteners, sockets and idle tick are authored as separate physical components. The paint projection remains deliberately deferred until the map-stripped silhouette gate passes.',
+    referenceImage: `${BASE}front-medusa.webp`,
+    sourcePath: 'src/demos/awp-medusa-v2/createAwpMedusaModelV2.ts',
+    sourceUrl: `${REPO}/src/demos/awp-medusa-v2/createAwpMedusaModelV2.ts`,
+    generatedWith: 'img2threejs V2 · custom AWP rifle adapter · macro-blockout pass',
+    author: 'Codex',
+    authorUrl: 'https://github.com/hoainho/img2threejs',
+    status: 'placeholder',
+    cameraPosition: [0, 1.2, 11.5],
+    cameraTarget: [0, 0.05, 0],
+    cameraFov: 25,
+    captureMargin: 1.0,
+    // Source masks place the object bbox about 7/224 grid rows lower than
+    // the previous auto-framed capture on both admitted broadside views.
+    // This is a camera solve correction, not a geometry translation.
+    captureTargetOffsetY: 0.08,
+    captureTargetOffsetYBack: 0.08,
+    accent: '#16669b',
+    backgroundGradient: { inner: '#263b47', outer: '#081018' },
+    exposure: 0.9,
+    environmentIntensity: 0.82,
+    toneMapping: 'neutral',
+    installLights: (scene) => {
+      scene.add(createAWPMedusaMinimalWearLookDevLights());
+    },
+    build: (scene) => {
+      scene.background = makeAWPMedusaMinimalWearBackground();
+      const group = createAWPMedusaMinimalWearModel({ shadows: true, qualityPriority: 'reference-fidelity' });
+      scene.add(group);
       return group;
     },
   },
