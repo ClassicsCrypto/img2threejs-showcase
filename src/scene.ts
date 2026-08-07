@@ -30,6 +30,15 @@ export interface ViewerOptions {
   captureMargin?: number;
 }
 
+/** An explicit review camera: geometry-independent, so a pass is measured rather than reframed. */
+export interface PinnedCaptureCamera {
+  position: [number, number, number];
+  target: [number, number, number];
+  fov: number;
+  near: number;
+  far: number;
+}
+
 /** A component a click can resolve to: the unit the inspector selects, names and isolates. */
 export interface PartInfo {
   name: string;
@@ -907,6 +916,25 @@ export class Viewer {
     this.camera.updateProjectionMatrix();
     this.camera.lookAt(center);
     this.controls.target.copy(center);
+    this.controls.update();
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  /**
+   * Capture framing pinned to explicit numbers. Nothing here reads the scene, so a geometry change
+   * cannot reframe the shot — which is what makes a silhouette metric comparable between passes.
+   * frameForCapture() derives distance and target from the bounding box of the very geometry under
+   * review, so growing a sub-assembly pulls the camera back and shrinks the whole silhouette.
+   */
+  pinCaptureCamera(cam: PinnedCaptureCamera): void {
+    this.camera.fov = cam.fov;
+    this.camera.near = cam.near;
+    this.camera.far = cam.far;
+    this.camera.position.set(cam.position[0], cam.position[1], cam.position[2]);
+    this.camera.updateProjectionMatrix();
+    const target = new THREE.Vector3(cam.target[0], cam.target[1], cam.target[2]);
+    this.camera.lookAt(target);
+    this.controls.target.copy(target);
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   }

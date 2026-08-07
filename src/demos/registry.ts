@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { PinnedCaptureCamera } from '../scene';
 import {
   createM9DopplerModel,
   createM9DopplerLookDevLights,
@@ -104,6 +105,11 @@ export interface DemoEntry {
   captureTargetOffsetX?: number;
   /** Optional reverse-view capture correction; the back plate has different transparent padding. */
   captureTargetOffsetXBack?: number;
+  /**
+   * Explicit review camera per broadside. When present, capture uses these numbers instead of
+   * frameForCapture()'s bbox-derived framing, so a geometry change cannot reframe the shot.
+   */
+  capturePinnedCamera?: { front: PinnedCaptureCamera; back: PinnedCaptureCamera };
 }
 
 const BASE = import.meta.env.BASE_URL;
@@ -163,11 +169,11 @@ export const demos: DemoEntry[] = [
     title: 'AWP | Medusa (Minimal Wear) · V2 rebuild',
     subjectClass: 'object',
     blurb:
-      'Fresh V2 procedural rebuild from the admitted front/back broadside references. Macro shell profiles, open thumbhole, receiver, coaxial barrel and muzzle bore, scope rings/turrets/glass, receiver-parented bolt, trigger group, magazine, hinge, independent springs, telescoping bipod legs, feet, fasteners, sockets and idle tick are authored as separate physical components. The paint projection remains deliberately deferred until the map-stripped silhouette gate passes.',
+      'Fresh V2 procedural rebuild from the admitted front/back broadside references. The silhouette gate is met at IoU 0.9205 front / 0.9171 back against a 0.90 target, so the blockout pass is closed and the Medusa artwork is now projected from the reference\'s own de-lit pixels through the capture camera the plates are registered to. Macro shell profiles, open thumbhole, receiver, constant-diameter barrel with a squared front-sight block and a crowned muzzle, scope with a corrected objective flare and U-clamp ring saddles, receiver-parented bolt, trigger group, magazine, hinge, independent springs, telescoping bipod legs, feet, fasteners, sockets and idle tick are separate physical components with 15 verified contact pairs. Three subsystems that the reference does not contain were deleted rather than tuned. Materials, wear and lighting are later passes and are not done: this is an in-progress structural rebuild, not a finished look.',
     referenceImage: `${BASE}front-medusa.webp`,
     sourcePath: 'src/demos/awp-medusa-v2/createAwpMedusaModelV2.ts',
     sourceUrl: `${REPO}/src/demos/awp-medusa-v2/createAwpMedusaModelV2.ts`,
-    generatedWith: 'img2threejs V2 · custom AWP rifle adapter · macro-blockout pass',
+    generatedWith: 'img2threejs V2 · custom AWP rifle adapter · blockout closed, structural pass in progress',
     author: 'Codex',
     authorUrl: 'https://github.com/hoainho/img2threejs',
     status: 'placeholder',
@@ -180,6 +186,28 @@ export const demos: DemoEntry[] = [
     // This is a camera solve correction, not a geometry translation.
     captureTargetOffsetY: 0.08,
     captureTargetOffsetYBack: 0.08,
+    // Pass-163 finding: frameForCapture() derives the camera from the scene bounding box, so every
+    // geometry change reframed the review shot — lifting the optic 0.066 moved scaleDelta 0.0224 ->
+    // 0.0044 and dropped both broadside IoUs ~0.039, an order of magnitude above the per-pass
+    // geometry signal being measured. These are the exact numbers that framing produced at the
+    // retained pass-157 geometry, frozen so later passes are measured instead of reframed. The
+    // captureMargin/offset fields above are inert while this is set; they record how it was solved.
+    capturePinnedCamera: {
+      front: {
+        position: [0.06105950944125864, 0.6510459728837025, 17.578492692244154],
+        target: [0.06105950944125649, 0.6510459728837014, 0.01349999964237214],
+        fov: 20,
+        near: 16.511992697250943,
+        far: 21.776992674005132,
+      },
+      back: {
+        position: [0.06105950944125864, 0.6510459728837025, -17.551492692959407],
+        target: [0.06105950944125649, 0.6510459728837014, 0.01349999964237214],
+        fov: 20,
+        near: 16.511992697250943,
+        far: 21.776992674005132,
+      },
+    },
     accent: '#16669b',
     backgroundGradient: { inner: '#263b47', outer: '#081018' },
     exposure: 0.9,

@@ -47,24 +47,64 @@ async function open(page, query = '', freeze = true) {
   await open(page, '&back=1');
   await page.locator('canvas').first().screenshot({ path: path.join(out, 'broadside-back.png') });
 
-  async function orbit(name, dx, dy) {
-    await open(page, 'reviewWhite=1', false);
-    const canvas = page.locator('canvas').first();
-    const box = await canvas.boundingBox();
-    if (!box) throw new Error(`canvas bounds missing for ${name}`);
-    const cx = box.x + box.width * 0.52;
-    const cy = box.y + box.height * 0.52;
-    await page.mouse.move(cx, cy);
-    await page.mouse.down();
-    await page.mouse.move(cx + dx, cy + dy, { steps: 24 });
-    await page.mouse.up();
-    await page.waitForTimeout(350);
-    await canvas.screenshot({ path: path.join(out, `${name}.png`) });
+  // Orbit frames are driven through pinCaptureCamera instead of mouse drags. The old path passed
+  // `reviewWhite=1` (a V1-only flag that V2 ignores) and dropped `capture=1` so OrbitControls would
+  // stay enabled — which meant every orbit frame rendered on the DARK studio background 0x1b1d24.
+  // That colour sits next to this weapon's own albedo, so build_foreground_mask found almost no
+  // foreground, fell back to `alpha > 16`, and marked the whole opaque frame as the silhouette:
+  // every orbit frame measured area=1.0000 and the multi-angle gate passed without testing anything.
+  // Driving the camera keeps capture mode (white studio) AND gives real angular separation.
+  async function orbit(name, azimuthDeg, elevationDeg) {
+    await open(page);
+    await page.evaluate(({ az, el }) => {
+      const viewer = window.__IMG2THREEJS_VIEWER__;
+      const w = window;
+      w.__ORBIT_BASE__ = w.__ORBIT_BASE__ || {
+        position: viewer.camera.position.toArray(),
+        target: viewer.controls.target.toArray(),
+        fov: viewer.camera.fov,
+        near: viewer.camera.near,
+        far: viewer.camera.far,
+      };
+      const base = w.__ORBIT_BASE__;
+      const [tx, ty, tz] = base.target;
+      const dx = base.position[0] - tx;
+      const dy = base.position[1] - ty;
+      const dz = base.position[2] - tz;
+      // Pull in for orbit frames: at the broadside framing distance a three-quarter view of this
+      // long thin object covers under 3.5% of the frame, which trips build_foreground_mask's
+      // `coverage < 0.035` fallback to `alpha > 16` -- on an opaque render that silently reports
+      // the WHOLE frame as silhouette (area=1.0000) instead of failing, and the multi-angle gate
+      // then reads it as a huge area and passes.
+      const radius = Math.hypot(dx, dy, dz) * 0.75;
+      const a = (az * Math.PI) / 180;
+      const e = (el * Math.PI) / 180;
+      viewer.pinCaptureCamera({
+        position: [
+          tx + radius * Math.cos(e) * Math.sin(a),
+          ty + radius * Math.sin(e),
+          tz + radius * Math.cos(e) * Math.cos(a),
+        ],
+        target: [tx, ty, tz],
+        fov: base.fov,
+        // near/far must follow the orbit radius. Reusing the broadside camera's near plane while
+        // moving closer put the whole model IN FRONT of it: the frame came back pure white, coverage
+        // read ~0, and the mask fell back to `alpha > 16` -- reporting area=1.0000 for an empty frame.
+        near: radius * 0.05,
+        far: radius * 6,
+      });
+    }, { az: azimuthDeg, el: elevationDeg });
+    await page.waitForTimeout(250);
+    await page.locator('canvas').first().screenshot({ path: path.join(out, `${name}.png`) });
   }
 
-  await orbit('orbit-left', -280, 0);
-  await orbit('orbit-right', 360, 30);
-  await orbit('orbit-top', 0, 180);
-  await orbit('orbit-muzzle', -520, 20);
+  // Angles chosen so a flat billboard would collapse: two three-quarter views, one from above, and
+  // one down the bore where a plane-faked barrel would nearly vanish.
+  await orbit('orbit-left', -55, 8);
+  await orbit('orbit-right', 55, 14);
+  await orbit('orbit-top', 10, 72);
+  // 80 deg, not 88: at 88 the down-bore silhouette measured 0.0355 -- within 0.0005 of
+  // build_foreground_mask's 0.035 fallback, where the gate would silently go blind again.
+  await orbit('orbit-muzzle', 80, 6);
   await browser.close();
 })().catch((error) => { console.error(error.stack || error); process.exitCode = 1; });

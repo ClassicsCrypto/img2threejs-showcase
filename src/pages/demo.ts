@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { getDemo } from '../demos/registry';
 import { Viewer, type PartInfo } from '../scene';
 import { navigate } from '../router';
+import { createScopeMode, type OpticSocket } from '../scopeMode';
 
 const GITHUB_URL = 'https://github.com/hoainho/img2threejs';
 
@@ -79,6 +80,9 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
             <div class="demo-links">
               <button class="btn btn-explode" id="demo-explode" type="button" aria-pressed="false" hidden>
                 <span class="explode-glyph">&#10021;</span> <span class="explode-label">Explode parts</span>
+              </button>
+              <button class="btn btn-scope" id="demo-scope" type="button" aria-pressed="false" hidden>
+                <span class="scope-glyph">&#9678;</span> <span class="scope-label">Look through scope</span>
               </button>
               <a class="btn" href="${demo.sourceUrl}" target="_blank" rel="noopener noreferrer">
                 &lt;/&gt; View generated source
@@ -185,6 +189,23 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
 
   // Explode control. Hidden for single-mesh demos and in capture mode, where the panel is
   // hidden anyway and the evaluation frame must stay deterministic.
+  // Look-through-the-optic mode. Offered only when the MODEL publishes a `scope-sight-line` socket,
+  // so this stays data-driven rather than special-casing the rifle. Suppressed in capture mode, where
+  // the evaluation frame must stay deterministic.
+  const scopeBtn = mount.querySelector<HTMLButtonElement>('#demo-scope');
+  const sightSocket = modelRuntime?.sockets?.['scope-sight-line'] as OpticSocket | undefined;
+  const scopeMode = capture ? null : createScopeMode(viewer, canvasMount, model, sightSocket);
+  if (scopeBtn && scopeMode) {
+    scopeBtn.hidden = false;
+    const label = scopeBtn.querySelector('.scope-label')!;
+    scopeBtn.addEventListener('click', () => {
+      scopeMode.toggle();
+      scopeBtn.setAttribute('aria-pressed', String(scopeMode.active));
+      scopeBtn.classList.toggle('is-active', scopeMode.active);
+      label.textContent = scopeMode.active ? 'Exit scope' : 'Look through scope';
+    });
+  }
+
   const explodeBtn = mount.querySelector<HTMLButtonElement>('#demo-explode');
   if (explodeBtn && viewer.canExplode && !capture) {
     explodeBtn.hidden = false;
@@ -335,12 +356,21 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
       ? demo.captureTargetOffsetXBack ?? demo.captureTargetOffsetX
       : demo.captureTargetOffsetX;
     if (captureOffsetX !== undefined) model.position.x += captureOffsetX;
-    viewer.frameForCapture(
-      20,
-      demo.captureMargin ?? 1.12,
-      backCapture ? -1 : 1,
-      backCapture ? demo.captureTargetOffsetYBack ?? demo.captureTargetOffsetY ?? 0 : demo.captureTargetOffsetY ?? 0,
-    );
+    // A pinned camera makes the review shot independent of the geometry it reviews; the auto-fit
+    // below reads the scene bbox, so any envelope change reframes the shot and contaminates the
+    // silhouette metric it feeds.
+    if (demo.capturePinnedCamera) {
+      viewer.pinCaptureCamera(
+        backCapture ? demo.capturePinnedCamera.back : demo.capturePinnedCamera.front,
+      );
+    } else {
+      viewer.frameForCapture(
+        20,
+        demo.captureMargin ?? 1.12,
+        backCapture ? -1 : 1,
+        backCapture ? demo.captureTargetOffsetYBack ?? demo.captureTargetOffsetY ?? 0 : demo.captureTargetOffsetY ?? 0,
+      );
+    }
   }
   viewer.start();
 
