@@ -1241,7 +1241,28 @@ function addTriggerAndMagazine(parent: THREE.Object3D, mats: MaterialSet, runtim
   }
 }
 
-function addBipod(parent: THREE.Object3D, mats: MaterialSet, runtime: Runtime): void {
+export type BipodController = {
+  /** True when the legs are deployed down (progress >= 0.5). */
+  readonly deployed: boolean;
+  /** Current fold progress: 0 = folded forward under the fore-end, 1 = deployed down. */
+  readonly progress: number;
+  setDeployed(on: boolean): void;
+  /** Flip the fold state, returns the new `deployed` value. */
+  toggle(): boolean;
+  /** Frame hook driven by the model tick; eases the pivots toward the target fold. */
+  tick(dt: number): void;
+};
+
+// Folded (progress 0) the legs run forward under the fore-end exactly as the
+// reference plates show; deployed (progress 1) they swing down-and-forward
+// about the hinge axle AND splay outward into a slight A-stance (góc nghiêng,
+// hơi bẹt) instead of hanging vertical and parallel. The rake keeps the feet
+// ahead of the hinge like a real bipod; the per-leg splay widens the stance
+// so the rifle reads as standing on its own tripod of feet.
+const BIPOD_DEPLOY_ANGLE = -Math.PI / 2 * 0.80; // ~72° from horizontal, forward rake
+const BIPOD_SPLAY_ANGLE = THREE.MathUtils.degToRad(10); // per-leg outward tilt
+
+function addBipod(parent: THREE.Object3D, mats: MaterialSet, runtime: Runtime): BipodController {
   // Pass-157 horizontal-overfill hypothesis: preserve every retained Y/Z
   // station, but shorten the independent coil and terminal endpoint while
   // allocating more of the folded chain to a thinner straight telescoping rod.
@@ -1258,12 +1279,26 @@ function addBipod(parent: THREE.Object3D, mats: MaterialSet, runtime: Runtime): 
   const axle = cylinderZ(0.78, 0.30, 0, 0.72, 0.075, mats.steel);
   axle.name = 'bipod-hinge-axle';
   parent.add(axle);
+  // Each side's leg + independent spring are children of a deployment pivot
+  // seated on the hinge axle. The pivot lives at the hinge centre and its
+  // child groups carry the negative offset, so with rotation.z = 0 the whole
+  // assembly lands on exactly the authored folded stations; rotating the
+  // pivot swings the legs down about the axle without touching any authored
+  // number in the geometry below. `splaySign` tilts the left leg toward -Z
+  // and the right leg toward +Z as the stance opens.
+  const pivots: Array<{ pivot: THREE.Group; splaySign: number }> = [];
   for (const [side, z] of [['left', -0.27], ['right', 0.27]] as const) {
+    const pivot = new THREE.Group();
+    pivot.name = `bipod-leg-${side}-pivot`;
+    pivot.position.set(0.78, 0.30, z);
+    parent.add(pivot);
+    runtime.nodes[pivot.name] = pivot;
+    pivots.push({ pivot, splaySign: z < 0 ? 1 : -1 });
     const leg = new THREE.Group();
     leg.name = `bipod-leg-${side}`;
-    parent.add(leg);
+    leg.position.set(-0.78, -0.30, -z);
+    pivot.add(leg);
     runtime.nodes[`bipod-leg-${side}`] = leg;
-    leg.position.y = 0.0000;
     // In the supplied broadside plates the folded bipod runs immediately
     // beneath the fore-end, not as a low hanging bar. Keep its rods near the
     // hinge centerline so the assembly remains attached in the fixed shot.
@@ -1338,7 +1373,8 @@ function addBipod(parent: THREE.Object3D, mats: MaterialSet, runtime: Runtime): 
     // end hooks travel together when the bipod is exploded or animated.
     const springGroup = new THREE.Group();
     springGroup.name = `bipod-spring-${side}`;
-    parent.add(springGroup);
+    springGroup.position.set(-0.78, -0.30, -z);
+    pivot.add(springGroup);
     runtime.nodes[`bipod-spring-${side}`] = springGroup;
     const springPath = new THREE.CatmullRomCurve3(Array.from({ length: 73 }, (_, index) => {
       const t = index / 72;
@@ -1390,19 +1426,21 @@ function addBipod(parent: THREE.Object3D, mats: MaterialSet, runtime: Runtime): 
     const hingeSpringAnchor = new THREE.Mesh(new THREE.TorusGeometry(0.092, 0.021, 8, 24), mats.steel);
     hingeSpringAnchor.name = `bipod-hinge-${side}-spring-anchor`;
     hingeSpringAnchor.rotation.y = Math.PI / 2;
-    // Hinge is already stationed at (0.78, 0.30); use local coordinates so
-    // the anchor lands at the global hook station (0.96, 0.25).
-    hingeSpringAnchor.position.set(0.18, -0.05, springZ);
-    hinge.add(hingeSpringAnchor);
+    // The top collar rides the spring assembly (which swings with the leg), so
+    // it is authored at the folded-pose hook station in pivot-world space
+    // rather than on the static hinge plate. At fold 0 the world position is
+    // exactly the old (0.96, 0.25, springZ) hinge-local station.
+    hingeSpringAnchor.position.set(0.96, 0.25, springZ);
+    springGroup.add(hingeSpringAnchor);
     runtime.meshes[hingeSpringAnchor.name] = hingeSpringAnchor;
     const hingeSpringConnector = tubeBetween(
-      new THREE.Vector3(0.18, -0.05, z),
-      new THREE.Vector3(0.18, -0.05, springZ),
+      new THREE.Vector3(0.96, 0.25, z),
+      new THREE.Vector3(0.96, 0.25, springZ),
       0.018,
       mats.steel,
     );
     hingeSpringConnector.name = `bipod-hinge-${side}-spring-side-connector`;
-    hinge.add(hingeSpringConnector);
+    springGroup.add(hingeSpringConnector);
     runtime.meshes[hingeSpringConnector.name] = hingeSpringConnector;
     // Keep the logical spring manifest names while binding both collars to
     // the actual receiving components. This avoids duplicate floating collars
@@ -1410,6 +1448,31 @@ function addBipod(parent: THREE.Object3D, mats: MaterialSet, runtime: Runtime): 
     runtime.meshes[`bipod-spring-${side}-top-collar`] = hingeSpringAnchor;
     runtime.meshes[`bipod-spring-${side}-bottom-collar`] = legSpringAnchor;
   }
+
+  let deployTarget = 0;
+  let deployProgress = 0;
+  const applyPose = (): void => {
+    const angle = deployProgress * BIPOD_DEPLOY_ANGLE;
+    const splay = deployProgress * BIPOD_SPLAY_ANGLE;
+    for (const entry of pivots) {
+      // Euler XYZ order applies Rz (deploy) first, then Rx (splay), so the
+      // legs swing forward-down and open sideways as one continuous motion.
+      entry.pivot.rotation.z = angle;
+      entry.pivot.rotation.x = entry.splaySign * splay;
+    }
+  };
+  applyPose();
+  return {
+    get deployed() { return deployTarget >= 0.5; },
+    get progress() { return deployProgress; },
+    setDeployed(on) { deployTarget = on ? 1 : 0; },
+    toggle() { deployTarget = this.deployed ? 0 : 1; return this.deployed; },
+    tick(dt) {
+      deployProgress += (deployTarget - deployProgress) * Math.min(1, dt * 5);
+      if (Math.abs(deployTarget - deployProgress) < 0.001) deployProgress = deployTarget;
+      applyPose();
+    },
+  };
 }
 
 function addStock(parent: THREE.Object3D, mats: MaterialSet, runtime: Runtime): void {
@@ -1820,7 +1883,102 @@ export function createAWPMedusaMinimalWearModel(options: AWPV2Options = {}): THR
   addScope(root, mats, runtime);
   addBolt(receiver, mats, runtime);
   addTriggerAndMagazine(root, mats, runtime);
-  addBipod(root, mats, runtime);
+  const bipod = addBipod(root, mats, runtime);
+  root.userData.bipod = bipod;
+
+  // ------------------------------------------------------------------ firing rig
+  // Interactive muzzle-flash / tracer / casing / recoil / bolt-cycle effects.
+  // Everything here is inert by default (hidden at rest) and only animates
+  // inside `root.userData.tick`, which the viewer strips in capture mode, so
+  // review frames stay deterministic. The flash group is authored on the
+  // muzzle object so it tracks the barrel in every orbit.
+  const muzzleGroup = runtime.nodes.muzzle;
+  const flashGroup = new THREE.Group();
+  flashGroup.name = 'fire-flash';
+  flashGroup.position.set(5.51, 0, 0);
+  flashGroup.visible = false;
+  muzzleGroup.add(flashGroup);
+  const flashMat = new THREE.MeshBasicMaterial({
+    color: 0xffe0b0,
+    transparent: true,
+    opacity: 1,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    toneMapped: false,
+  });
+  const flashCore = new THREE.Mesh(new THREE.SphereGeometry(0.085, 14, 12), flashMat);
+  flashCore.name = 'fire-flash-core';
+  flashGroup.add(flashCore);
+  const flashBurst = new THREE.Mesh(new THREE.OctahedronGeometry(0.20, 0), flashMat);
+  flashBurst.name = 'fire-flash-burst';
+  flashBurst.scale.set(2.1, 1.3, 1.3);
+  flashGroup.add(flashBurst);
+  const flashFlame = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.11, 0.85, 12, 1, true), flashMat);
+  flashFlame.name = 'fire-flash-flame';
+  flashFlame.rotation.z = -Math.PI / 2;
+  flashFlame.position.x = 0.42;
+  flashGroup.add(flashFlame);
+  const flashLight = new THREE.PointLight(0xffc36b, 0, 9, 2);
+  flashLight.name = 'fire-flash-light';
+  flashGroup.add(flashLight);
+
+  const tracerMat = new THREE.MeshBasicMaterial({
+    color: 0xffb35c,
+    transparent: true,
+    opacity: 0.95,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    toneMapped: false,
+  });
+  const tracerMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.018, 2.2, 8, 1, true), tracerMat);
+  tracerMesh.name = 'fire-tracer';
+  tracerMesh.rotation.z = -Math.PI / 2;
+  tracerMesh.visible = false;
+  root.add(tracerMesh);
+
+  const casingMat = new THREE.MeshStandardMaterial({ color: 0xc98a2d, metalness: 0.92, roughness: 0.34 });
+  const casingMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.030, 0.15, 14), casingMat);
+  casingMesh.name = 'fire-casing';
+  casingMesh.visible = false;
+  root.add(casingMesh);
+
+  const fire = {
+    cooldown: 0,
+    flashT: -1,
+    tracerT: -1,
+    casingT: -1,
+    casing: { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0 },
+    boltT: -1,
+    recoilT: -1,
+    rounds: 0,
+  };
+  const muzzleTipWorld = new THREE.Vector3();
+  const fireRifle = (): boolean => {
+    if (fire.cooldown > 0) return false;
+    fire.cooldown = 0.9;
+    fire.flashT = 0;
+    flashGroup.getWorldPosition(muzzleTipWorld);
+    tracerMesh.position.copy(muzzleTipWorld);
+    tracerMesh.material.opacity = 0.95;
+    tracerMesh.visible = true;
+    fire.tracerT = 0;
+    // Brass casing pops out of the ejection port on the handle (+Z) side.
+    fire.casingT = 0;
+    fire.casing.x = 0.35; fire.casing.y = 0.78; fire.casing.z = 0.36;
+    fire.casing.vx = 2.4; fire.casing.vy = 2.6; fire.casing.vz = 1.6;
+    casingMesh.visible = true;
+    casingMesh.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+    fire.boltT = 0;
+    fire.recoilT = 0;
+    fire.rounds += 1;
+    return true;
+  };
+  root.userData.fire = fireRifle;
+  root.userData.fireState = {
+    get ready() { return fire.cooldown <= 0; },
+    get rounds() { return fire.rounds; },
+  };
+
   addPaintPanels(root, mats, runtime);
   root.userData.sculptRuntime = runtime;
   root.userData.pivots = {
@@ -1828,6 +1986,8 @@ export function createAWPMedusaMinimalWearModel(options: AWPV2Options = {}): THR
     bolt: runtime.nodes.bolt,
     trigger: runtime.sockets['trigger-pivot'],
     bipod: runtime.nodes['bipod-hinge'],
+    bipodLeft: runtime.nodes['bipod-leg-left-pivot'],
+    bipodRight: runtime.nodes['bipod-leg-right-pivot'],
     scope: runtime.nodes.scope,
   };
   root.userData.sockets = runtime.sockets;
@@ -1840,8 +2000,8 @@ export function createAWPMedusaMinimalWearModel(options: AWPV2Options = {}): THR
     boltCycle: { pivot: 'bolt', socket: 'bolt-pivot' },
     boltHandleThrow: { pivot: 'bolt', socket: 'bolt-handle-root' },
     triggerPull: { pivot: 'trigger', socket: 'trigger-pivot' },
-    bipodFoldLeft: { pivot: 'bipod', socket: 'bipod-leg-left-socket' },
-    bipodFoldRight: { pivot: 'bipod', socket: 'bipod-leg-right-socket' },
+    bipodFoldLeft: { pivot: 'bipod-leg-left-pivot', socket: 'bipod-leg-left-socket' },
+    bipodFoldRight: { pivot: 'bipod-leg-right-pivot', socket: 'bipod-leg-right-socket' },
     receiverMount: { pivot: 'root', socket: 'receiver-root' },
   };
   root.userData.contactEvidence = {
@@ -1860,10 +2020,81 @@ export function createAWPMedusaMinimalWearModel(options: AWPV2Options = {}): THR
     const bolt = runtime.nodes.bolt;
     if (bolt) {
       const applyCycle = bolt.userData.applyCycle as ((progress: number) => void) | undefined;
-      if (applyCycle) applyCycle(0.04 + (Math.sin(elapsed * 0.65) * 0.5 + 0.5) * 0.08);
+      if (applyCycle) {
+        if (fire.boltT >= 0) {
+          // Full cycle on a shot: rearward slam on the first half, forward
+          // return on the second, then hand the bolt back to the idle tick.
+          fire.boltT += dt;
+          const cycle = fire.boltT / 0.9;
+          if (cycle >= 1) fire.boltT = -1;
+          else {
+            const p = cycle < 0.42 ? cycle / 0.42 : (1 - cycle) / 0.58;
+            applyCycle(0.04 + THREE.MathUtils.clamp(p, 0, 1) * 0.96);
+          }
+        } else {
+          applyCycle(0.04 + (Math.sin(elapsed * 0.65) * 0.5 + 0.5) * 0.08);
+        }
+      }
     }
     const scope = runtime.nodes.scope;
     if (scope) scope.rotation.z = Math.sin(elapsed * 0.25) * 0.002;
+    bipod.tick(dt);
+    // --- firing effects ---
+    if (fire.cooldown > 0) fire.cooldown = Math.max(0, fire.cooldown - dt);
+    if (fire.flashT >= 0) {
+      fire.flashT += dt;
+      const k = fire.flashT / 0.13;
+      if (k >= 1) {
+        fire.flashT = -1;
+        flashGroup.visible = false;
+        flashLight.intensity = 0;
+      } else {
+        flashGroup.visible = true;
+        const decay = 1 - k;
+        flashGroup.scale.setScalar(1 + k * 0.8);
+        flashMat.opacity = decay;
+        flashLight.intensity = 46 * decay;
+      }
+    }
+    if (fire.tracerT >= 0) {
+      fire.tracerT += dt;
+      // Fast enough to read as a shot, slow enough that the streak stays inside
+      // the fired camera framing (camera punches back ~5.5 units on fire) for
+      // a readable beat before it exits the right edge.
+      tracerMesh.position.x += 5.5 * dt;
+      const life = 0.62;
+      if (fire.tracerT >= life) {
+        fire.tracerT = -1;
+        tracerMesh.visible = false;
+      } else {
+        const fade = fire.tracerT > life * 0.38 ? 1 - (fire.tracerT - life * 0.38) / (life * 0.62) : 1;
+        tracerMesh.material.opacity = 0.95 * fade;
+      }
+    }
+    if (fire.casingT >= 0) {
+      fire.casingT += dt;
+      const c = fire.casing;
+      c.vy -= 9.8 * dt;
+      c.x += c.vx * dt; c.y += c.vy * dt; c.z += c.vz * dt;
+      casingMesh.position.set(c.x, c.y, c.z);
+      casingMesh.rotation.x += 7 * dt;
+      casingMesh.rotation.z += 5 * dt;
+      if (fire.casingT > 1.3) {
+        fire.casingT = -1;
+        casingMesh.visible = false;
+      }
+    }
+    if (fire.recoilT >= 0) {
+      fire.recoilT += dt;
+      const k = fire.recoilT / 0.22;
+      if (k >= 1) {
+        fire.recoilT = -1;
+        root.position.set(0, 0, 0);
+      } else {
+        // Damped kick-and-return pulse; settles exactly back to the rest pose.
+        root.position.x = -0.1 * Math.sin(k * Math.PI) * Math.exp(-2.5 * k);
+      }
+    }
   };
   root.traverse((object) => {
     object.userData.v2 = true;

@@ -26,6 +26,7 @@ export interface OpticSocket extends THREE.Object3D {
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const MONO_FONT = 'ui-monospace,SFMono-Regular,Menlo,monospace';
 
 const EASE = (t: number): number => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 
@@ -85,12 +86,11 @@ function buildOverlay(starLabel: string, repoLabel: string): HTMLDivElement {
   ink.appendChild(hashGroup);
   root.appendChild(ink);
 
-  const mono = 'ui-monospace,SFMono-Regular,Menlo,monospace';
-  const headline = svg('text', { x: '50', y: '27', 'text-anchor': 'middle' });
-  headline.setAttribute('style', `font:600 4.4px ${mono};fill:rgba(12,16,20,0.9);letter-spacing:0.35px`);
+  const headline = svg('text', { x: '50', y: '27', 'text-anchor': 'middle', 'data-scope-headline': 'true' });
+  headline.setAttribute('style', `font:600 4.4px ${MONO_FONT};fill:rgba(12,16,20,0.9);letter-spacing:0.35px`);
   headline.textContent = starLabel;
   const sub = svg('text', { x: '50', y: '33.2', 'text-anchor': 'middle' });
-  sub.setAttribute('style', `font:500 2.5px ${mono};fill:rgba(12,16,20,0.62);letter-spacing:1.1px`);
+  sub.setAttribute('style', `font:500 2.5px ${MONO_FONT};fill:rgba(12,16,20,0.62);letter-spacing:1.1px`);
   sub.textContent = repoLabel;
   root.appendChild(headline);
   root.appendChild(sub);
@@ -111,6 +111,11 @@ export interface ScopeModeOptions {
 export interface ScopeMode {
   readonly active: boolean;
   toggle(): void;
+  /**
+   * Reticle hit effect, played by the host when the model fires while scoped
+   * (the reticle's star is the target). No-op when scope mode is inactive.
+   */
+  hit(): void;
   dispose(): void;
 }
 
@@ -134,6 +139,72 @@ export function createScopeMode(
   );
   if (getComputedStyle(mount).position === 'static') mount.style.position = 'relative';
   mount.appendChild(overlay);
+  // The hit-effect keyframes target [data-scope-fx], so tag the overlay that
+  // carries the fx-on class (its semantic role stays data-scope-overlay).
+  overlay.dataset.scopeFx = 'true';
+
+  // --- reticle hit effect -----------------------------------------------------
+  // "Fired while scoped" payoff: a four-tick hit marker and expanding ring at
+  // the reticle centre, a "+1 ★" counter popping off the star headline, a star
+  // pulse, and a 2px shake of the whole optic view. Driven by CSS keyframes
+  // (restarted per shot via class toggle + reflow) so it replays on Chrome,
+  // Firefox AND Safari — WAAPI-on-SVG transform animation is a Safari gap.
+  const reticleSvg = overlay.querySelector('svg')!;
+  const hitFx = svg('g', { 'data-scope-fx-child': 'marker', opacity: '0' });
+  const TICK = 4;
+  for (const [dx, dy] of [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const) {
+    hitFx.appendChild(svg('line', {
+      x1: `${50 - dx * TICK}`, y1: `${50 - dy * TICK}`,
+      x2: `${50 - dx * TICK * 0.4}`, y2: `${50 - dy * TICK * 0.4}`,
+      stroke: 'rgba(255,255,255,0.95)', 'stroke-width': '0.55', 'stroke-linecap': 'round',
+    }));
+  }
+  const hitRing = svg('circle', {
+    cx: '50', cy: '50', r: '1.5', fill: 'none',
+    stroke: 'rgba(255,255,255,0.9)', 'stroke-width': '0.4', 'data-scope-fx-child': 'ring', opacity: '0',
+  });
+  const hitCounter = svg('text', {
+    x: '50', y: '38.5', 'text-anchor': 'middle', 'data-scope-fx-child': 'counter', opacity: '0',
+  });
+  hitCounter.setAttribute('style', `font:700 2.8px ${MONO_FONT};fill:rgba(255,255,255,0.95);letter-spacing:0.4px`);
+  hitFx.setAttribute('transform-box', 'fill-box');
+  hitFx.setAttribute('transform-origin', 'center');
+  hitRing.setAttribute('transform-box', 'fill-box');
+  hitRing.setAttribute('transform-origin', 'center');
+  hitCounter.setAttribute('transform-box', 'fill-box');
+  hitCounter.setAttribute('transform-origin', 'center');
+  reticleSvg.appendChild(hitFx);
+  reticleSvg.appendChild(hitRing);
+  reticleSvg.appendChild(hitCounter);
+  const headline = overlay.querySelector<SVGTextElement>('[data-scope-headline]');
+  headline?.setAttribute('transform-box', 'fill-box');
+  headline?.setAttribute('transform-origin', 'center');
+  const fxStyle = document.createElement('style');
+  fxStyle.textContent = [
+    '@keyframes fx-hit-mark { 0% { opacity: 0 } 15% { opacity: 1 } 100% { opacity: 0 } }',
+    '@keyframes fx-hit-grow { 0% { transform: scale(0.55) } 100% { transform: scale(1.45) } }',
+    '@keyframes fx-ring { 0% { r: 2; opacity: 0.9 } 100% { r: 15; opacity: 0 } }',
+    '@keyframes fx-counter { 0% { opacity: 0; transform: translateY(1.6px) } 22% { opacity: 1 } 100% { opacity: 0; transform: translateY(-2.8px) } }',
+    '@keyframes fx-headline { 0%, 100% { transform: scale(1) } 32% { transform: scale(1.24) } }',
+    '@keyframes fx-shake { 0%, 100% { transform: translate(0, 0) } 33% { transform: translate(0.7px, -0.9px) } 66% { transform: translate(-0.5px, 0.6px) } }',
+    '[data-scope-fx].fx-on { animation: fx-shake 0.17s ease-out; }',
+    '[data-scope-fx].fx-on [data-scope-fx-child="marker"] { animation: fx-hit-mark 0.3s ease-out, fx-hit-grow 0.3s ease-out; }',
+    '[data-scope-fx].fx-on [data-scope-fx-child="ring"] { animation: fx-ring 0.42s ease-out; }',
+    '[data-scope-fx].fx-on [data-scope-fx-child="counter"] { animation: fx-counter 0.64s ease-out; }',
+    '[data-scope-fx].fx-on [data-scope-headline] { animation: fx-headline 0.48s ease-out; }',
+  ].join('\n');
+  overlay.appendChild(fxStyle);
+  let shotHits = 0;
+  const playHit = (): void => {
+    if (!active) return;
+    shotHits += 1;
+    hitCounter.textContent = `★ +${shotHits}`;
+    // Class-toggle + forced reflow restarts every keyframe animation, so rapid
+    // shots chain cleanly instead of queueing stale ones.
+    overlay.classList.remove('fx-on');
+    void overlay.getBoundingClientRect();
+    overlay.classList.add('fx-on');
+  };
 
   const hiddenLenses: THREE.Object3D[] = [];
   const saved = { position: new THREE.Vector3(), target: new THREE.Vector3(), fov: 0 };
@@ -207,8 +278,13 @@ export function createScopeMode(
       }
     },
 
+    hit(): void {
+      playHit();
+    },
+
     dispose(): void {
       cancelAnimationFrame(raf);
+      overlay.classList.remove('fx-on');
       for (const o of hiddenLenses) o.visible = true;
       hiddenLenses.length = 0;
       overlay.remove();

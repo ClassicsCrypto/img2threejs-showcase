@@ -84,6 +84,12 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
               <button class="btn btn-scope" id="demo-scope" type="button" aria-pressed="false" hidden>
                 <span class="scope-glyph">&#9678;</span> <span class="scope-label">Look through scope</span>
               </button>
+              <button class="btn btn-action" id="demo-fire" type="button" hidden>
+                <span class="action-glyph">&#9889;</span> <span class="action-label">Fire</span>
+              </button>
+              <button class="btn btn-action btn-bipod" id="demo-bipod" type="button" aria-pressed="false" hidden>
+                <span class="action-glyph">&#9660;</span> <span class="action-label">Deploy bipod</span>
+              </button>
               <a class="btn" href="${demo.sourceUrl}" target="_blank" rel="noopener noreferrer">
                 &lt;/&gt; View generated source
               </a>
@@ -186,6 +192,87 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     ...(partManifest ?? { parts: [], unnamedMeshes: 0, integralMeshes: 0 }),
     parts: [...(partManifest?.parts ?? []), ...logicalParts],
   };
+
+  // Firing + bipod controls, driven purely by capabilities the model publishes
+  // on `model.userData` (a `fire()` function and a `bipod` controller). No
+  // demo-specific ids or special-casing — any future model gets the same
+  // buttons by publishing the same hooks. Suppressed in capture mode.
+  const modelHooks = model.userData as {
+    fire?: () => boolean;
+    bipod?: { deployed?: boolean; toggle?: () => boolean };
+  };
+  const fireBtn = mount.querySelector<HTMLButtonElement>('#demo-fire');
+  if (fireBtn && typeof modelHooks.fire === 'function' && !capture) {
+    // Cinematic recoil punch: the authored framing sits tight on the weapon
+    // body, so a muzzle flash at the bore would fire off-frame. When the shot
+    // goes off, briefly dolly the camera back along its own view direction so
+    // the flash, tracer streak and barrel enter frame, then ease home. Orbit
+    // controls come back the moment the camera settles. Skipped while scoped
+    // (the optic owns the camera there) and while a punch is already running.
+    let punchRaf = 0;
+    let punching = false;
+    const punchEase = (t: number): number => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+    const firePunch = (): void => {
+      if (punching || scopeMode?.active) return;
+      punching = true;
+      cancelAnimationFrame(punchRaf);
+      const from = viewer.camera.position.clone();
+      const toward = viewer.controls.target;
+      const dir = from.clone().sub(toward);
+      const len = dir.length();
+      if (len < 1e-6) { punching = false; return; }
+      const to = from.clone().addScaledVector(dir.normalize(), Math.min(5.5, len * 0.48));
+      const wasEnabled = viewer.controls.enabled;
+      viewer.controls.enabled = false;
+      const t0 = performance.now();
+      const out = (now: number): void => {
+        const k = punchEase(Math.min(1, (now - t0) / 280));
+        viewer.camera.position.lerpVectors(from, to, k);
+        viewer.controls.update();
+        if (k < 1) { punchRaf = requestAnimationFrame(out); return; }
+        const t1 = performance.now();
+        const back = (now2: number): void => {
+          const k2 = punchEase(Math.min(1, (now2 - t1) / 520));
+          viewer.camera.position.lerpVectors(to, from, k2);
+          viewer.controls.update();
+          if (k2 < 1) { punchRaf = requestAnimationFrame(back); return; }
+          viewer.controls.enabled = wasEnabled;
+          punching = false;
+        };
+        punchRaf = requestAnimationFrame(back);
+      };
+      punchRaf = requestAnimationFrame(out);
+    };
+    fireBtn.hidden = false;
+    fireBtn.addEventListener('click', () => {
+      if (modelHooks.fire?.()) {
+        firePunch();
+        // Scoped shots land on the reticle's star — the hit marker, ring and
+        // "+1 ★" counter play on the optic overlay (no-op outside scope mode).
+        scopeMode?.hit();
+      }
+    });
+    // Cancel a half-finished punch when the route unmounts so the camera never
+    // stays pinned mid-flight for the next demo.
+    (mount as HTMLElement & { __firePunchCancel__?: () => void }).__firePunchCancel__ = () => {
+      cancelAnimationFrame(punchRaf);
+      viewer.controls.enabled = true;
+    };
+  }
+  const bipodBtn = mount.querySelector<HTMLButtonElement>('#demo-bipod');
+  const bipodApi = modelHooks.bipod;
+  if (bipodBtn && bipodApi && typeof bipodApi.toggle === 'function' && !capture) {
+    const syncBipod = (): void => {
+      const deployed = !!bipodApi.deployed;
+      bipodBtn.setAttribute('aria-pressed', String(deployed));
+      bipodBtn.classList.toggle('is-active', deployed);
+      const label = bipodBtn.querySelector('.action-label')!;
+      label.textContent = deployed ? 'Fold bipod' : 'Deploy bipod';
+    };
+    bipodBtn.hidden = false;
+    bipodBtn.addEventListener('click', () => { bipodApi.toggle?.(); syncBipod(); });
+    syncBipod();
+  }
 
   // Explode control. Hidden for single-mesh demos and in capture mode, where the panel is
   // hidden anyway and the evaluation frame must stay deterministic.
@@ -409,6 +496,7 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     bar.removeEventListener('click', onBarClick);
     compact.removeEventListener('change', onCompactChange);
     canvasMount.removeEventListener('pointerdown', hideHint);
+    (mount as HTMLElement & { __firePunchCancel__?: () => void }).__firePunchCancel__?.();
     viewer.dispose();
   };
 }
