@@ -107,7 +107,20 @@ function buildOverlay(starLabel: string, repoLabel: string): HTMLDivElement {
     'paint-order:stroke',
     'letter-spacing:0.4px',
   ].join(';'));
-  headline.textContent = starLabel;
+  // The star glyph renders gold (GitHub-star yellow) while the surrounding
+  // text stays white — split the label into tspans so one run can recolor.
+  const headlineParts = starLabel.split('★');
+  const prefix = svg('tspan', {});
+  prefix.textContent = headlineParts[0];
+  headline.appendChild(prefix);
+  if (headlineParts.length > 1) {
+    const goldStar = svg('tspan', { fill: '#ffd51a' });
+    goldStar.textContent = '★';
+    headline.appendChild(goldStar);
+    const suffix = svg('tspan', {});
+    suffix.textContent = headlineParts.slice(1).join('★');
+    headline.appendChild(suffix);
+  }
   const sub = svg('text', { x: '50', y: '34.5', 'text-anchor': 'middle' });
   sub.setAttribute('style', [
     `font:600 2.9px ${MONO_FONT}`,
@@ -221,10 +234,20 @@ export function createScopeMode(
   ].join('\n');
   overlay.appendChild(fxStyle);
   let shotHits = 0;
+  const setCounterText = (value: string): void => {
+    // "★ +N": gold star run + white count run, rebuilt per shot.
+    hitCounter.replaceChildren();
+    const goldStar = svg('tspan', { fill: '#ffd51a' });
+    goldStar.textContent = '★';
+    hitCounter.appendChild(goldStar);
+    const count = svg('tspan', {});
+    count.textContent = value;
+    hitCounter.appendChild(count);
+  };
   const playHit = (): void => {
     if (!active) return;
     shotHits += 1;
-    hitCounter.textContent = `★ +${shotHits}`;
+    setCounterText(` +${shotHits}`);
     // Class-toggle + forced reflow restarts every keyframe animation, so rapid
     // shots chain cleanly instead of queueing stale ones.
     overlay.classList.remove('fx-on');
