@@ -86,11 +86,37 @@ function buildOverlay(starLabel: string, repoLabel: string): HTMLDivElement {
   ink.appendChild(hashGroup);
   root.appendChild(ink);
 
-  const headline = svg('text', { x: '50', y: '27', 'text-anchor': 'middle', 'data-scope-headline': 'true' });
-  headline.setAttribute('style', `font:600 4.4px ${MONO_FONT};fill:rgba(12,16,20,0.9);letter-spacing:0.35px`);
+  // Star-count readout. Plain dark ink vanished against the dark scene seen
+  // through the optic, so the label is now white with a dark paint-order
+  // outline (readable on bright AND dark backgrounds) on a translucent dark
+  // chip that guarantees contrast over any scene content behind it.
+  const chip = svg('rect', {
+    x: '18', y: '18', width: '64', height: '20', rx: '3',
+    fill: 'rgba(8,11,16,0.42)',
+    stroke: 'rgba(255,255,255,0.16)', 'stroke-width': '0.3',
+    'data-scope-fx-child': 'chip',
+  });
+  root.appendChild(chip);
+
+  const headline = svg('text', { x: '50', y: '27.5', 'text-anchor': 'middle', 'data-scope-headline': 'true' });
+  headline.setAttribute('style', [
+    `font:700 6.2px ${MONO_FONT}`,
+    'fill:#ffffff',
+    'stroke:rgba(10,13,18,0.9)',
+    'stroke-width:0.55px',
+    'paint-order:stroke',
+    'letter-spacing:0.4px',
+  ].join(';'));
   headline.textContent = starLabel;
-  const sub = svg('text', { x: '50', y: '33.2', 'text-anchor': 'middle' });
-  sub.setAttribute('style', `font:500 2.5px ${MONO_FONT};fill:rgba(12,16,20,0.62);letter-spacing:1.1px`);
+  const sub = svg('text', { x: '50', y: '34.5', 'text-anchor': 'middle' });
+  sub.setAttribute('style', [
+    `font:600 2.9px ${MONO_FONT}`,
+    'fill:rgba(255,255,255,0.94)',
+    'stroke:rgba(10,13,18,0.8)',
+    'stroke-width:0.4px',
+    'paint-order:stroke',
+    'letter-spacing:1.4px',
+  ].join(';'));
   sub.textContent = repoLabel;
   root.appendChild(headline);
   root.appendChild(sub);
