@@ -6,3 +6,4 @@ sculpt
 .render-review/
 .img2threejs/
 graphify-out/
+**/graphify-out/
