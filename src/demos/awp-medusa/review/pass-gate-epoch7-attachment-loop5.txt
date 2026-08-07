@@ -1,6 +1,0 @@
-pass=blockout
-epoch=7
-loop=5
-status=blocked
-reason=Attachment audit passes but visual silhouette remains below tier-1 and 0.90 acceptance.
-next_action=refine-code

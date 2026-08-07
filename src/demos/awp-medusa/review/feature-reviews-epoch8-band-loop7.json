@@ -1,9 +1,0 @@
-[
-  {"id":"muzzle-side-barrel-band","score":0.93,"threshold":0.90,"visible":true,"confidence":0.96,"notes":"The fore-end collar moved from the receiver-side position to the muzzle-side barrel station, matching the front/back source and eliminating the top-orbit isolated oval."},
-  {"id":"bolt-receiver-placement","score":0.92,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"Bolt pivot is embedded at z=.255 on the receiver side wall and remains below the optic; the prior top-orbit float candidate is not visible."},
-  {"id":"scope-crown-source-crop","score":0.88,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Tighter source crop/mask remains tangent and readable, but foil identity is still below target."},
-  {"id":"bipod-spring-and-feet","score":0.84,"threshold":0.90,"visible":true,"confidence":0.93,"notes":"Spring radius is tighter around its spine and the feet now have pad/end-cap geometry; hinge and folded silhouette remain approximate."},
-  {"id":"trigger-magazine-lower-assembly","score":0.84,"threshold":0.90,"visible":true,"confidence":0.96,"notes":"Source-fit magazine rollback is retained and trigger guard remains a real through-depth loop, but broadside placement/proportions are not yet exact."},
-  {"id":"macro-awp-silhouette","score":0.83,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Fresh deterministic IoU is 0.8126 front and 0.8004 back; the band correction causes a small measurable regression but removes a real orbit artifact."},
-  {"id":"attachment-contract-audit","score":0.99,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"11 world-space seam pairs pass at maxGap 0 and 12 attachment records pass required metadata."}
-]

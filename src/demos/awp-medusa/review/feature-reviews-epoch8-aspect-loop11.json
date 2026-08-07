@@ -1,8 +1,0 @@
-[
-  {"id":"front-back-macro-silhouette","score":0.81,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"Aspect-preserving 16:9 comparison confirms the full rifle is present, but receiver/bipod/lower assembly proportions still diverge from source."},
-  {"id":"scope-rings-hardware","score":0.82,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"Two rings are attached and volumetric, but the source clamp plates/screws are larger and more visibly machined than the current small arcs/feet."},
-  {"id":"scope-crown","score":0.89,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"Source crown/skull is tangent and cleaner after highlight filtering, but its foil mark is still softer/smaller than source."},
-  {"id":"trigger-magazine","score":0.79,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"Both parts are attached and separate, but the broadside comparison shows the lower assembly too compact and not source-shaped."},
-  {"id":"bipod-spring-hinge-feet","score":0.78,"threshold":0.90,"visible":true,"confidence":0.94,"notes":"Real helix and feet exist, but the source bipod reads wider, denser, and more mechanically articulated."},
-  {"id":"attachment-contract-audit","score":0.99,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"11 world-space seam pairs pass at maxGap 0 and 12 attachment records pass required metadata."}
-]

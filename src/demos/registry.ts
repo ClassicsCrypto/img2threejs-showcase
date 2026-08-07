@@ -45,11 +45,6 @@ import {
   makeGhostProtocolBackground,
 } from './glock-ghost-protocol/createGlockGhostProtocolModel';
 import {
-  createAwpMedusaModel,
-  createAwpMedusaLookDevLights,
-  makeAwpMedusaBackground,
-} from './awp-medusa/createAwpMedusaModel';
-import {
   createAWPMedusaMinimalWearModel,
   createAWPMedusaMinimalWearLookDevLights,
   makeAWPMedusaMinimalWearBackground,
@@ -117,66 +112,18 @@ const REPO = 'https://github.com/hoainho/img2threejs-showcase/blob/main';
 
 export const demos: DemoEntry[] = [
   {
-    id: 'awp-medusa',
-    title: 'AWP | Medusa (Minimal Wear)',
-    subjectClass: 'object',
-    blurb:
-      'A procedural CS2 AWP rebuilt from opposing FRONT/BACK broadside references. The long bolt-action silhouette, thumbhole stock, receiver/barrel axis, scope and rings, bolt handle, trigger group, muzzle device, folded bipod, real fasteners, and visible seams are separate geometry. The dark navy painted shell uses shell-only de-lit reference projections for the blue-green Medusa artwork on both sides, while bare metal, optic, polymer, gloss, restrained Minimal Wear, and tone-mapping limits remain separate material responses. Hidden thickness and internals are explicitly inferred from the two-view evidence. Live: a restrained studio idle with exposed bolt, magazine, muzzle, bipod, and scope sockets.',
-    referenceImage: `${BASE}front-medusa.webp`,
-    sourcePath: 'src/demos/awp-medusa/createAwpMedusaModel.ts',
-    sourceUrl: `${REPO}/src/demos/awp-medusa/createAwpMedusaModel.ts`,
-    generatedWith: 'img2threejs v1.4.4-beta.3 · cs2-rifle-v1',
-    author: 'Codex',
-    authorUrl: 'https://github.com/hoainho/img2threejs',
-    status: 'final',
-    // Revert the loop12 wide-margin experiment: its full-object framing was
-    // visually useful, but it worsened the deterministic silhouette scale
-    // gate. Keep the acceptance camera at the prior measured fit until the
-    // geometry envelope itself is corrected.
-    cameraPosition: [0.51, 0.49, 5.8],
-    cameraTarget: [0.72, 0.25, 0],
-    cameraFov: 30,
-    captureMargin: 0.982,
-    captureTargetOffsetY: 0.083,
-    captureTargetOffsetYBack: 0.083,
-    captureTargetOffsetX: 0.03,
-    captureTargetOffsetXBack: 0.006,
-    accent: '#155c8d',
-    backgroundGradient: { inner: '#0c1727', outer: '#02030a' },
-    exposure: 0.85,
-    environmentIntensity: 0.72,
-    toneMapping: 'aces',
-    installLights: (scene) => {
-      scene.add(createAwpMedusaLookDevLights());
-    },
-    build: (scene) => {
-      scene.background = makeAwpMedusaBackground();
-      const group = createAwpMedusaModel({ shadows: true });
-      scene.add(group);
-      let t = 0;
-      group.userData.tick = (dt: number) => {
-        t += dt;
-        group.rotation.y = Math.sin(t * 0.25) * 0.08;
-        group.rotation.x = Math.sin(t * 0.17) * 0.018;
-        const boltPivot = group.getObjectByName('boltPivot');
-        if (boltPivot) boltPivot.position.x = Math.sin(t * 0.55) * 0.008;
-      };
-      return group;
-    },
-  },
-  {
     id: 'awp-medusa-v2',
     title: 'AWP | Medusa (Minimal Wear) · V2 rebuild',
     subjectClass: 'object',
     blurb:
-      'Fresh V2 procedural rebuild from the admitted front/back broadside references. The silhouette gate is met at IoU 0.9205 front / 0.9171 back against a 0.90 target, so the blockout pass is closed and the Medusa artwork is now projected from the reference\'s own de-lit pixels through the capture camera the plates are registered to. Macro shell profiles, open thumbhole, receiver, constant-diameter barrel with a squared front-sight block and a crowned muzzle, scope with a corrected objective flare and U-clamp ring saddles, receiver-parented bolt, trigger group, magazine, hinge, independent springs, telescoping bipod legs, feet, fasteners, sockets and idle tick are separate physical components with 15 verified contact pairs. Three subsystems that the reference does not contain were deleted rather than tuned. Materials, wear and lighting are later passes and are not done: this is an in-progress structural rebuild, not a finished look.',
+      'Procedural CS2 AWP rebuilt from the admitted front/back broadside references. The silhouette gate is met at IoU 0.9205 front / 0.9171 back against a 0.90 target, and the Medusa artwork is projected from the reference\'s own de-lit pixels through the capture camera the plates are registered to. Macro shell profiles, open thumbhole, receiver, constant-diameter barrel with a squared front-sight block and a crowned muzzle, scope with a corrected objective flare and U-clamp ring saddles, receiver-parented bolt, trigger group, magazine, hinge, independent springs, telescoping bipod legs, feet, fasteners, sockets and idle tick are separate physical components with 15 verified contact pairs. Interactive: fire for muzzle flash, tracer, ejecting casing, recoil and bolt cycle; deploy the splayed bipod; look through the scope and fire to hit the reticle\'s star.',
     referenceImage: `${BASE}front-medusa.webp`,
     sourcePath: 'src/demos/awp-medusa-v2/createAwpMedusaModelV2.ts',
     sourceUrl: `${REPO}/src/demos/awp-medusa-v2/createAwpMedusaModelV2.ts`,
-    generatedWith: 'img2threejs V2 · custom AWP rifle adapter · blockout closed, structural pass in progress',
-    author: 'Codex',
-    authorUrl: 'https://github.com/hoainho/img2threejs',
-    status: 'placeholder',
+    generatedWith: 'img2threejs V2 · custom AWP rifle adapter · blockout + projection + interactions complete',
+    author: 'kokorolx',
+    authorUrl: 'https://github.com/kokorolx',
+    status: 'final',
     cameraPosition: [0, 1.2, 11.5],
     cameraTarget: [0, 0.05, 0],
     cameraFov: 25,

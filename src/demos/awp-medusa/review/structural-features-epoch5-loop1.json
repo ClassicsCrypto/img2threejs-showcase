@@ -1,8 +1,0 @@
-[
-  {"id":"awp-silhouette","score":0.81,"threshold":0.9,"visible":true,"notes":"Two-view contour remains below target; front mask improved to 0.8091 after shallow objective-bell correction."},
-  {"id":"thumbhole-stock","score":0.92,"threshold":0.9,"visible":true,"notes":"Real extruded stock cut remains recognizable."},
-  {"id":"scope-and-rings","score":0.89,"threshold":0.9,"visible":true,"notes":"Shallower objective flare, matte graphite tube, separate thin mirrored clamp faces, turret, ocular marking, and mount are present; exact ring proportions remain approximate."},
-  {"id":"bolt-handle","score":0.89,"threshold":0.9,"visible":true,"notes":"Curved handle and ball remain on the corrected rearward exposed pivot/socket; hidden action depth is inferred."},
-  {"id":"medusa-pattern-placement","score":0.93,"threshold":0.9,"visible":true,"notes":"Front/back projection remains source-bound on real shell geometry."},
-  {"id":"optic-crown-foil","score":0.89,"threshold":0.9,"visible":true,"notes":"Gold crown/skull is a separate beveled foil assembly with gems, dark sockets, jaw, and teeth; fine source sticker engraving remains inferred."}
-]

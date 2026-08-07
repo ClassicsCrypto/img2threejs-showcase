@@ -1,6 +1,0 @@
-pass=blockout
-epoch=8
-loop=10
-status=blocked
-reason=Crown source decal is clearer and the scan line is removed, but deterministic silhouette 0.8121/0.8011 and trigger/bipod/macro gates remain below strict 0.90.
-next_action=refine-code

@@ -1,1 +1,0 @@
-{"passed":false,"checks":{"silhouetteIoU":0.8092,"aspectRatioDelta":0.0,"scaleDelta":0.0,"bilateralSymmetryError":0.1504},"failures":["silhouette IoU 0.809 is below threshold 0.85"],"renderHash":"6f1c323fbaf2b4a3","passId":"epoch8-trigger-loop3-front"}

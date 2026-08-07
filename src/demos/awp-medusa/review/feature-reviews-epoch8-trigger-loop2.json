@@ -1,7 +1,0 @@
-[
-  {"id":"scope-crown-source-decal","score":0.86,"threshold":0.9,"visible":true,"confidence":0.97,"notes":"Source-only decal is now readable as the gold crown/skull graphic and sits on the objective bell station; exact conical wrap and source scale still need refinement."},
-  {"id":"trigger-guard-depth","score":0.82,"threshold":0.9,"visible":true,"confidence":0.98,"notes":"Through-depth trigger bow remains visible on both broadside views without moving the bolt."},
-  {"id":"bolt-receiver-placement","score":0.91,"threshold":0.9,"visible":true,"confidence":0.98,"notes":"Locked receiver-parented bolt remains correct."},
-  {"id":"bipod-hinge-and-compression-spring","score":0.79,"threshold":0.9,"visible":true,"confidence":0.92,"notes":"Connected 18-turn spring and telescoping assembly remain approximate against source."},
-  {"id":"attachment-contract-audit","score":0.95,"threshold":0.9,"visible":true,"confidence":0.99,"notes":"Eight metadata nodes and eight seam pairs remain passing."}
-]

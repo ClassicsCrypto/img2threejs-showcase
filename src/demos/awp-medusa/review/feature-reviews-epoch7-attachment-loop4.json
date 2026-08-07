@@ -1,8 +1,0 @@
-[
-  {"id":"bolt-receiver-placement","score":0.91,"threshold":0.9,"visible":true,"confidence":0.98,"notes":"Locked and unchanged; receiver-parented, descending handle, preserved idle rest socket."},
-  {"id":"trigger-guard-and-trigger","score":0.79,"threshold":0.9,"visible":true,"confidence":0.98,"notes":"Geometry unchanged while metadata audit confirms the guard and trigger pivot have explicit receiver/guard sockets; visual profile still needs refinement."},
-  {"id":"scope-crown-contact","score":0.78,"threshold":0.9,"visible":true,"confidence":0.96,"notes":"Thin conformed decal and gold overlay remain co-located with the objective bell; exact source artwork scale remains open."},
-  {"id":"bipod-hinge-and-compression-spring","score":0.79,"threshold":0.9,"visible":true,"confidence":0.92,"notes":"Hinge, tubes, spring, and feet remain connected; spring metadata now participates in the attachment contract."},
-  {"id":"fastener-surface-contact","score":0.72,"threshold":0.9,"visible":true,"confidence":0.94,"notes":"Fastener depth correction remains visible in top/muzzle views, but instanced fasteners still need per-owner surface probes rather than one mixed root mesh."},
-  {"id":"attachment-contract-audit","score":0.93,"threshold":0.9,"visible":true,"confidence":0.98,"notes":"Runtime joint-attachment audit passes metadata completeness for all six declared attachment nodes; paired world-space seam gate passes all eight explicit pairs."}
-]

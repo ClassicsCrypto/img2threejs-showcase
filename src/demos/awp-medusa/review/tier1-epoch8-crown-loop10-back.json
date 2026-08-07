@@ -1,1 +1,0 @@
-{"passed":false,"checks":{"silhouetteIoU":0.8011,"aspectRatioDelta":0.0045,"scaleDelta":0.0045,"bilateralSymmetryError":0.1515},"failures":["silhouette IoU 0.8011 is below threshold 0.85"],"renderHash":"0f7523cadd0b10d9","passId":"blockout"}

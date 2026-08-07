@@ -1,8 +1,0 @@
-pass=blockout
-epoch=8
-loop=1
-status=blocked
-reason=Trigger contact improved, but front/back tier-1 silhouette remains below 0.85 and strict visual target is 0.90.
-front=0.8138
-back=0.8023
-next_action=refine-code

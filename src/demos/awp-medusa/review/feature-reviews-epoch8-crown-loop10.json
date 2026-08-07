@@ -1,8 +1,0 @@
-[
-  {"id":"scope-crown-source-decal","score":0.91,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"The source-only decal is tangent to the bell, the crop mask removes the optic scan line, and saturated gold/dark skull pixels remain visible in back broadside and orbit."},
-  {"id":"scope-rings-and-bolt","score":0.93,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"Coaxial rings, receiver-embedded bolt, and muzzle-side band remain stable across four orbit stress views."},
-  {"id":"trigger-profile","score":0.88,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"Moderately enlarged rounded U guard is closer but not yet exact."},
-  {"id":"bipod-spring-hinge-feet","score":0.86,"threshold":0.90,"visible":true,"confidence":0.94,"notes":"True helix, hinge saddle, lock, telescoping rails, pads, and caps are attached; source folded silhouette remains approximate."},
-  {"id":"macro-awp-silhouette","score":0.83,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Front/back deterministic IoU stays 0.8121/0.8011; strict macro gate remains failed."},
-  {"id":"attachment-contract-audit","score":0.99,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"11 world-space seam pairs pass at maxGap 0 and 12 attachment records pass required metadata."}
-]

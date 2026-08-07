@@ -1,3 +1,0 @@
-STATUS pass=blockout completed=0 blocked=none
-FAIL
-Tier 1 diagnostics remain below the blockout threshold (front IoU 0.8113, back IoU 0.8004); visual correction must continue.

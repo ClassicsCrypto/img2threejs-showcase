@@ -1,9 +1,0 @@
-[
-  {"id":"magazine-placement","score":0.84,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"The source-fit magazine station/envelope is restored after a forward-shift experiment failed both silhouette gates; it is now separately attached and measured against the receiver."},
-  {"id":"scope-crown-source-crop","score":0.88,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Tighter source crop/mask improves crown/skull readability while preserving tangent bell contact."},
-  {"id":"scope-ring-attachment","score":0.94,"threshold":0.90,"visible":true,"confidence":0.98,"notes":"Coaxial torus clamp rings, saddles, and rail remain attached in all stress views."},
-  {"id":"bolt-receiver-placement","score":0.91,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"Receiver-parented bolt handle remains below the optic and clear of the scope."},
-  {"id":"trigger-bipod-silhouette","score":0.81,"threshold":0.90,"visible":true,"confidence":0.93,"notes":"Trigger bow and helical bipod are real connected assemblies, but source contour, hinge plate, lock lug, and feet still need refinement."},
-  {"id":"macro-awp-silhouette","score":0.83,"threshold":0.90,"visible":true,"confidence":0.97,"notes":"Rollback returns deterministic front/back IoU to 0.813/0.801; no threshold pass is claimed."},
-  {"id":"attachment-contract-audit","score":0.99,"threshold":0.90,"visible":true,"confidence":0.99,"notes":"11 world-space seam pairs pass at maxGap 0 and all 12 attachment records satisfy the contract."}
-]

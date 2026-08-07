@@ -1,7 +1,0 @@
-[
-  {"id":"trigger-guard-depth-and-profile","score":0.82,"threshold":0.9,"visible":true,"confidence":0.98,"notes":"Guard now spans receiver depth and is visible on both broadside views; compact X/Y profile is closer but still not source-exact."},
-  {"id":"bolt-receiver-placement","score":0.91,"threshold":0.9,"visible":true,"confidence":0.98,"notes":"Locked receiver-parented bolt remains below the optic and unchanged."},
-  {"id":"scope-crown-contact","score":0.78,"threshold":0.9,"visible":true,"confidence":0.96,"notes":"Conformed patch and thin gold overlay remain attached; source artwork scale remains approximate."},
-  {"id":"bipod-hinge-and-compression-spring","score":0.79,"threshold":0.9,"visible":true,"confidence":0.92,"notes":"Connected hinge/telescoping tubes/18-turn spring/feet remain, but folded silhouette is not exact."},
-  {"id":"attachment-contract-audit","score":0.95,"threshold":0.9,"visible":true,"confidence":0.99,"notes":"Eight attachment nodes pass metadata and explicit seam gate remains 8/8."}
-]

@@ -1,3 +1,0 @@
-ledger disagreement: review history contains uncredited passes because blockout and later passes remain incomplete or failed their gates.
-STATUS pass=blockout completed=0 blocked=none
-The current review is retained as refine-code evidence; state remains in the blockout correction loop.

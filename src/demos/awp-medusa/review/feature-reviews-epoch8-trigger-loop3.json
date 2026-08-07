@@ -1,8 +1,0 @@
-[
-  {"id":"trigger-guard-profile","score":0.86,"threshold":0.9,"visible":true,"confidence":0.98,"notes":"Compact through-depth guard is now visible and closer to the source U profile."},
-  {"id":"magazine-envelope","score":0.76,"threshold":0.9,"visible":true,"confidence":0.97,"notes":"Magazine is lighter and structurally separate, but the narrowed envelope now underfills the source silhouette."},
-  {"id":"scope-crown-source-decal","score":0.86,"threshold":0.9,"visible":true,"confidence":0.97,"notes":"Source-only crown remains attached/readable on the objective bell."},
-  {"id":"bolt-receiver-placement","score":0.91,"threshold":0.9,"visible":true,"confidence":0.98,"notes":"Locked receiver-parented bolt unchanged."},
-  {"id":"bipod-hinge-and-compression-spring","score":0.79,"threshold":0.9,"visible":true,"confidence":0.92,"notes":"Connected spring/legs/feet remain approximate."},
-  {"id":"attachment-contract-audit","score":0.95,"threshold":0.9,"visible":true,"confidence":0.99,"notes":"Attachment metadata and seam gates remain passing."}
-]
