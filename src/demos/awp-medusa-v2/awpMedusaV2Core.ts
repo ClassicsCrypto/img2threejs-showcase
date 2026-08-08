@@ -1852,6 +1852,209 @@ function addPaintPanels(parent: THREE.Object3D, mats: MaterialSet, runtime: Runt
   }
 }
 
+type MedusaEyeAccent = {
+  haloLayers: THREE.Sprite[];
+  core: THREE.Mesh;
+  baseScale: number;
+  phase: number;
+};
+
+type MedusaEyeAccentController = {
+  tick: (dt: number) => void;
+  restart: () => void;
+};
+
+function makeMedusaEyeGlowTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 96;
+  canvas.height = 96;
+  const context = canvas.getContext('2d')!;
+  const gradient = context.createRadialGradient(48, 48, 1, 48, 48, 48);
+  gradient.addColorStop(0, 'rgba(245, 255, 255, 1)');
+  gradient.addColorStop(0.12, 'rgba(120, 255, 246, 0.96)');
+  gradient.addColorStop(0.38, 'rgba(42, 232, 221, 0.44)');
+  gradient.addColorStop(1, 'rgba(14, 153, 174, 0)');
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 96, 96);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+function projectionPixelToWorld(
+  pixelX: number,
+  pixelY: number,
+  side: 'front' | 'back',
+  planeZ: number,
+): THREE.Vector3 {
+  const camera = new THREE.PerspectiveCamera(
+    PROJECTION_CAMERA.fov,
+    PROJECTION_CAMERA.width / PROJECTION_CAMERA.height,
+    PROJECTION_CAMERA.near,
+    PROJECTION_CAMERA.far,
+  );
+  const sign = side === 'front' ? 1 : -1;
+  camera.position.set(
+    PROJECTION_CAMERA.position[0],
+    PROJECTION_CAMERA.position[1],
+    sign * Math.abs(PROJECTION_CAMERA.position[2]),
+  );
+  camera.lookAt(PROJECTION_CAMERA.target[0], PROJECTION_CAMERA.target[1], PROJECTION_CAMERA.target[2]);
+  camera.updateMatrixWorld(true);
+  camera.updateProjectionMatrix();
+  const pointOnNearPlane = new THREE.Vector3(
+    (pixelX / PROJECTION_CAMERA.width) * 2 - 1,
+    1 - (pixelY / PROJECTION_CAMERA.height) * 2,
+    0.5,
+  ).unproject(camera);
+  const direction = pointOnNearPlane.sub(camera.position).normalize();
+  const distance = (planeZ - camera.position.z) / direction.z;
+  return camera.position.clone().add(direction.multiplyScalar(distance));
+}
+
+function addMedusaEyeAccent(
+  parent: THREE.Object3D,
+  name: string,
+  position: THREE.Vector3,
+  rotationY: number,
+  baseScale: number,
+  phase: number,
+): MedusaEyeAccent {
+  const group = new THREE.Group();
+  group.name = name;
+  group.position.copy(position);
+  group.rotation.y = rotationY;
+  group.userData.explodeWithParent = true;
+  group.userData.effectOnly = true;
+
+  const coreMaterial = new THREE.MeshBasicMaterial({
+    color: 0xeaffff,
+    transparent: true,
+    opacity: 0.9,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    depthTest: false,
+    toneMapped: false,
+  });
+  const core = new THREE.Mesh(new THREE.CircleGeometry(baseScale * 0.16, 24), coreMaterial);
+  core.name = `${name}-core`;
+  core.position.z = 0.006;
+  core.renderOrder = 100;
+  core.userData.explodeWithParent = true;
+  core.userData.effectOnly = true;
+  group.add(core);
+
+  const haloLayers = [
+    { scale: 0.82, opacity: 0.70 },
+    { scale: 1.70, opacity: 0.44 },
+    { scale: 3.20, opacity: 0.24 },
+    { scale: 5.40, opacity: 0.11 },
+  ].map(({ scale, opacity }, index) => {
+    const glowMaterial = new THREE.SpriteMaterial({
+      map: makeMedusaEyeGlowTexture(),
+      color: index === 0 ? 0x8ffff8 : 0x36f4e8,
+      transparent: true,
+      opacity,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      depthTest: false,
+      toneMapped: false,
+      sizeAttenuation: true,
+    });
+    const glow = new THREE.Sprite(glowMaterial);
+    glow.name = `${name}-halo-${index + 1}`;
+    glow.position.z = 0.008 + index * 0.001;
+    glow.scale.set(baseScale * scale, baseScale * scale, 1);
+    glow.renderOrder = 101 + index;
+    glow.userData.explodeWithParent = true;
+    glow.userData.effectOnly = true;
+    group.add(glow);
+    return glow;
+  });
+  parent.add(group);
+
+  return { haloLayers, core, baseScale, phase };
+}
+
+/**
+ * Small, persistent accents only: one light on the painted Medusa eye and two lights in the
+ * skull decal's sockets. Their layered sprites breathe in and out like a soft bulb; no snake
+ * geometry or reveal animation is part of the weapon.
+ */
+function createMedusaEyeAccents(
+  parent: THREE.Group,
+  runtime: Runtime,
+): MedusaEyeAccentController {
+  const accents: MedusaEyeAccent[] = [];
+  const facePanel = runtime.meshes['painted-shell-visible-surface-back'];
+  if (facePanel) {
+    parent.updateWorldMatrix(true, true);
+    facePanel.updateWorldMatrix(true, false);
+    const panelCenter = facePanel.getWorldPosition(new THREE.Vector3());
+    // Pixel measured from awp-v2-back-projection.png: the visible Medusa eye sits at ~1411,514.
+    const faceWorld = projectionPixelToWorld(1411, 514, 'back', panelCenter.z - 0.012);
+    const faceLocal = parent.worldToLocal(faceWorld);
+    accents.push(addMedusaEyeAccent(parent, 'medusa-painted-eye', faceLocal, Math.PI, 0.13, 0));
+  }
+
+  const sticker = runtime.nodes['crown-skull-sticker'];
+  if (sticker) {
+    // The decal is a 0.474 x 0.500 plane with the same 1.22 vertical conform scale used by
+    // conformObjectiveDecalGeometry. These are the two dark socket centres in the source decal.
+    const eyeY = (0.5 - 90 / 130) * 0.5 * 1.22;
+    for (const [index, eyeX] of [0.011, 0.115].entries()) {
+      const surfaceX = 1.0370 - eyeX;
+      const surfaceY = -0.0255 + eyeY;
+      const radius = objectiveRadiusAt(surfaceX);
+      const surfaceDepth = Math.sqrt(Math.max(0, radius * radius - surfaceY * surfaceY));
+      const eyePosition = new THREE.Vector3(eyeX, eyeY, surfaceDepth + 0.008);
+      accents.push(addMedusaEyeAccent(
+        sticker,
+        `medusa-skull-eye-${index === 0 ? 'left' : 'right'}`,
+        eyePosition,
+        0,
+        0.075,
+        index * Math.PI,
+      ));
+    }
+  }
+
+  let elapsed = 0;
+  const applyPulse = (accent: MedusaEyeAccent, fade: number): void => {
+    const coreMaterial = accent.core.material as THREE.MeshBasicMaterial;
+    coreMaterial.opacity = 0.05 + fade * 0.95;
+    accent.core.scale.setScalar(0.78 + fade * 0.30);
+    const layerOpacity = [0.70, 0.44, 0.24, 0.11];
+    const layerScale = [0.82, 1.70, 3.20, 5.40];
+    accent.haloLayers.forEach((halo, index) => {
+      const material = halo.material as THREE.SpriteMaterial;
+      material.opacity = 0.008 + fade * layerOpacity[index];
+      halo.scale.setScalar(accent.baseScale * layerScale[index] * (0.82 + fade * 0.24));
+    });
+  };
+  const update = (): void => {
+    accents.forEach((accent) => {
+      const pulse = 0.5 + 0.5 * Math.sin(elapsed * 2.45 + accent.phase);
+      // Smoothstep makes the fade linger softly at both ends instead of blinking abruptly.
+      const fade = pulse * pulse * (3 - 2 * pulse);
+      applyPulse(accent, fade);
+    });
+  };
+  update();
+
+  return {
+    tick: (dt: number): void => {
+      elapsed += Math.min(Math.max(dt, 0), 0.1);
+      update();
+    },
+    restart: (): void => {
+      elapsed = 0;
+      update();
+    },
+  };
+}
+
 export function createAWPMedusaMinimalWearModel(options: AWPV2Options = {}): THREE.Group {
   const mats = makeMaterials(options);
   const root = new THREE.Group();
@@ -1980,6 +2183,8 @@ export function createAWPMedusaMinimalWearModel(options: AWPV2Options = {}): THR
   };
 
   addPaintPanels(root, mats, runtime);
+  const medusaEyes = createMedusaEyeAccents(root, runtime);
+  root.userData.medusaEyes = medusaEyes;
   root.userData.sculptRuntime = runtime;
   root.userData.pivots = {
     root: root,
@@ -2017,6 +2222,7 @@ export function createAWPMedusaMinimalWearModel(options: AWPV2Options = {}): THR
   let elapsed = 0;
   root.userData.tick = (dt: number): void => {
     elapsed += dt;
+    medusaEyes.tick(dt);
     const bolt = runtime.nodes.bolt;
     if (bolt) {
       const applyCycle = bolt.userData.applyCycle as ((progress: number) => void) | undefined;
