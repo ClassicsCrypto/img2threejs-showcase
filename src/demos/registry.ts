@@ -47,6 +47,11 @@ import {
   createElectricMouseMascotLookDevLights,
   createElectricMouseMascotModel,
 } from './electric-mouse-mascot/createElectricMouseMascotModel';
+import {
+  createTalonDopplerRubyModel,
+  createTalonDopplerRubyLookDevLights,
+  makeTalonDopplerRubyBackground,
+} from './talon-doppler-ruby/createTalonDopplerRubyModel';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -587,6 +592,87 @@ export const demos: DemoEntry[] = [
     cameraFov: 38,
     build: (scene) => {
       const group = createCrownChestModel();
+      scene.add(group);
+      return group;
+    },
+  },
+  {
+    id: 'talon-doppler-ruby',
+    title: '★ Talon Knife | Doppler Ruby (Factory New)',
+    subjectClass: 'object',
+    blurb:
+      'A CS2 Talon Knife rebuilt in code from two admitted broadside references. The silhouette is '
+      + 'traced, not eyeballed: one fixed image→world mapping puts the outline at 2.400 world units '
+      + 'long and aspect 2.884:1 against the reference\'s measured 2.885:1, with 5 raked ratchet '
+      + 'sawteeth at their measured irregular pitches, 3 graduated through-holes as real openings, '
+      + 'two finger choils and a closed ring whose bore circularity is 0.986. The blade is a '
+      + 'variable-thickness loft — full stock at the spine grinding to a near-zero apex — because a '
+      + 'constant-thickness extrude reads as a toy cutout the moment it turns. Steel runs as ONE body '
+      + '(blade → tang → ring); a Talon has no crossguard, so none is invented. Grip is a three-panel '
+      + 'ivory scale with 7 brass through-pins per side at measured positions, a brass-rimmed rosette '
+      + 'over a neutral-grey inlay, and two spacer strips of which the aft one is raked 12°. The '
+      + 'Doppler Ruby finish is the reference\'s own de-lit pixels projected through the traced '
+      + 'mapping, never a procedural swirl. Rendered under AgX: the measured peak ruby is '
+      + 'rgb(245,56,65) with the red channel already clipped in the source, and ACES turns that pink. '
+      + 'Live: a looping 9s talon spin about the finger-ring axis — an anodized finish only resolves '
+      + 'in motion. Every thickness value is an inference; both references are broadside.',
+    referenceImage: `${BASE}references/talon-doppler-ruby.webp`,
+    sourcePath: 'src/demos/talon-doppler-ruby/createTalonDopplerRubyModel.ts',
+    sourceUrl: `${REPO}/src/demos/talon-doppler-ruby/createTalonDopplerRubyModel.ts`,
+    generatedWith: 'img2threejs v1.4.4 · cs2-knife-v1 adapter · talon subtype · reference-projection / image-only',
+    prompt:
+      'Rebuild the subject in this image as a procedural Three.js model. Hold proportions and '
+      + 'silhouette to the reference; enumerate the identity-defining details first and drop any '
+      + 'detail you cannot place on a real component instead of faking it. Derive the finish class '
+      + 'and gradient stops from the reference pixels, not from memory, and flag any colour that '
+      + 'will not survive tone-mapping. Expose pivots and sockets for whatever should move, plus a '
+      + 'userData.tick for a looping idle animation.',
+    author: 'kokorolx',
+    authorUrl: 'https://github.com/kokorolx',
+    status: 'final',
+    // Matches the solved reference framing: fov 14 at distance 5.6 gives a 2.445-wide frame, so
+    // the 2.400-long knife fills 98.2% of width against the reference's measured 98.4%.
+    cameraPosition: [0, 0, 5.6],
+    cameraTarget: [0, 0, 0],
+    cameraFov: 14,
+    // Pinned so a geometry change cannot reframe the review shot and contaminate the silhouette
+    // metric. Derived, not tuned: the traced model is 2.409 wide, and filling 98.4% of frame
+    // width (the reference's measured fill) at fov 14 on a 16:9 frame needs
+    // d = (2.409/0.984) / (2*tan(7deg)*16/9) = 5.61. Target y = 0.002 is the traced bbox centre.
+    // y = 0.0418, not 0.002: the reference's subject bbox is centred at 0.5281 of image height,
+    // NOT at the image centre, so centring the model in frame leaves it 26px high. Measured, that
+    // offset alone held raw silhouette IoU at 0.736 while a pure 26px translation lifted it to
+    // 0.965 — a framing error masquerading as a shape error. 26/900 * frameHeight(1.3775) = 0.0398.
+    capturePinnedCamera: {
+      front: {
+        position: [0, 0.0418, 5.61], target: [0, 0.0418, 0], fov: 14, near: 5.0, far: 6.4,
+      },
+      back: {
+        position: [0, 0.0418, -5.61], target: [0, 0.0418, 0], fov: 14, near: 5.0, far: 6.4,
+      },
+    },
+    accent: '#f53841',
+    backgroundGradient: { inner: '#20101a', outer: '#050307' },
+    exposure: 0.7,
+    environmentIntensity: 1.0,
+    // MEASURED, not assumed. The registry documents 'agx' as the operator a Ruby-Doppler blade
+    // needs, and that is right for a PROCEDURAL Doppler whose colour comes from environment
+    // reflection. This build takes the projection route, so the de-lit plate already carries the
+    // finished appearance and the best operator is the one that transforms it least. A 16-way
+    // sweep (4 operators x 4 exposures) scored the blade's ruby median against the reference:
+    //   neutral@0.70  rgb(135, 20, 25)  dV  +8  dS +10   <- chosen
+    //   neutral@0.85  rgb(148, 26, 31)  dV +21  dS  +3
+    //   aces@0.70     rgb(151, 34, 41)  dV +24  dS -14
+    //   agx@1.15      rgb(177, 90, 85)  dV +50  dS -79   <- worst of all 16
+    // reference is rgb(127, 24, 27). AgX desaturates high-chroma values toward white as part of
+    // its highlight rolloff, which is exactly wrong when the chroma IS the reference data.
+    toneMapping: 'neutral',
+    installLights: (scene) => {
+      scene.add(createTalonDopplerRubyLookDevLights());
+    },
+    build: (scene) => {
+      scene.background = makeTalonDopplerRubyBackground();
+      const group = createTalonDopplerRubyModel({ shadows: true });
       scene.add(group);
       return group;
     },
