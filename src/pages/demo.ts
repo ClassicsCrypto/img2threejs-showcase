@@ -3,6 +3,10 @@ import { getDemo } from '../demos/registry';
 import { Viewer, type PartInfo } from '../scene';
 import { navigate } from '../router';
 import { createScopeMode, type OpticSocket } from '../scopeMode';
+import {
+  createElectricMouseMascotLookDevLights,
+  createElectricMouseMascotModel,
+} from '../demos/electric-mouse-mascot/createElectricMouseMascotModel';
 
 const GITHUB_URL = 'https://github.com/hoainho/img2threejs';
 
@@ -15,6 +19,65 @@ const COMPACT_QUERY = '(max-width: 860px), (max-height: 520px)';
  * on a phone, where an open panel would cover the model entirely).
  */
 let panelExpanded: boolean | null = null;
+
+function createAwpScopeMascotTarget(
+  scene: THREE.Scene,
+  model: THREE.Object3D,
+  socket: OpticSocket,
+): { setVisible: (visible: boolean) => void; triggerElectric: () => void; dispose: () => void } {
+  model.updateWorldMatrix(true, true);
+  const eye = socket.getWorldPosition(new THREE.Vector3());
+  const axisArray = socket.userData.socket?.axis ?? [1, 0, 0];
+  const axis = new THREE.Vector3(axisArray[0], axisArray[1], axisArray[2])
+    .transformDirection(socket.matrixWorld)
+    .normalize();
+
+  const target = new THREE.Group();
+  target.name = 'scope-target-electric-mouse';
+  target.userData.effectOnly = true;
+  target.position.copy(eye).addScaledVector(axis, 20);
+  // The mascot is authored facing +Z. Turn that face toward the eye station.
+  target.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), axis.clone().negate());
+
+  const mascot = createElectricMouseMascotModel({ includeSpeechBubble: false });
+  mascot.name = 'scope-target-electric-mouse-model';
+  mascot.scale.setScalar(0.32);
+  // The authored mascot origin is near its feet; lower it so its face/body centre sits on the
+  // optical axis rather than touching the lower reticle edge.
+  const mascotHolder = new THREE.Group();
+  mascotHolder.name = 'scope-target-electric-mouse-holder';
+  mascotHolder.position.y = -0.54;
+  mascotHolder.add(mascot);
+  target.add(mascotHolder, createElectricMouseMascotLookDevLights());
+
+  // The rifle's inner tube is intentionally opaque outside its bore. Render this small scope-only
+  // target above that tube, while keeping a stable layer order inside the mascot so the body does
+  // not paint over its eyes and mouth when depth testing is bypassed.
+  mascot.traverse((object) => {
+    if (!(object as THREE.Mesh).isMesh) return;
+    const mesh = object as THREE.Mesh;
+    const isFaceDetail = /Eye|EyeHighlight|Nose|Mouth|Tongue|Cheek/.test(mesh.name);
+    mesh.renderOrder = isFaceDetail ? 220 : mesh.name === 'Body_Head_Main' ? 200 : 210;
+    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    materials.forEach((material) => {
+      material.depthTest = false;
+      material.depthWrite = false;
+    });
+  });
+
+  const runtime = mascot.userData.electricMouseMascotRuntime as ReturnType<typeof createElectricMouseMascotModel>['userData']['electricMouseMascotRuntime'];
+  target.userData.tick = (_dt: number, elapsed: number) => {
+    if (target.visible) runtime.update(elapsed);
+  };
+  target.visible = false;
+  scene.add(target);
+
+  return {
+    setVisible: (visible: boolean) => { target.visible = visible; },
+    triggerElectric: () => { if (target.visible) runtime.triggerElectric(); },
+    dispose: () => { target.removeFromParent(); },
+  };
+}
 
 /**
  * Renders the full-viewport demo viewer + info panel for `id`.
@@ -247,9 +310,10 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     fireBtn.addEventListener('click', () => {
       if (modelHooks.fire?.()) {
         firePunch();
-        // Scoped shots land on the reticle's star — the hit marker, ring and
-        // "+1 ★" counter play on the optic overlay (no-op outside scope mode).
+        // Scoped shots land on the reticle — the hit marker and ring play on
+        // the optic overlay (no-op outside scope mode).
         scopeMode?.hit();
+        scopeTarget?.triggerElectric();
       }
     });
     // Cancel a half-finished punch when the route unmounts so the camera never
@@ -281,7 +345,12 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
   // the evaluation frame must stay deterministic.
   const scopeBtn = mount.querySelector<HTMLButtonElement>('#demo-scope');
   const sightSocket = modelRuntime?.sockets?.['scope-sight-line'] as OpticSocket | undefined;
-  const scopeMode = capture ? null : createScopeMode(viewer, canvasMount, model, sightSocket);
+  const scopeTarget = !capture && id === 'awp-medusa-v2' && sightSocket
+    ? createAwpScopeMascotTarget(viewer.scene, model, sightSocket)
+    : null;
+  const scopeMode = capture ? null : createScopeMode(viewer, canvasMount, model, sightSocket, {
+    onActiveChange: (active) => scopeTarget?.setVisible(active),
+  });
   if (scopeBtn && scopeMode) {
     scopeBtn.hidden = false;
     const label = scopeBtn.querySelector('.scope-label')!;
@@ -497,6 +566,8 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     compact.removeEventListener('change', onCompactChange);
     canvasMount.removeEventListener('pointerdown', hideHint);
     (mount as HTMLElement & { __firePunchCancel__?: () => void }).__firePunchCancel__?.();
+    scopeMode?.dispose();
+    scopeTarget?.dispose();
     viewer.dispose();
   };
 }

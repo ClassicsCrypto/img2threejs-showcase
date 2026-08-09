@@ -272,8 +272,15 @@ function tubeBetween(a: THREE.Vector3, b: THREE.Vector3, radius: number, materia
   return mesh;
 }
 
-function cylinderX(x: number, length: number, radius: number, materialValue: THREE.Material, radiusRight = radius): THREE.Mesh {
-  const geometry = new THREE.CylinderGeometry(radius, radiusRight, length, 32, 2);
+function cylinderX(
+  x: number,
+  length: number,
+  radius: number,
+  materialValue: THREE.Material,
+  radiusRight = radius,
+  openEnded = false,
+): THREE.Mesh {
+  const geometry = new THREE.CylinderGeometry(radius, radiusRight, length, 32, 2, openEnded);
   const mesh = new THREE.Mesh(geometry, materialValue);
   mesh.rotation.z = -Math.PI / 2;
   mesh.position.x = x;
@@ -574,7 +581,9 @@ function addScope(parent: THREE.Object3D, mats: MaterialSet, runtime: Runtime): 
   // raise local centre by the same delta, per body owner) improved FRONT IoU by
   // only +0.0004 while BACK regressed -0.0019, which its own contract makes a
   // mandatory rollback. Restore the retained pass-157 radial profile.
-  addPart(group, 'scope-eyepiece', cylinderX(-1.0304, 0.5152, 0.1620, mats.metal, 0.1700), runtime);
+  // Both ocular housings are sleeves: their rear caps were occluding the glass and producing the
+  // black radial fan visible from the eye station. The objective uses the same open bore pattern.
+  addPart(group, 'scope-eyepiece', cylinderX(-1.0304, 0.5152, 0.1620, mats.metal, 0.1700, true), runtime);
   // Pass-262, user report: this ring "nhô cao lên" -- it stood too proud. It was a TorusGeometry whose
   // outer radius reached 0.1990 against a 0.1700 eyepiece, so it hooped 0.0290 (17.1%) above the surface it
   // sits on. The objective end of the same optic does the equivalent feature correctly and is the pattern to
@@ -591,7 +600,7 @@ function addScope(parent: THREE.Object3D, mats: MaterialSet, runtime: Runtime): 
   // as absent -- nothing was there at all. The printed digits themselves ("11 12 13 14" on the ocular, and the
   // turret's own graduations) are PROJECTED SURFACE work, not geometry, and belong to surface-pass; what is
   // added here is the physical band each set of digits is printed on.
-  const ocularRim = cylinderX(-1.2660, 0.0440, 0.1797, mats.steel);
+  const ocularRim = cylinderX(-1.2660, 0.0440, 0.1797, mats.steel, 0.1797, true);
   ocularRim.name = 'scope-ocular-rim';
   group.add(ocularRim);
   runtime.meshes['scope-ocular-rim'] = ocularRim;
@@ -613,7 +622,8 @@ function addScope(parent: THREE.Object3D, mats: MaterialSet, runtime: Runtime): 
   const sightLine = addSocket(group, 'scope-sight-line', new THREE.Vector3(-1.6400, 0, 0), new THREE.Vector3(1, 0, 0), runtime);
   sightLine.userData.role = 'eye-relief-station-on-the-optical-axis';
   sightLine.userData.optic = { fovDegrees: 6.2, eyeReliefFromOcular: 0.3520 };
-  const ocularGlass = addPart(group, 'scope-glass-eyepiece', cylinderX(-1.1592, 0.0166, 0.1300, mats.glass), runtime);
+  // Flush the real glass to the rear ocular face, mirroring the exposed objective-glass station.
+  const ocularGlass = addPart(group, 'scope-glass-eyepiece', cylinderX(-1.2880, 0.0166, 0.1300, mats.glass), runtime);
   ocularGlass.position.z = 0;
 
   // The front station correction is only valid when the optic remains one
