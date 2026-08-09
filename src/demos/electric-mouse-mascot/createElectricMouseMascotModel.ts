@@ -5,6 +5,7 @@ export interface ElectricMouseMascotRuntime {
   parts: Record<string, THREE.Object3D>;
   getBellyTune: () => ElectricMouseBellyTune;
   setBellyTune: (next: Partial<ElectricMouseBellyTune>) => void;
+  triggerElectric: () => void;
   update: (elapsedSeconds: number) => void;
 }
 
@@ -1032,6 +1033,51 @@ export function createElectricMouseMascotModel(options: ElectricMouseMascotOptio
   tailLightningBurst.position.set(0.82, 0.22, 0.14);
   tail.add(tailLightningBurst);
 
+  // A scope shot can trigger a short Pikachu-style counter-attack from both
+  // cheek pads. It is separate from the idle 10K celebration lightning so the
+  // shot response is deterministic and can be fired on demand by the host.
+  const electricAttack = register(new THREE.Group(), 'Electric_Attack_Burst');
+  const electricAttackPaths: Array<Array<[number, number]>> = [
+    [[-0.56, 1.63], [-0.78, 1.73], [-0.69, 1.90], [-1.00, 2.07], [-0.87, 2.24]],
+    [[0.56, 1.63], [0.78, 1.73], [0.69, 1.90], [1.00, 2.07], [0.87, 2.24]],
+    [[-0.18, 1.59], [-0.34, 1.72], [-0.27, 1.87], [-0.48, 2.00]],
+    [[0.18, 1.59], [0.34, 1.72], [0.27, 1.87], [0.48, 2.00]],
+  ];
+  for (let i = 0; i < electricAttackPaths.length; i += 1) {
+    const bolt = register(mesh(
+      `Electric_Attack_Bolt_${i + 1}`,
+      makeLightningBoltGeometry(electricAttackPaths[i], 0.085),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffa8,
+        transparent: true,
+        opacity: 0,
+        depthTest: false,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+        toneMapped: false,
+      }),
+    ));
+    bolt.userData.lightningBoltIndex = i;
+    bolt.renderOrder = 12;
+    const glow = mesh(
+      `Electric_Attack_Glow_${i + 1}`,
+      makeLightningBoltGeometry(electricAttackPaths[i], 0.15),
+      makeLightningGlowMaterial(),
+    );
+    glow.userData.lightningBoltIndex = i;
+    glow.renderOrder = 10;
+    electricAttack.add(glow, bolt);
+  }
+  electricAttack.position.z = 0.70;
+  electricAttack.visible = false;
+  electricAttack.userData.effectOnly = true;
+  root.add(electricAttack);
+  let electricAttackT = -1;
+  const triggerElectric = (): void => {
+    electricAttackT = runtimeTime;
+    electricAttack.visible = true;
+  };
+
   // Additional celebration bolts frame the whole mascot during the final
   // 10K hold. They are separate from the tail flash so the silhouette reads
   // as a celebratory electric aura rather than one oversized tail effect.
@@ -1189,6 +1235,7 @@ export function createElectricMouseMascotModel(options: ElectricMouseMascotOptio
   const lightningBurst = root.getObjectByName('Star_Lightning_Burst');
   const lightningAura = root.getObjectByName('Celebration_Lightning_Aura');
   const tenKLabel = speechBubble?.getObjectByName('Star_10K_Label');
+  let runtimeTime = 0;
 
   root.traverse((child) => {
     if (child instanceof THREE.Mesh) {
@@ -1202,8 +1249,10 @@ export function createElectricMouseMascotModel(options: ElectricMouseMascotOptio
     parts,
     getBellyTune: () => ({ ...bellyTune }),
     setBellyTune,
+    triggerElectric,
     update: (elapsedSeconds) => {
       const t = elapsedSeconds;
+      runtimeTime = t;
       const rollingDuration = 6.4;
       const finalHoldDuration = 2.0;
       const finalExitDuration = 0.4;
@@ -1376,6 +1425,26 @@ export function createElectricMouseMascotModel(options: ElectricMouseMascotOptio
           0.30,
           Math.sin(cycleProgress * Math.PI * 2 * 2) * 0.012,
         );
+      }
+      if (electricAttackT >= 0) {
+        const attackProgress = (t - electricAttackT) / 0.58;
+        if (attackProgress >= 1) {
+          electricAttackT = -1;
+          electricAttack.visible = false;
+        } else {
+          const clampedProgress = THREE.MathUtils.clamp(attackProgress, 0, 1);
+          const attackEnergy = Math.sin(Math.PI * clampedProgress)
+            * (0.84 + Math.abs(Math.sin(t * 24)) * 0.16);
+          electricAttack.position.z = 0.70 + clampedProgress * 0.34;
+          updateLightningGroup(
+            electricAttack,
+            attackEnergy,
+            t * 1.35,
+            0.88,
+            0.28,
+            Math.sin(t * 18) * 0.035,
+          );
+        }
       }
       if (tenKLabel) {
         const labelScale = 1 + cyclePulse * 0.04 + finalEnergy * 0.38;

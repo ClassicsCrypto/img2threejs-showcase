@@ -2,6 +2,11 @@ import * as THREE from 'three';
 import { getDemo } from '../demos/registry';
 import { Viewer, type PartInfo } from '../scene';
 import { navigate } from '../router';
+import { createScopeMode, type OpticSocket } from '../scopeMode';
+import {
+  createElectricMouseMascotLookDevLights,
+  createElectricMouseMascotModel,
+} from '../demos/electric-mouse-mascot/createElectricMouseMascotModel';
 
 const GITHUB_URL = 'https://github.com/hoainho/img2threejs';
 
@@ -14,6 +19,65 @@ const COMPACT_QUERY = '(max-width: 860px), (max-height: 520px)';
  * on a phone, where an open panel would cover the model entirely).
  */
 let panelExpanded: boolean | null = null;
+
+function createAwpScopeMascotTarget(
+  scene: THREE.Scene,
+  model: THREE.Object3D,
+  socket: OpticSocket,
+): { setVisible: (visible: boolean) => void; triggerElectric: () => void; dispose: () => void } {
+  model.updateWorldMatrix(true, true);
+  const eye = socket.getWorldPosition(new THREE.Vector3());
+  const axisArray = socket.userData.socket?.axis ?? [1, 0, 0];
+  const axis = new THREE.Vector3(axisArray[0], axisArray[1], axisArray[2])
+    .transformDirection(socket.matrixWorld)
+    .normalize();
+
+  const target = new THREE.Group();
+  target.name = 'scope-target-electric-mouse';
+  target.userData.effectOnly = true;
+  target.position.copy(eye).addScaledVector(axis, 20);
+  // The mascot is authored facing +Z. Turn that face toward the eye station.
+  target.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), axis.clone().negate());
+
+  const mascot = createElectricMouseMascotModel({ includeSpeechBubble: false });
+  mascot.name = 'scope-target-electric-mouse-model';
+  mascot.scale.setScalar(0.32);
+  // The authored mascot origin is near its feet; lower it so its face/body centre sits on the
+  // optical axis rather than touching the lower reticle edge.
+  const mascotHolder = new THREE.Group();
+  mascotHolder.name = 'scope-target-electric-mouse-holder';
+  mascotHolder.position.y = -0.54;
+  mascotHolder.add(mascot);
+  target.add(mascotHolder, createElectricMouseMascotLookDevLights());
+
+  // The rifle's inner tube is intentionally opaque outside its bore. Render this small scope-only
+  // target above that tube, while keeping a stable layer order inside the mascot so the body does
+  // not paint over its eyes and mouth when depth testing is bypassed.
+  mascot.traverse((object) => {
+    if (!(object as THREE.Mesh).isMesh) return;
+    const mesh = object as THREE.Mesh;
+    const isFaceDetail = /Eye|EyeHighlight|Nose|Mouth|Tongue|Cheek/.test(mesh.name);
+    mesh.renderOrder = isFaceDetail ? 220 : mesh.name === 'Body_Head_Main' ? 200 : 210;
+    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    materials.forEach((material) => {
+      material.depthTest = false;
+      material.depthWrite = false;
+    });
+  });
+
+  const runtime = mascot.userData.electricMouseMascotRuntime as ReturnType<typeof createElectricMouseMascotModel>['userData']['electricMouseMascotRuntime'];
+  target.userData.tick = (_dt: number, elapsed: number) => {
+    if (target.visible) runtime.update(elapsed);
+  };
+  target.visible = false;
+  scene.add(target);
+
+  return {
+    setVisible: (visible: boolean) => { target.visible = visible; },
+    triggerElectric: () => { if (target.visible) runtime.triggerElectric(); },
+    dispose: () => { target.removeFromParent(); },
+  };
+}
 
 /**
  * Renders the full-viewport demo viewer + info panel for `id`.
@@ -80,6 +144,15 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
               <button class="btn btn-explode" id="demo-explode" type="button" aria-pressed="false" hidden>
                 <span class="explode-glyph">&#10021;</span> <span class="explode-label">Explode parts</span>
               </button>
+              <button class="btn btn-scope" id="demo-scope" type="button" aria-pressed="false" hidden>
+                <span class="scope-glyph">&#9678;</span> <span class="scope-label">Look through scope</span>
+              </button>
+              <button class="btn btn-action" id="demo-fire" type="button" hidden>
+                <span class="action-glyph">&#9889;</span> <span class="action-label">Fire</span>
+              </button>
+              <button class="btn btn-action btn-bipod" id="demo-bipod" type="button" aria-pressed="false" hidden>
+                <span class="action-glyph">&#9660;</span> <span class="action-label">Deploy bipod</span>
+              </button>
               <a class="btn" href="${demo.sourceUrl}" target="_blank" rel="noopener noreferrer">
                 &lt;/&gt; View generated source
               </a>
@@ -110,6 +183,10 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
   // background with a frozen camera for the Divine Eye reference loop. Default off (normal viewing).
   const capture = /[?&]capture=1\b/.test(window.location.hash) ||
     new URLSearchParams(window.location.search).get('capture') === '1';
+  const backCapture = new URLSearchParams(window.location.search).get('back') === '1';
+  const cameraPosition: [number, number, number] = backCapture
+    ? [-demo.cameraPosition[0], demo.cameraPosition[1], -demo.cameraPosition[2]]
+    : demo.cameraPosition;
 
   // Per-demo tone-mapping (optional on the entry; read structurally so demo.ts is independent of
   // the DemoEntry field being declared). AgX preserves the Ruby-Doppler crimson that ACES washes.
@@ -117,7 +194,7 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
 
   const canvasMount = mount.querySelector<HTMLDivElement>('#demo-canvas-mount')!;
   const viewer = new Viewer(canvasMount, {
-    cameraPosition: demo.cameraPosition,
+    cameraPosition,
     cameraTarget: demo.cameraTarget,
     cameraFov: demo.cameraFov,
     backgroundGradient: demo.backgroundGradient,
@@ -130,19 +207,161 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
 
   const model = demo.build(viewer.scene);
   viewer.setExplodeRoot(model);
+  // QA capture scripts may place a diagnostic camera on a named socket. This
+  // is not part of the demo UI or model geometry; it exposes only the existing
+  // viewer instance to the local evidence harness.
+  (window as unknown as Record<string, unknown>).__IMG2THREEJS_VIEWER__ = viewer;
+  const modelRuntime = model.userData.sculptRuntime as {
+    pivots?: Record<string, unknown>;
+    sockets?: Record<string, unknown>;
+    actionAnchors?: Record<string, unknown>;
+    colliders?: unknown[];
+    adjacency?: unknown[];
+    attachmentGate?: unknown;
+    attachmentAudit?: unknown;
+    destructionGroups?: Record<string, unknown>;
+    logicalComponents?: Record<string, { kind?: string; binding?: string; boundMeshes?: string[] }>;
+  } | undefined;
+  (window as unknown as Record<string, unknown>).__IMG2THREEJS_RUNTIME__ = {
+    model: id,
+    hasTick: typeof model.userData.tick === 'function',
+    pivotNames: Object.keys(modelRuntime?.pivots ?? model.userData.pivots ?? {}),
+    socketNames: Object.keys(modelRuntime?.sockets ?? {}),
+    actionAnchors: modelRuntime?.actionAnchors ?? model.userData.actionAnchors ?? {},
+    colliderCount: modelRuntime?.colliders?.length ?? 0,
+    adjacencyCount: modelRuntime?.adjacency?.length ?? 0,
+    attachmentGate: modelRuntime?.attachmentGate ?? null,
+    attachmentAudit: modelRuntime?.attachmentAudit ?? null,
+    destructionGroupNames: Object.keys(modelRuntime?.destructionGroups ?? {}),
+  };
   // Responsive framing: keeps the authored desktop composition, dollies back on narrow/short
   // viewports so the whole subject stays in frame instead of being cropped away.
   viewer.fitToViewport(model);
 
   // Part tree published for the assembly gate (forge/stage4_review/check_part_coverage.py).
   // Set in capture mode too — that is the headless run the gate reads it from.
+  const partManifest = viewer.partManifest();
+  const logicalParts = Object.entries(modelRuntime?.logicalComponents ?? {}).map(([name, value]) => ({
+    name,
+    module: null,
+    kind: value.kind ?? 'logical',
+    triangles: 0,
+    materials: [],
+  }));
+  // Logical entries describe a coverage binding only; they do not add
+  // geometry, selectable meshes, or a camera-facing surface to the model.
   (window as unknown as Record<string, unknown>).__IMG2THREEJS_PARTS__ = {
     model: id,
-    ...viewer.partManifest(),
+    ...(partManifest ?? { parts: [], unnamedMeshes: 0, integralMeshes: 0 }),
+    parts: [...(partManifest?.parts ?? []), ...logicalParts],
   };
+
+  // Firing + bipod controls, driven purely by capabilities the model publishes
+  // on `model.userData` (a `fire()` function and a `bipod` controller). No
+  // demo-specific ids or special-casing — any future model gets the same
+  // buttons by publishing the same hooks. Suppressed in capture mode.
+  const modelHooks = model.userData as {
+    fire?: () => boolean;
+    bipod?: { deployed?: boolean; toggle?: () => boolean };
+  };
+  const fireBtn = mount.querySelector<HTMLButtonElement>('#demo-fire');
+  if (fireBtn && typeof modelHooks.fire === 'function' && !capture) {
+    // Cinematic recoil punch: the authored framing sits tight on the weapon
+    // body, so a muzzle flash at the bore would fire off-frame. When the shot
+    // goes off, briefly dolly the camera back along its own view direction so
+    // the flash, tracer streak and barrel enter frame, then ease home. Orbit
+    // controls come back the moment the camera settles. Skipped while scoped
+    // (the optic owns the camera there) and while a punch is already running.
+    let punchRaf = 0;
+    let punching = false;
+    const punchEase = (t: number): number => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
+    const firePunch = (): void => {
+      if (punching || scopeMode?.active) return;
+      punching = true;
+      cancelAnimationFrame(punchRaf);
+      const from = viewer.camera.position.clone();
+      const toward = viewer.controls.target;
+      const dir = from.clone().sub(toward);
+      const len = dir.length();
+      if (len < 1e-6) { punching = false; return; }
+      const to = from.clone().addScaledVector(dir.normalize(), Math.min(5.5, len * 0.48));
+      const wasEnabled = viewer.controls.enabled;
+      viewer.controls.enabled = false;
+      const t0 = performance.now();
+      const out = (now: number): void => {
+        const k = punchEase(Math.min(1, (now - t0) / 280));
+        viewer.camera.position.lerpVectors(from, to, k);
+        viewer.controls.update();
+        if (k < 1) { punchRaf = requestAnimationFrame(out); return; }
+        const t1 = performance.now();
+        const back = (now2: number): void => {
+          const k2 = punchEase(Math.min(1, (now2 - t1) / 520));
+          viewer.camera.position.lerpVectors(to, from, k2);
+          viewer.controls.update();
+          if (k2 < 1) { punchRaf = requestAnimationFrame(back); return; }
+          viewer.controls.enabled = wasEnabled;
+          punching = false;
+        };
+        punchRaf = requestAnimationFrame(back);
+      };
+      punchRaf = requestAnimationFrame(out);
+    };
+    fireBtn.hidden = false;
+    fireBtn.addEventListener('click', () => {
+      if (modelHooks.fire?.()) {
+        firePunch();
+        // Scoped shots land on the reticle — the hit marker and ring play on
+        // the optic overlay (no-op outside scope mode).
+        scopeMode?.hit();
+        scopeTarget?.triggerElectric();
+      }
+    });
+    // Cancel a half-finished punch when the route unmounts so the camera never
+    // stays pinned mid-flight for the next demo.
+    (mount as HTMLElement & { __firePunchCancel__?: () => void }).__firePunchCancel__ = () => {
+      cancelAnimationFrame(punchRaf);
+      viewer.controls.enabled = true;
+    };
+  }
+  const bipodBtn = mount.querySelector<HTMLButtonElement>('#demo-bipod');
+  const bipodApi = modelHooks.bipod;
+  if (bipodBtn && bipodApi && typeof bipodApi.toggle === 'function' && !capture) {
+    const syncBipod = (): void => {
+      const deployed = !!bipodApi.deployed;
+      bipodBtn.setAttribute('aria-pressed', String(deployed));
+      bipodBtn.classList.toggle('is-active', deployed);
+      const label = bipodBtn.querySelector('.action-label')!;
+      label.textContent = deployed ? 'Fold bipod' : 'Deploy bipod';
+    };
+    bipodBtn.hidden = false;
+    bipodBtn.addEventListener('click', () => { bipodApi.toggle?.(); syncBipod(); });
+    syncBipod();
+  }
 
   // Explode control. Hidden for single-mesh demos and in capture mode, where the panel is
   // hidden anyway and the evaluation frame must stay deterministic.
+  // Look-through-the-optic mode. Offered only when the MODEL publishes a `scope-sight-line` socket,
+  // so this stays data-driven rather than special-casing the rifle. Suppressed in capture mode, where
+  // the evaluation frame must stay deterministic.
+  const scopeBtn = mount.querySelector<HTMLButtonElement>('#demo-scope');
+  const sightSocket = modelRuntime?.sockets?.['scope-sight-line'] as OpticSocket | undefined;
+  const scopeTarget = !capture && id === 'awp-medusa-v2' && sightSocket
+    ? createAwpScopeMascotTarget(viewer.scene, model, sightSocket)
+    : null;
+  const scopeMode = capture ? null : createScopeMode(viewer, canvasMount, model, sightSocket, {
+    onActiveChange: (active) => scopeTarget?.setVisible(active),
+  });
+  if (scopeBtn && scopeMode) {
+    scopeBtn.hidden = false;
+    const label = scopeBtn.querySelector('.scope-label')!;
+    scopeBtn.addEventListener('click', () => {
+      scopeMode.toggle();
+      scopeBtn.setAttribute('aria-pressed', String(scopeMode.active));
+      scopeBtn.classList.toggle('is-active', scopeMode.active);
+      label.textContent = scopeMode.active ? 'Exit scope' : 'Look through scope';
+    });
+  }
+
   const explodeBtn = mount.querySelector<HTMLButtonElement>('#demo-explode');
   if (explodeBtn && viewer.canExplode && !capture) {
     explodeBtn.hidden = false;
@@ -289,7 +508,25 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
       mount.querySelector<HTMLElement>(sel)?.style.setProperty('display', 'none');
     }
     // Side-on auto-framing so the evaluation silhouette matches the side-on reference plate.
-    viewer.frameForCapture();
+    const captureOffsetX = backCapture
+      ? demo.captureTargetOffsetXBack ?? demo.captureTargetOffsetX
+      : demo.captureTargetOffsetX;
+    if (captureOffsetX !== undefined) model.position.x += captureOffsetX;
+    // A pinned camera makes the review shot independent of the geometry it reviews; the auto-fit
+    // below reads the scene bbox, so any envelope change reframes the shot and contaminates the
+    // silhouette metric it feeds.
+    if (demo.capturePinnedCamera) {
+      viewer.pinCaptureCamera(
+        backCapture ? demo.capturePinnedCamera.back : demo.capturePinnedCamera.front,
+      );
+    } else {
+      viewer.frameForCapture(
+        20,
+        demo.captureMargin ?? 1.12,
+        backCapture ? -1 : 1,
+        backCapture ? demo.captureTargetOffsetYBack ?? demo.captureTargetOffsetY ?? 0 : demo.captureTargetOffsetY ?? 0,
+      );
+    }
   }
   viewer.start();
 
@@ -328,6 +565,9 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     bar.removeEventListener('click', onBarClick);
     compact.removeEventListener('change', onCompactChange);
     canvasMount.removeEventListener('pointerdown', hideHint);
+    (mount as HTMLElement & { __firePunchCancel__?: () => void }).__firePunchCancel__?.();
+    scopeMode?.dispose();
+    scopeTarget?.dispose();
     viewer.dispose();
   };
 }

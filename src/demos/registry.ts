@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { PinnedCaptureCamera } from '../scene';
 import {
   createM9DopplerModel,
   createM9DopplerLookDevLights,
@@ -43,6 +44,11 @@ import {
   createGlockGhostProtocolLookDevLights,
   makeGhostProtocolBackground,
 } from './glock-ghost-protocol/createGlockGhostProtocolModel';
+import {
+  createAWPMedusaMinimalWearModel,
+  createAWPMedusaMinimalWearLookDevLights,
+  makeAWPMedusaMinimalWearBackground,
+} from './awp-medusa-v2/createAwpMedusaModelV2';
 import {
   createElectricMouseMascotLookDevLights,
   createElectricMouseMascotModel,
@@ -93,12 +99,86 @@ export interface DemoEntry {
   installLights?: (scene: THREE.Scene) => void;
   /** Adds the model (and any demo-specific lights) to the scene, returns the group. */
   build: (scene: THREE.Scene) => THREE.Group;
+  /** Optional deterministic capture framing margin for source plates with tight bounds. */
+  captureMargin?: number;
+  /** Optional vertical framing correction as a fraction of the measured subject bbox height. */
+  captureTargetOffsetY?: number;
+  /** Optional reverse-view vertical correction for asymmetric source padding. */
+  captureTargetOffsetYBack?: number;
+  /** Optional capture-only world-X correction for asymmetric transparent source padding. */
+  captureTargetOffsetX?: number;
+  /** Optional reverse-view capture correction; the back plate has different transparent padding. */
+  captureTargetOffsetXBack?: number;
+  /**
+   * Explicit review camera per broadside. When present, capture uses these numbers instead of
+   * frameForCapture()'s bbox-derived framing, so a geometry change cannot reframe the shot.
+   */
+  capturePinnedCamera?: { front: PinnedCaptureCamera; back: PinnedCaptureCamera };
 }
 
 const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/hoainho/img2threejs-showcase/blob/main';
 
 export const demos: DemoEntry[] = [
+  {
+    id: 'awp-medusa-v2',
+    title: 'AWP | Medusa (Minimal Wear) · V2 rebuild',
+    subjectClass: 'object',
+    blurb:
+      'Procedural CS2 AWP rebuilt from the admitted front/back broadside references. The silhouette gate is met at IoU 0.9205 front / 0.9171 back against a 0.90 target, and the Medusa artwork is projected from the reference\'s own de-lit pixels through the capture camera the plates are registered to. Macro shell profiles, open thumbhole, receiver, constant-diameter barrel with a squared front-sight block and a crowned muzzle, scope with a corrected objective flare and U-clamp ring saddles, receiver-parented bolt, trigger group, magazine, hinge, independent springs, telescoping bipod legs, feet, fasteners, sockets and idle tick are separate physical components with 15 verified contact pairs. Interactive: fire for muzzle flash, tracer, ejecting casing, recoil and bolt cycle; deploy the splayed bipod; look through the scope to line up the electric-mouse mascot, then fire to trigger its lightning burst and hit the reticle.',
+    referenceImage: `${BASE}front-medusa.webp`,
+    sourcePath: 'src/demos/awp-medusa-v2/createAwpMedusaModelV2.ts',
+    sourceUrl: `${REPO}/src/demos/awp-medusa-v2/createAwpMedusaModelV2.ts`,
+    generatedWith: 'img2threejs V2 · custom AWP rifle adapter · blockout + projection + interactions complete',
+    author: 'kokorolx',
+    authorUrl: 'https://github.com/kokorolx',
+    status: 'final',
+    cameraPosition: [0, 1.2, 11.5],
+    cameraTarget: [0, 0.05, 0],
+    cameraFov: 25,
+    captureMargin: 1.0,
+    // Source masks place the object bbox about 7/224 grid rows lower than
+    // the previous auto-framed capture on both admitted broadside views.
+    // This is a camera solve correction, not a geometry translation.
+    captureTargetOffsetY: 0.08,
+    captureTargetOffsetYBack: 0.08,
+    // Pass-163 finding: frameForCapture() derives the camera from the scene bounding box, so every
+    // geometry change reframed the review shot — lifting the optic 0.066 moved scaleDelta 0.0224 ->
+    // 0.0044 and dropped both broadside IoUs ~0.039, an order of magnitude above the per-pass
+    // geometry signal being measured. These are the exact numbers that framing produced at the
+    // retained pass-157 geometry, frozen so later passes are measured instead of reframed. The
+    // captureMargin/offset fields above are inert while this is set; they record how it was solved.
+    capturePinnedCamera: {
+      front: {
+        position: [0.06105950944125864, 0.6510459728837025, 17.578492692244154],
+        target: [0.06105950944125649, 0.6510459728837014, 0.01349999964237214],
+        fov: 20,
+        near: 16.511992697250943,
+        far: 21.776992674005132,
+      },
+      back: {
+        position: [0.06105950944125864, 0.6510459728837025, -17.551492692959407],
+        target: [0.06105950944125649, 0.6510459728837014, 0.01349999964237214],
+        fov: 20,
+        near: 16.511992697250943,
+        far: 21.776992674005132,
+      },
+    },
+    accent: '#16669b',
+    backgroundGradient: { inner: '#263b47', outer: '#081018' },
+    exposure: 0.9,
+    environmentIntensity: 0.82,
+    toneMapping: 'neutral',
+    installLights: (scene) => {
+      scene.add(createAWPMedusaMinimalWearLookDevLights());
+    },
+    build: (scene) => {
+      scene.background = makeAWPMedusaMinimalWearBackground();
+      const group = createAWPMedusaMinimalWearModel({ shadows: true, qualityPriority: 'reference-fidelity' });
+      scene.add(group);
+      return group;
+    },
+  },
   {
     id: 'electric-mouse-mascot',
     title: 'Pikachu 10K Star Celebration',

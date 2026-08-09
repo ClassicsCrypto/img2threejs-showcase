@@ -1087,6 +1087,33 @@ code,
   transform: rotate(45deg) scale(1.15);
 }
 
+/* Action buttons (Fire / Deploy bipod): same resets as .btn-explode, with the
+   glyph as the only accent so the pair reads as one row of model controls. */
+.btn-action {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.btn-action .action-glyph {
+  color: var(--accent-strong);
+  display: inline-block;
+  transition: transform 0.35s ease;
+}
+
+.btn-action.is-active {
+  border-color: var(--accent);
+  background: var(--bg-glass);
+}
+
+.btn-bipod.is-active .action-glyph {
+  transform: rotate(180deg);
+}
+
 /* ---- part inspector ---- */
 
 .demo-parts {

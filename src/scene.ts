@@ -26,6 +26,17 @@ export interface ViewerOptions {
    * Divine Eye reference loop. Does NOT change the object's own appearance — capture-only.
    */
   capture?: boolean;
+  /** Side-on capture margin. Demos with photo plates that touch the frame can tighten this. */
+  captureMargin?: number;
+}
+
+/** An explicit review camera: geometry-independent, so a pass is measured rather than reframed. */
+export interface PinnedCaptureCamera {
+  position: [number, number, number];
+  target: [number, number, number];
+  fov: number;
+  near: number;
+  far: number;
 }
 
 /** A component a click can resolve to: the unit the inspector selects, names and isolates. */
@@ -172,7 +183,13 @@ export class Viewer {
   constructor(mount: HTMLElement, options: ViewerOptions = {}) {
     this.mount = mount;
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    // A mask capture keeps the same camera and draw list as the white studio
+    // shot, but preserves mesh alpha so bright bare-metal pixels cannot be
+    // mistaken for the background by the Tier-1 silhouette diagnostic.
+    const maskCapture = options.capture === true
+      && typeof window !== 'undefined'
+      && new URLSearchParams(window.location.search).get('mask') === '1';
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: maskCapture });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = options.toneMapping === 'agx'
       ? THREE.AgXToneMapping
@@ -190,7 +207,9 @@ export class Viewer {
     this.scene = new THREE.Scene();
     if (this.capture) {
       // Flat white studio bg matches the reference photos (white-bg) → fair silhouette IoU.
-      this.scene.background = new THREE.Color(0xffffff);
+      // Mask captures intentionally leave the clear color transparent for
+      // alpha-based foreground extraction; they are diagnostic evidence only.
+      this.scene.background = maskCapture ? null : new THREE.Color(0xffffff);
     } else if (options.backgroundGradient) {
       this.scene.background = makeGradientBackground(
         options.backgroundGradient.inner,
@@ -822,7 +841,11 @@ export class Viewer {
       this.rafHandle = requestAnimationFrame(loop);
       const dt = clock.getDelta();
       const elapsed = clock.getElapsedTime();
-      for (const tick of tickers) tick(dt, elapsed);
+      // Review captures must freeze the authored idle pose so repeated screenshots
+      // compare the same pixels. The runtime hook remains active in the live viewer.
+      if (!this.capture) {
+        for (const tick of tickers) tick(dt, elapsed);
+      }
       // Ease toward the explode target, then hold the pose. Runs AFTER the demo tickers so
       // that on a demo which animates part positions (a rising lid, a turning crank) the
       // explode offset wins while separated, and the ticker gets its parts back the frame
@@ -869,15 +892,16 @@ export class Viewer {
    * bounding-box centre) at a distance that fits the object, matching a side-on reference plate.
    * Call AFTER the demo's build() so the model exists. Near-ortho fov reduces perspective skew.
    */
-  frameForCapture(fovDeg = 20, margin = 1.12): void {
+  frameForCapture(fovDeg = 20, margin = 1.12, side: 1 | -1 = 1, targetOffsetY = 0): void {
     const box = new THREE.Box3();
     this.scene.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (mesh.isMesh && mesh.geometry) box.expandByObject(mesh);
     });
     if (box.isEmpty()) return;
-    const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    center.y += size.y * targetOffsetY;
     this.camera.fov = fovDeg;
     const vFov = (fovDeg * Math.PI) / 180;
     const halfH = size.y / 2;
@@ -886,12 +910,31 @@ export class Viewer {
     const distH = halfH / Math.tan(vFov / 2);
     const distW = halfW / Math.tan(vFov / 2) / aspect;
     const dist = Math.max(distH, distW) * margin + size.z / 2;
-    this.camera.position.set(center.x, center.y, center.z + dist);
+    this.camera.position.set(center.x, center.y, center.z + dist * side);
     this.camera.near = Math.max(0.01, dist - size.z);
     this.camera.far = dist + size.z * 4;
     this.camera.updateProjectionMatrix();
     this.camera.lookAt(center);
     this.controls.target.copy(center);
+    this.controls.update();
+    this.renderer.render(this.scene, this.camera);
+  }
+
+  /**
+   * Capture framing pinned to explicit numbers. Nothing here reads the scene, so a geometry change
+   * cannot reframe the shot — which is what makes a silhouette metric comparable between passes.
+   * frameForCapture() derives distance and target from the bounding box of the very geometry under
+   * review, so growing a sub-assembly pulls the camera back and shrinks the whole silhouette.
+   */
+  pinCaptureCamera(cam: PinnedCaptureCamera): void {
+    this.camera.fov = cam.fov;
+    this.camera.near = cam.near;
+    this.camera.far = cam.far;
+    this.camera.position.set(cam.position[0], cam.position[1], cam.position[2]);
+    this.camera.updateProjectionMatrix();
+    const target = new THREE.Vector3(cam.target[0], cam.target[1], cam.target[2]);
+    this.camera.lookAt(target);
+    this.controls.target.copy(target);
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
   }
