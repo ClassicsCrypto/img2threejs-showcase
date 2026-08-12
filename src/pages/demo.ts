@@ -131,6 +131,13 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
               </div>
               <p>${demo.blurb}</p>
             </div>
+            <section class="demo-animations" id="demo-animations" hidden aria-labelledby="demo-animations-title">
+              <div class="demo-animations-head">
+                <span class="parts-title" id="demo-animations-title">Animations</span>
+                <output class="demo-animation-status" id="demo-animation-status">Idle</output>
+              </div>
+              <div class="demo-animation-buttons" id="demo-animation-buttons"></div>
+            </section>
             <section class="demo-parts" id="demo-parts" hidden>
               <div class="parts-head">
                 <span class="parts-title">Parts</span>
@@ -206,6 +213,58 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
   });
 
   const model = demo.build(viewer.scene);
+  type AnimationController = {
+    actions: ReadonlyArray<{ id: string; label: string; loop: boolean }>;
+    readonly active: string;
+    play: (name: string) => void;
+    stop: () => void;
+    subscribe: (listener: (active: string) => void) => () => void;
+  };
+  const animationController = (
+    model.userData.sculptRuntime as { animationController?: AnimationController } | undefined
+  )?.animationController;
+  const animationSection = mount.querySelector<HTMLElement>('#demo-animations');
+  const animationButtons = mount.querySelector<HTMLElement>('#demo-animation-buttons');
+  const animationStatus = mount.querySelector<HTMLOutputElement>('#demo-animation-status');
+  const animationButtonCleanups: Array<() => void> = [];
+  let unsubscribeAnimation: (() => void) | undefined;
+  if (animationController && animationSection && animationButtons && !capture) {
+    animationSection.hidden = false;
+    const buttons = new Map<string, HTMLButtonElement>();
+    for (const action of animationController.actions) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'btn demo-animation-btn';
+      button.dataset.animation = action.id;
+      button.textContent = action.label;
+      button.setAttribute('aria-pressed', 'false');
+      button.title = action.loop ? `${action.label} (loops until stopped)` : `${action.label} (plays once)`;
+      const onClick = (): void => animationController.play(action.id);
+      button.addEventListener('click', onClick);
+      animationButtonCleanups.push(() => button.removeEventListener('click', onClick));
+      animationButtons.appendChild(button);
+      buttons.set(action.id, button);
+    }
+    const stopButton = document.createElement('button');
+    stopButton.type = 'button';
+    stopButton.className = 'btn demo-animation-btn demo-animation-stop';
+    stopButton.dataset.animation = 'stop';
+    stopButton.textContent = 'Stop / Reset';
+    const onStop = (): void => animationController.stop();
+    stopButton.addEventListener('click', onStop);
+    animationButtonCleanups.push(() => stopButton.removeEventListener('click', onStop));
+    animationButtons.appendChild(stopButton);
+    unsubscribeAnimation = animationController.subscribe((active) => {
+      if (animationStatus) animationStatus.value = active === 'idle'
+        ? 'Idle'
+        : buttons.get(active)?.textContent ?? active.charAt(0).toUpperCase() + active.slice(1);
+      for (const [id, button] of buttons) {
+        const selected = id === active;
+        button.classList.toggle('is-active', selected);
+        button.setAttribute('aria-pressed', String(selected));
+      }
+    });
+  }
   viewer.setExplodeRoot(model);
   // QA capture scripts may place a diagnostic camera on a named socket. This
   // is not part of the demo UI or model geometry; it exposes only the existing
@@ -568,6 +627,9 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     (mount as HTMLElement & { __firePunchCancel__?: () => void }).__firePunchCancel__?.();
     scopeMode?.dispose();
     scopeTarget?.dispose();
+    animationController?.stop();
+    unsubscribeAnimation?.();
+    for (const cleanup of animationButtonCleanups) cleanup();
     viewer.dispose();
   };
 }
