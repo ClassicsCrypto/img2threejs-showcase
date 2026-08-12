@@ -58,6 +58,10 @@ import {
   createTalonDopplerRubyLookDevLights,
   makeTalonDopplerRubyBackground,
 } from './talon-doppler-ruby/createTalonDopplerRubyModel';
+import {
+  createLowPolyHumanoidLookDevLights,
+  createLowPolyHumanoidModel,
+} from './low-poly-humanoid/createLowPolyHumanoidModel';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -125,6 +129,44 @@ const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/hoainho/img2threejs-showcase/blob/main';
 
 export const demos: DemoEntry[] = [
+  {
+    id: 'low-poly-humanoid',
+    title: 'Low-Poly Humanoid — Rigged Character',
+    subjectClass: 'character',
+    blurb:
+      'A code-only procedural humanoid sculpted with broad low-poly cuts across the chest, back, '
+      + 'abdomen, arms, hands, legs, feet, fingers and toes. Its articulated runtime includes '
+      + 'shoulder, elbow, wrist, finger, hip, knee, ankle, toe, eye and hair motion, deformable '
+      + 'shorts, continuous torso-to-shoulder joins, and nine panel-controlled actions: Run, Jump, '
+      + 'Kick, T-Pose Breathing, Fan Salute, Wave Left, Wave Right, Roundhouse and Dodge.',
+    referenceImage: `${BASE}references/low-poly-humanoid-glb/humanoid.jpeg`,
+    sourcePath: 'src/demos/low-poly-humanoid/createLowPolyHumanoidModel.ts',
+    sourceUrl: `${REPO}/src/demos/low-poly-humanoid/createLowPolyHumanoidModel.ts`,
+    generatedWith: 'img2threejs v1.5.0 · procedural character rig',
+    prompt:
+      'Reconstruct the supplied low-poly male humanoid as an independent code-only Three.js character. '
+      + 'Preserve the angular anatomy, orange shorts, dark swept hair, articulated hands and feet, '
+      + 'continuous shoulder seams, and flexible animation-ready body rig without copying source topology.',
+    author: 'Hoài Nhớ',
+    authorUrl: 'https://github.com/hoainho',
+    status: 'placeholder',
+    cameraPosition: [0, 3.25, 9.4],
+    cameraTarget: [0, 3.25, 0],
+    cameraFov: 31,
+    accent: '#f2690c',
+    backgroundGradient: { inner: '#303030', outer: '#1d1d1d' },
+    exposure: 0.95,
+    environmentIntensity: 0.7,
+    toneMapping: 'aces',
+    installLights: (scene) => {
+      scene.add(createLowPolyHumanoidLookDevLights('reference'));
+    },
+    build: (scene) => {
+      const group = createLowPolyHumanoidModel({ castShadow: true, receiveShadow: true });
+      scene.add(group);
+      return group;
+    },
+  },
   {
     id: 'awp-medusa-v2',
     title: 'AWP | Medusa (Minimal Wear) · V2 rebuild',
