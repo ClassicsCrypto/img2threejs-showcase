@@ -42,6 +42,26 @@ export class HeroStage {
   private fogBase: { near: number; far: number } | null = null;
 
   private activeObjects: THREE.Object3D[] = [];
+  /**
+   * Every demo this stage has built, kept alive and merely hidden when it is not on the turntable.
+   *
+   * The turntable used to dispose the active model and call `build` again on every swap, so the
+   * cost of a demo was paid once per 5.2s cycle AND once per card hover, forever. Most demos build
+   * in ~10ms and that was invisible; the procedural humanoid builds a 2.1M-sample signed-distance
+   * field, so the same code path froze the page every time it came round. Caching turns a swap into
+   * a `visible` toggle, which is what the turntable always looked like it was doing.
+   */
+  private readonly built = new Map<number, {
+    objects: THREE.Object3D[];
+    fog: THREE.Fog | null;
+    fogBase: { near: number; far: number } | null;
+    fitExtent: SubjectExtent | null;
+  }>();
+  private started = false;
+  /** Demo indices the turntable may show — everything without a `prewarm`, plus each one as it lands. */
+  private readonly ready = new Set<number>();
+  /** Late arrivals awaiting their first turn, so a pre-warmed demo is not held back a full lap. */
+  private readonly pendingDebut: number[] = [];
   private index = -1;
   private elapsed = 0;
   private entryStart = 0;
@@ -172,31 +192,50 @@ export class HeroStage {
     }
   }
 
-  private clearActive(): void {
-    for (const obj of this.activeObjects) {
-      this.scene.remove(obj);
-      obj.traverse((node) => {
-        const mesh = node as THREE.Mesh;
-        mesh.geometry?.dispose();
-        const material = mesh.material as THREE.Material | THREE.Material[] | undefined;
-        if (!material) return;
-        for (const mat of Array.isArray(material) ? material : [material]) mat.dispose();
-      });
-    }
-    this.activeObjects = [];
+  private static disposeObject(obj: THREE.Object3D): void {
+    obj.traverse((node) => {
+      const mesh = node as THREE.Mesh;
+      mesh.geometry?.dispose();
+      const material = mesh.material as THREE.Material | THREE.Material[] | undefined;
+      if (!material) return;
+      for (const mat of Array.isArray(material) ? material : [material]) mat.dispose();
+    });
   }
 
   private showDemo(index: number): void {
-    this.clearActive();
+    for (const obj of this.activeObjects) obj.visible = false;
+
     const demo = this.demos[index];
-    const before = new Set(this.scene.children);
-    // Reset fog so a previous demo's atmosphere doesn't leak onto this one.
-    this.scene.fog = null;
-    demo.build(this.scene);
-    // Some demos set an opaque scene.background; keep the hero canvas transparent
-    // so the CSS aurora shows through.
-    this.scene.background = null;
-    this.activeObjects = this.scene.children.filter((c) => !before.has(c));
+    let entry = this.built.get(index);
+    if (!entry) {
+      const before = new Set(this.scene.children);
+      // Reset fog so a previous demo's atmosphere doesn't leak onto this one.
+      this.scene.fog = null;
+      demo.build(this.scene);
+      // Some demos set an opaque scene.background; keep the hero canvas transparent
+      // so the CSS aurora shows through.
+      this.scene.background = null;
+      const objects = this.scene.children.filter((c) => !before.has(c));
+      // Cast because TS narrows `scene.fog` to `null` from the reset above — it cannot see that
+      // `demo.build` is what puts a fog back.
+      const built = this.scene.fog as THREE.Fog | null;
+      const fog = built instanceof THREE.Fog ? built : null;
+      // `fogBase` and `fitExtent` are captured HERE, before `applyFit` runs, because `applyFit`
+      // mutates `fog.near`/`fog.far` in place and the entry animation mutates the model's scale.
+      // Re-deriving either of them on a later show would read a value this class had already
+      // scaled, and the demo would drift a little further every time it came round.
+      entry = {
+        objects,
+        fog,
+        fogBase: fog ? { near: fog.near, far: fog.far } : null,
+        fitExtent: null,
+      };
+      this.built.set(index, entry);
+    } else {
+      for (const obj of entry.objects) obj.visible = true;
+    }
+    this.scene.fog = entry.fog;
+    this.activeObjects = entry.objects;
 
     const [tx, ty, tz] = demo.cameraTarget;
     const [px, py, pz] = demo.cameraPosition;
@@ -210,9 +249,9 @@ export class HeroStage {
     this.camera.fov = demo.cameraFov;
     this.camera.updateProjectionMatrix();
 
-    this.fitExtent = subjectExtent(this.activeObjects, this.target);
-    const fog = this.scene.fog as THREE.Fog | null;
-    this.fogBase = fog instanceof THREE.Fog ? { near: fog.near, far: fog.far } : null;
+    if (!entry.fitExtent) entry.fitExtent = subjectExtent(this.activeObjects, this.target);
+    this.fitExtent = entry.fitExtent;
+    this.fogBase = entry.fogBase;
     this.applyFit();
 
     this.entryStart = this.elapsed;
@@ -220,13 +259,58 @@ export class HeroStage {
     this.onDemo(demo, index);
   }
 
+  /**
+   * The next demo whose `prewarm` has finished, searching forward and wrapping.
+   *
+   * A demo that declares `prewarm` is one whose `build` would block long enough to be felt, so it
+   * is not eligible for the turntable until that work is done. Returns the current index when
+   * nothing else is ready yet, which simply holds the current demo on screen a little longer.
+   */
+  private nextReady(from: number): number {
+    const n = this.demos.length;
+    for (let step = 1; step <= n; step += 1) {
+      const i = (from + step) % n;
+      if (this.ready.has(i)) return i;
+    }
+    return from;
+  }
+
   private next(): void {
-    this.showDemo((this.index + 1) % this.demos.length);
+    // A demo that finished pre-warming after the turntable had already passed its slot would
+    // otherwise wait out a whole lap. The humanoid is demo 0 and the reason this page exists, so
+    // giving a late arrival the next slot rather than a 70-second wait is the point of the queue.
+    const debut = this.pendingDebut.shift();
+    if (debut !== undefined && debut !== this.index) {
+      this.showDemo(debut);
+      return;
+    }
+    const i = this.nextReady(this.index);
+    if (i !== this.index) this.showDemo(i);
+  }
+
+  /**
+   * Walks the demos that need pre-warming, one at a time, and admits each to the turntable when it
+   * lands. Sequential rather than concurrent: these are main-thread time slices, so running two at
+   * once would halve the frame budget without finishing either any sooner.
+   */
+  private async prewarmAll(): Promise<void> {
+    for (let i = 0; i < this.demos.length; i += 1) {
+      const prewarm = this.demos[i].prewarm;
+      if (!prewarm || this.ready.has(i)) continue;
+      try {
+        await prewarm();
+      } catch {
+        // A demo that cannot pre-warm stays out of the rotation rather than taking the page down.
+        continue;
+      }
+      if (this.disposed) return;
+      this.ready.add(i);
+      this.pendingDebut.push(i);
+    }
   }
 
   start(): void {
     if (this.demos.length === 0) return;
-    this.showDemo(0);
     const loop = (): void => {
       if (this.disposed) return;
       this.rafHandle = requestAnimationFrame(loop);
@@ -275,11 +359,40 @@ export class HeroStage {
 
       this.composer.render();
     };
-    loop();
+
+    // THE FIRST BUILD MUST NOT BLOCK THE FIRST PAINT. `renderHome` sets the page's markup and
+    // constructs this stage in one synchronous task, so a `showDemo(0)` called inline runs before
+    // the browser has painted anything: the nav, hero copy and the whole card grid stay invisible
+    // for as long as the heaviest demo takes to build. Two nested frames is the cheap guarantee
+    // that a paint has actually happened — one rAF fires BEFORE the paint it is scheduled against,
+    // not after. The turntable then starts a beat late, which nobody can see, instead of the page
+    // arriving late, which everybody can.
+    for (let i = 0; i < this.demos.length; i += 1) {
+      if (!this.demos[i].prewarm) this.ready.add(i);
+    }
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (this.disposed) return;
+      // Open on the first demo that needs no pre-warming, rather than always on demo 0. Demo 0 may
+      // be the expensive one, and waiting for it would leave the stage empty for several seconds
+      // while thirteen other demos were ready to orbit. It joins the rotation when it lands.
+      this.showDemo(this.nextReady(this.demos.length - 1));
+      this.started = true;
+      // Discard the build time so the entry animation starts from zero rather than mid-flight.
+      this.clock.getDelta();
+      loop();
+      void this.prewarmAll();
+    }));
   }
 
   /** Jump to a specific demo (e.g. when the user hovers a card). */
   focus(index: number): void {
+    // Hovering a card before the stage has shown its first demo would build a second model ahead of
+    // demo 0 and leave `index` pointing at something the turntable never introduced.
+    if (!this.started) return;
+    // A demo still pre-warming would have to build synchronously to be shown, which is exactly the
+    // multi-second freeze the pre-warm exists to avoid. Hovering it early is a no-op.
+    if (!this.ready.has(index)) return;
     if (index < 0 || index >= this.demos.length || index === this.index) return;
     this.sinceSwap = 0;
     this.showDemo(index);
@@ -289,7 +402,16 @@ export class HeroStage {
     this.disposed = true;
     cancelAnimationFrame(this.rafHandle);
     this.ro.disconnect();
-    this.clearActive();
+    // Every demo ever shown is still in the scene, hidden — dispose all of them, not just the
+    // visible one, or the cache leaks a GPU buffer per demo the user hovered.
+    for (const entry of this.built.values()) {
+      for (const obj of entry.objects) {
+        this.scene.remove(obj);
+        HeroStage.disposeObject(obj);
+      }
+    }
+    this.built.clear();
+    this.activeObjects = [];
     this.scene.traverse((node) => {
       const mesh = node as THREE.Mesh;
       mesh.geometry?.dispose();

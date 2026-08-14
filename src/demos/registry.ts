@@ -61,6 +61,7 @@ import {
 import {
   createLowPolyHumanoidLookDevLights,
   createLowPolyHumanoidModel,
+  prewarmLowPolyHumanoidField,
 } from './low-poly-humanoid/createLowPolyHumanoidModel';
 
 export interface DemoEntry {
@@ -108,6 +109,15 @@ export interface DemoEntry {
   installLights?: (scene: THREE.Scene) => void;
   /** Adds the model (and any demo-specific lights) to the scene, returns the group. */
   build: (scene: THREE.Scene) => THREE.Group;
+  /**
+   * Precomputes this demo's expensive intermediates, yielding to the browser as it goes.
+   *
+   * `build` is synchronous by contract and every caller may keep treating it that way. This is for
+   * demos whose build is heavy enough to be felt as a frozen page — awaiting it first moves that
+   * cost off the critical path, after which `build` is cheap. Resolving twice is a no-op, and the
+   * result is cached for the lifetime of the module, so any later `build` is fast too.
+   */
+  prewarm?: () => Promise<void>;
   /** Optional deterministic capture framing margin for source plates with tight bounds. */
   captureMargin?: number;
   /** Optional vertical framing correction as a fraction of the measured subject bbox height. */
@@ -161,6 +171,8 @@ export const demos: DemoEntry[] = [
     installLights: (scene) => {
       scene.add(createLowPolyHumanoidLookDevLights('reference'));
     },
+    // The only demo heavy enough to need this: its body is a 2.12M-sample signed-distance field.
+    prewarm: prewarmLowPolyHumanoidField,
     build: (scene) => {
       const group = createLowPolyHumanoidModel({ castShadow: true, receiveShadow: true });
       scene.add(group);
