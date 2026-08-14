@@ -1182,28 +1182,72 @@ function sdPlate(
   return outside + inside - plate.round;
 }
 
-function evaluateField(capsules: Capsule[], x: number, y: number, z: number): number {
-  let d = Infinity;
-  for (const raw of capsules) {
+/**
+ * A capsule with every per-sample-invariant term already folded in.
+ *
+ * WHY THIS TYPE EXISTS AT ALL. `evaluateField` runs once per capsule per grid sample, and the body
+ * grid is 225 x 145 x 65 = 2.12M samples against 92 capsules — 195M iterations. The radius scale,
+ * the squash lookup and the pre-scaled endpoints are all constant across every one of them, so
+ * computing them inside the loop is 195M redundant evaluations AND 195M short-lived objects.
+ * Hoisting them into a prepared list is the whole difference between a page that paints and a page
+ * that blocks the main thread for tens of seconds.
+ */
+type PreparedCapsule = {
+  a: [number, number, number];
+  b: [number, number, number];
+  ra: number;
+  rb: number;
+  sx: number; sy: number; sz: number;
+  /** Endpoints already multiplied by the squash, for the symmetric path. */
+  asx: number; asy: number; asz: number;
+  bsx: number; bsy: number; bsz: number;
+  bias?: [number, number];
+  plate?: Capsule['plate'];
+  k: number;
+  carve: boolean;
+};
+
+/** Folds the radius scale and squash into each capsule once, ahead of any sampling. */
+function prepareField(capsules: Capsule[]): PreparedCapsule[] {
+  return capsules.map((raw) => {
     const s = raw.exact ? 1 : BODY_RADIUS_SCALE;
-    const c = { ...raw, ra: raw.ra * s, rb: raw.rb * s };
-    const sx = c.squash ? c.squash[0] : 1;
-    const sy = c.squash ? c.squash[1] : 1;
-    const sz = c.squash ? c.squash[2] : 1;
+    const sx = raw.squash ? raw.squash[0] : 1;
+    const sy = raw.squash ? raw.squash[1] : 1;
+    const sz = raw.squash ? raw.squash[2] : 1;
+    return {
+      a: raw.a,
+      b: raw.b,
+      ra: raw.ra * s,
+      rb: raw.rb * s,
+      sx, sy, sz,
+      asx: raw.a[0] * sx, asy: raw.a[1] * sy, asz: raw.a[2] * sz,
+      bsx: raw.b[0] * sx, bsy: raw.b[1] * sy, bsz: raw.b[2] * sz,
+      bias: raw.bias,
+      plate: raw.plate,
+      k: raw.k,
+      carve: raw.op === 'carve',
+    };
+  });
+}
+
+function evaluateField(capsules: PreparedCapsule[], x: number, y: number, z: number): number {
+  let d = Infinity;
+  for (let i = 0; i < capsules.length; i += 1) {
+    const c = capsules[i];
     // The asymmetric path runs only when `bias` is set, so every capsule authored before it keeps
     // its exact previous value. It also scales the offset AFTER projection rather than scaling the
     // sample point, which is what keeps the axis where it was put.
     const v = c.plate
       ? sdPlate(x, y, z, c.a, c.plate)
       : c.bias
-      ? sdCapsuleBiased(x, y, z, c.a, c.b, c.ra, c.rb, sx, sy, sz, c.bias[0], c.bias[1])
+      ? sdCapsuleBiased(x, y, z, c.a, c.b, c.ra, c.rb, c.sx, c.sy, c.sz, c.bias[0], c.bias[1])
       : sdCapsule(
-        x * sx, y * sy, z * sz,
-        c.a[0] * sx, c.a[1] * sy, c.a[2] * sz,
-        c.b[0] * sx, c.b[1] * sy, c.b[2] * sz,
+        x * c.sx, y * c.sy, z * c.sz,
+        c.asx, c.asy, c.asz,
+        c.bsx, c.bsy, c.bsz,
         c.ra, c.rb,
       );
-    if (c.op === 'carve') d = smax(d, -v, c.k);
+    if (c.carve) d = smax(d, -v, c.k);
     else d = d === Infinity ? v : smin(d, v, c.k);
   }
   return d;
@@ -1236,8 +1280,11 @@ const CROTCH_SLIT: Capsule[] = [
   { a: [0, 2.70, -0.12], b: [0, 2.16, -0.12], ra: 0.070, rb: 0.086, squash: [1, 1, 0.055], k: 0.015, op: 'carve', exact: true },
 ];
 
+/** Prepared once at module load — see `PreparedCapsule`. Rebuilding it per sample cost 2.12M arrays. */
+const BODY_FIELD = prepareField([...BODY_CAPSULES, ...CROTCH_SLIT]);
+
 function bodyField(x: number, y: number, z: number): number {
-  return evaluateField([...BODY_CAPSULES, ...CROTCH_SLIT], x, y, z);
+  return evaluateField(BODY_FIELD, x, y, z);
 }
 
 /**
@@ -1250,8 +1297,10 @@ function bodyField(x: number, y: number, z: number): number {
  * vertices of the same ring, and it read exactly as what it is: a dent pulled into the centre of the
  * crotch. The legs still use the slit-cut field, because a leg does wrap its own inner wall.
  */
+const BODY_FIELD_NO_SLIT = prepareField(BODY_CAPSULES);
+
 function bodyFieldNoSlit(x: number, y: number, z: number): number {
-  return evaluateField(BODY_CAPSULES, x, y, z);
+  return evaluateField(BODY_FIELD_NO_SLIT, x, y, z);
 }
 
 
@@ -1264,6 +1313,124 @@ function bodyFieldNoSlit(x: number, y: number, z: number): number {
  * is the right output for a low-poly read. The vertex placement also rounds the result slightly,
  * which suits an organic body better than marching cubes' faceted output.
  */
+/**
+ * Scalar field grids, keyed by the polygonisation they belong to.
+ *
+ * The grid is READ-ONLY once filled — the surface-nets pass only reads it — and the field it comes
+ * from is a pure function of module-level capsule tables, so the same key always describes the same
+ * numbers. That is what makes it safe to fill the grid somewhere other than inside
+ * `polygonizeField`, which is the whole point: it lets the ~4s of sampling be paid a few
+ * milliseconds at a time between animation frames instead of in one blocking call.
+ */
+const fieldGrids = new Map<string, Float32Array>();
+
+const gridKey = (name: string, nx: number, ny: number, nz: number): string =>
+  `${name}|${nx}x${ny}x${nz}`;
+
+/** Walks the grid, calling `visit` per row, so the sync and sliced paths cannot diverge. */
+function eachGridRow(
+  field: (x: number, y: number, z: number) => number,
+  min: [number, number, number],
+  max: [number, number, number],
+  nx: number, ny: number, nz: number,
+  grid: Float32Array,
+): (j: number, k: number) => void {
+  const dx = (max[0] - min[0]) / nx, dy = (max[1] - min[1]) / ny, dz = (max[2] - min[2]) / nz;
+  const gi = (i: number, j: number, k: number): number => (k * (ny + 1) + j) * (nx + 1) + i;
+  return (j, k) => {
+    const y = min[1] + j * dy;
+    const z = min[2] + k * dz;
+    for (let i = 0; i <= nx; i += 1) grid[gi(i, j, k)] = field(min[0] + i * dx, y, z);
+  };
+}
+
+/** The grid for this polygonisation, sampling it synchronously if nothing has pre-warmed it. */
+function fieldGrid(
+  name: string,
+  field: (x: number, y: number, z: number) => number,
+  min: [number, number, number],
+  max: [number, number, number],
+  nx: number, ny: number, nz: number,
+): Float32Array {
+  const key = gridKey(name, nx, ny, nz);
+  const cached = fieldGrids.get(key);
+  if (cached) return cached;
+  const grid = new Float32Array((nx + 1) * (ny + 1) * (nz + 1));
+  const row = eachGridRow(field, min, max, nx, ny, nz, grid);
+  for (let k = 0; k <= nz; k += 1) for (let j = 0; j <= ny; j += 1) row(j, k);
+  fieldGrids.set(key, grid);
+  return grid;
+}
+
+/** Hands the main thread back, preferring a frame boundary but still progressing in a hidden tab. */
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof requestAnimationFrame === 'function'
+      && (typeof document === 'undefined' || document.visibilityState !== 'hidden')) {
+      requestAnimationFrame(() => resolve());
+    } else {
+      setTimeout(resolve, 0);
+    }
+  });
+}
+
+/**
+ * Fills a field grid a slice at a time, yielding to the browser between slices.
+ *
+ * `sliceMs` is a budget, not a row count, because a row's cost is not knowable ahead of time — it
+ * depends on how many capsules the row passes near. Sampling one row is around half a millisecond,
+ * so the budget is honoured to well inside a frame.
+ */
+async function sampleFieldGrid(
+  name: string,
+  field: (x: number, y: number, z: number) => number,
+  min: [number, number, number],
+  max: [number, number, number],
+  [nx, ny, nz]: [number, number, number],
+  sliceMs = 4,
+): Promise<void> {
+  const key = gridKey(name, nx, ny, nz);
+  if (fieldGrids.has(key)) return;
+  const grid = new Float32Array((nx + 1) * (ny + 1) * (nz + 1));
+  const row = eachGridRow(field, min, max, nx, ny, nz, grid);
+  let j = 0;
+  let k = 0;
+  while (k <= nz) {
+    const deadline = performance.now() + sliceMs;
+    do {
+      row(j, k);
+      j += 1;
+      if (j > ny) { j = 0; k += 1; }
+    } while (k <= nz && performance.now() < deadline);
+    if (k <= nz) await yieldToBrowser();
+  }
+  // Published only once complete, so a build racing the prewarm never sees a half-filled grid.
+  fieldGrids.set(key, grid);
+}
+
+/** Geometry of the body polygonisation — kept beside the call in `createLowPolyHumanoidModel`. */
+const BODY_FIELD_GRID = {
+  name: 'Continuous body surface',
+  min: [-3.55, -0.06, -0.9] as [number, number, number],
+  max: [3.55, 5.85, 0.9] as [number, number, number],
+  resolution: [224, 144, 64] as [number, number, number],
+};
+
+/**
+ * Pays for the body's signed-distance grid off the critical path.
+ *
+ * `createLowPolyHumanoidModel` is synchronous and stays that way — callers that do not care can
+ * ignore this and pay the cost inline. Awaiting it first makes the subsequent build ~30x cheaper,
+ * which is the difference between the hero stage blocking every input for four seconds and not
+ * blocking at all.
+ */
+export function prewarmLowPolyHumanoidField(): Promise<void> {
+  return sampleFieldGrid(
+    BODY_FIELD_GRID.name, bodyField, BODY_FIELD_GRID.min, BODY_FIELD_GRID.max,
+    BODY_FIELD_GRID.resolution,
+  );
+}
+
 function polygonizeField(
   name: string,
   field: (x: number, y: number, z: number) => number,
@@ -1301,17 +1468,13 @@ function polygonizeField(
   const [nx, ny, nz] = typeof resolution === 'number'
     ? [resolution, resolution, resolution] : resolution;
   const dx = (max[0] - min[0]) / nx, dy = (max[1] - min[1]) / ny, dz = (max[2] - min[2]) / nz;
-  const at = (i: number, j: number, k: number): number =>
-    field(min[0] + i * dx, min[1] + j * dy, min[2] + k * dz);
-
-  // One scalar sample per grid corner, computed once.
-  const grid = new Float32Array((nx + 1) * (ny + 1) * (nz + 1));
   const gi = (i: number, j: number, k: number): number => (k * (ny + 1) + j) * (nx + 1) + i;
-  for (let k = 0; k <= nz; k += 1) {
-    for (let j = 0; j <= ny; j += 1) {
-      for (let i = 0; i <= nx; i += 1) grid[gi(i, j, k)] = at(i, j, k);
-    }
-  }
+
+  // One scalar sample per grid corner, computed once — and it is the whole cost of this function.
+  // Sampling the body's 225 x 145 x 65 corners against 92 capsules is ~195M field evaluations; the
+  // surface-nets pass that follows reads the result and is a rounding error beside it. See
+  // `sampleFieldGrid` for why that matters and who else fills this cache.
+  const grid = fieldGrid(name, field, min, max, nx, ny, nz);
 
   const vertexAt = new Int32Array(nx * ny * nz).fill(-1);
   const ci = (i: number, j: number, k: number): number => (k * ny + j) * nx + i;
@@ -4797,8 +4960,10 @@ export function createLowPolyHumanoidModel(
     root,
     root,
     'body',
-    polygonizeField('Continuous body surface', bodyField, [-3.55, -0.06, -0.9], [3.55, 5.85, 0.9],
-      [224, 144, 64], skin, insideTorsoShell),
+    // Bounds and resolution come from `BODY_FIELD_GRID` so this call and the prewarm cannot drift
+    // onto different grids — a mismatch would silently miss the cache and block for four seconds.
+    polygonizeField(BODY_FIELD_GRID.name, bodyField, BODY_FIELD_GRID.min, BODY_FIELD_GRID.max,
+      BODY_FIELD_GRID.resolution, skin, insideTorsoShell),
     'root',
     'body',
     runtime,
@@ -6045,7 +6210,30 @@ export function createLowPolyHumanoidModel(
     // Taking the camera's position IN THE HEAD'S LOCAL FRAME covers both cases with one expression:
     // it changes when the character turns AND when the viewer orbits, which is the same relative
     // motion and the thing a viewer actually perceives as the character turning.
-    hairMassMesh.onBeforeRender = (_r, _s, camera): void => {
+    // ONCE PER FRAME, NOT ONCE PER DRAW.
+    //
+    // `onBeforeRender` is a PER-DRAW hook, and this mesh is drawn many times per animation frame —
+    // once per material group, plus once more for every shadow pass it takes part in. Measured on
+    // the hero turntable it fired about 93 times per frame, so the spring integrated 93 sub-steps
+    // and, far worse, `computeVertexNormals` ran 93 times over the same 883 vertices. That was
+    // ~8,400 normal rebuilds per second and it pinned the hero stage in single-digit fps for as
+    // long as this demo was on the turntable.
+    //
+    // `dt <= 0` was meant to be this guard and cannot be: `performance.now()` is sub-millisecond, so
+    // it advances between two draws of the SAME frame and every redundant call saw a positive dt.
+    // The renderer's own frame counter is the thing that actually distinguishes them — it does not
+    // change within a single `render()` call.
+    //
+    // The sub-steps were not free accuracy either. The camera only moves between frames, so draws
+    // 2..93 fed the impulse term a zero delta while still applying damping, which over-damped the
+    // spring against its own authored STIFF/DAMP. One step per frame is the motion those constants
+    // were tuned for.
+    let lastFrame = -1;
+    hairMassMesh.onBeforeRender = (renderer, _s, camera): void => {
+      const frame = renderer.info.render.frame;
+      if (frame === lastFrame) return;
+      lastFrame = frame;
+
       const now = performance.now() / 1000;
       const dt = prevT ? Math.min(0.05, now - prevT) : 0;
       prevT = now;
