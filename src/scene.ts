@@ -205,11 +205,32 @@ export class Viewer {
     this.capture = options.capture ?? false;
 
     this.scene = new THREE.Scene();
+
+    // `?bg=RRGGBB` is read OUTSIDE the capture branch as well, because the two are independent needs.
+    // Capture mode also runs frameForCapture, which keeps re-deriving the camera from the scene bounds
+    // and reverts a pinned one — so a review that needs the profile's camera has to drop `capture=1`,
+    // and it must not lose a uniform background by doing so. A gradient backdrop makes every
+    // foreground threshold position-dependent; a single flat colour makes extraction exact.
+    const bgOverride = (() => {
+      if (typeof window === 'undefined') return null;
+      const raw = new URLSearchParams(window.location.search).get('bg');
+      return raw && /^#?[0-9a-fA-F]{6}$/.test(raw)
+        ? new THREE.Color(parseInt(raw.replace('#', ''), 16))
+        : null;
+    })();
+
     if (this.capture) {
       // Flat white studio bg matches the reference photos (white-bg) → fair silhouette IoU.
       // Mask captures intentionally leave the clear color transparent for
       // alpha-based foreground extraction; they are diagnostic evidence only.
-      this.scene.background = maskCapture ? null : new THREE.Color(0xffffff);
+      //
+      // `?bg=RRGGBB` overrides the white for a subject whose reference is NOT on white. That is not
+      // a preference: a render captured on white while its reference sits on #0f0f0f makes every
+      // foreground/silhouette number a measurement of the mismatch rather than of the model. The
+      // default stays white so every existing demo captures byte-identically.
+      this.scene.background = maskCapture ? null : (bgOverride ?? new THREE.Color(0xffffff));
+    } else if (bgOverride) {
+      this.scene.background = bgOverride;
     } else if (options.backgroundGradient) {
       this.scene.background = makeGradientBackground(
         options.backgroundGradient.inner,
@@ -476,6 +497,25 @@ export class Viewer {
   /** Every selectable component, in model tree order. Empty until `enableInspect`. */
   get parts(): PartInfo[] {
     return this.partList;
+  }
+
+  /**
+   * Recompute the part list after the model gains geometry.
+   *
+   * `enableInspect` reads the tree once, synchronously, which is correct for a demo whose `build()`
+   * hands back a finished model. A demo that loads an asset cannot do that: `build()` is synchronous
+   * by contract, so it returns an EMPTY group and fills it when the file arrives. The list taken from
+   * that empty group is not merely stale -- it is shorter than two entries, which the demo page reads
+   * as "no part tree" and hides the whole section permanently. The GLB baseline lost its part list
+   * exactly this way, and it is the one demo whose parts exist to be compared against.
+   */
+  rebuildParts(): void {
+    if (!this.inspectRoot) return;
+    this.buildPartList();
+    // The explode units are derived from the same meshes, so a part list that has changed means the
+    // cached offsets describe a model that no longer exists. Dropping them forces a recompute on the
+    // next explode instead of pulling apart a stale set.
+    this.explodeParts = null;
   }
 
   get selected(): PartInfo | null {

@@ -54,6 +54,11 @@ import {
   createElectricMouseMascotModel,
 } from './electric-mouse-mascot/createElectricMouseMascotModel';
 import {
+  createGirlCharacterModel,
+  createGirlCharacterLookDevLights,
+  prewarmGirlCharacter,
+} from './girl-character/createGirlCharacterModel';
+import {
   createTalonDopplerRubyModel,
   createTalonDopplerRubyLookDevLights,
   makeTalonDopplerRubyBackground,
@@ -139,6 +144,44 @@ const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/hoainho/img2threejs-showcase/blob/main';
 
 export const demos: DemoEntry[] = [
+  {
+    id: 'girl-character',
+    title: 'Dual-Sword Warrior — TypeScript procedural surfaces',
+    subjectClass: 'character',
+    blurb:
+      'A code-only Three.js character assembled from encoded Surface Nets data embedded in TypeScript. '
+      + 'High, Medium and Low quality streams are lazy-loaded as separate TypeScript modules, keeping '
+      + 'the athletic dual-sword warrior detailed and responsive across devices. Animation controls and '
+      + 'the parts inspector remain available in the live demo.',
+    referenceImage: `${BASE}references/girl-character/front.jpg`,
+    prewarm: prewarmGirlCharacter,
+    sourcePath: 'src/demos/girl-character/createGirlCharacterModel.ts',
+    sourceUrl: `${REPO}/src/demos/girl-character/createGirlCharacterModel.ts`,
+    generatedWith: 'img2threejs v1.5.1 · procedural TypeScript Surface Nets',
+    prompt:
+      'Reconstruct the athletic dual-sword warrior as an independent code-only Three.js character, '
+      + 'preserve the athletic silhouette, dual swords, layered outfit and expressive face, while '
+      + 'exposing High/Medium/Low quality levels for a responsive interactive render.',
+    author: 'Hoài Nhớ',
+    authorUrl: 'https://github.com/hoainho',
+    status: 'placeholder',
+    cameraPosition: [0, 0.9, 4.45],
+    cameraTarget: [0, 0.9, 0],
+    cameraFov: 25,
+    accent: '#b8402c',
+    backgroundGradient: { inner: '#1a1a1a', outer: '#0f0f0f' },
+    exposure: 0.55,
+    environmentIntensity: 1.0,
+    toneMapping: 'aces',
+    installLights: (scene) => {
+      scene.add(createGirlCharacterLookDevLights());
+    },
+    build: (scene) => {
+      const group = createGirlCharacterModel({ castShadow: true, receiveShadow: true });
+      scene.add(group);
+      return group;
+    },
+  },
   {
     id: 'low-poly-humanoid',
     title: 'Low-Poly Humanoid — Rigged Character',
