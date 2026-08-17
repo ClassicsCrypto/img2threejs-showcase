@@ -7,3 +7,5 @@ sculpt
 .img2threejs/
 graphify-out/
 **/graphify-out/
+
+__pycache__/
