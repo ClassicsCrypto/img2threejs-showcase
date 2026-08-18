@@ -454,6 +454,26 @@ export function applyRest(rig: WalkRig, rest: RestPose): void {
 const EULER = new THREE.Euler();
 
 /**
+ * Keep the swinging arm inside the deformation envelope of the authored torso-and-arm surface.
+ *
+ * The shoulder is a continuous surface, not a separate upper-arm shell. Beyond this small sagittal
+ * arc the low-resolution shoulder triangles fold over themselves under linear blend skinning and become
+ * back-facing slits. IDLE stays below that envelope; WALK is the only action that needs an explicit
+ * guard. The limits preserve a visible counter-swing while preventing the arm from crossing its own
+ * skin at the far end of the orbit.
+ */
+const WALK_ARM_LIMITS = {
+  freeShoulder: { gain: 0.14, max: 0.05 },
+  freeElbow: { gain: 0.10, max: 0.025 },
+  armedShoulder: { gain: 0.04, max: 0.02 },
+  armedElbow: { gain: 0.025, max: 0.012 },
+} as const;
+
+/** Smoothly saturate instead of introducing a hard kink into the periodic gait. */
+const limitAngle = (value: number, limit: number): number =>
+  limit * Math.tanh(value / limit);
+
+/**
  * A walk cycle written as joint angles over phase, which is how a walk is actually described.
  *
  * The right arm is deliberately quieter than the left: this figure carries a katana in it, and a full
@@ -544,10 +564,10 @@ export function poseWalk(rig: WalkRig, rest: RestPose, phase: number): void {
   // hip's, and the armed side keeps a third of that -- a hand holding a katana does not swing freely.
   const armL = gait(GAIT_HIP, R) - GAIT_HIP.dc;
   const armR = gait(GAIT_HIP, L) - GAIT_HIP.dc;
-  set('shoulder.L', -armL * 0.42);
-  set('elbow.L', Math.max(0, -armL) * 0.30);
-  set('shoulder.R', -armR * 0.15);
-  set('elbow.R', Math.max(0, -armR) * 0.10);
+  set('shoulder.L', limitAngle(-armL * WALK_ARM_LIMITS.freeShoulder.gain, WALK_ARM_LIMITS.freeShoulder.max));
+  set('elbow.L', limitAngle(Math.max(0, -armL) * WALK_ARM_LIMITS.freeElbow.gain, WALK_ARM_LIMITS.freeElbow.max));
+  set('shoulder.R', limitAngle(-armR * WALK_ARM_LIMITS.armedShoulder.gain, WALK_ARM_LIMITS.armedShoulder.max));
+  set('elbow.R', limitAngle(Math.max(0, -armR) * WALK_ARM_LIMITS.armedElbow.gain, WALK_ARM_LIMITS.armedElbow.max));
 
   // Pelvis and shoulder girdle turn opposite ways, spread along the spine so no joint shears.
   const twist = Math.sin(2 * Math.PI * L);
