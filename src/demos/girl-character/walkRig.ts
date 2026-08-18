@@ -255,7 +255,19 @@ export function buildWalkRig(model: THREE.Object3D): WalkRig | null {
   const boundMeshes: THREE.SkinnedMesh[] = [];
   for (const mesh of meshes) {
     mesh.updateMatrixWorld(true);
-    const allowed = REGION_BONES[mesh.userData.region as string];
+    /**
+     * A shin is the lower-leg surface, not a continuation of the thigh. The generic `skin` region
+     * used to let its upper vertices blend between hip and knee; when the hip counter-swung behind the
+     * body, that split the shin across the rear camera even though the knee itself was only slightly
+     * flexed. Keep the lower-leg surface on its own knee-to-ankle chain and let the trouser cuff hide
+     * the transition above the knee.
+     */
+    const shinAllowed = mesh.name === 'shin, character left'
+      ? (['knee.L', 'ankle.L'] as const)
+      : mesh.name === 'shin, character right'
+        ? (['knee.R', 'ankle.R'] as const)
+        : undefined;
+    const allowed = shinAllowed ?? REGION_BONES[mesh.userData.region as string];
     const candidates = allowed
       ? segments.filter((seg) => allowed.includes(specs[seg.index].name))
       : segments;
