@@ -118,8 +118,9 @@ a {
 body.intro-active { overflow: hidden; }
 
 #app { transition: opacity 200ms var(--ease); }
+/* Leave-only. There is no matching enter class: parking #app at opacity 0 after the mount made
+   visibility depend on a frame callback, which starved under load and hid the build loader. */
 #app.route-leaving { opacity: 0; }
-#app.route-entering { opacity: 0; }
 
 .intro-overlay {
   position: fixed;
@@ -372,34 +373,114 @@ body.intro-active { overflow: hidden; }
   display: block;
 }
 
-/* Loading readout: the build for a character demo is seconds of synchronous work, and a silent
-   freeze reads as a broken page. */
-.wb-status {
+/**
+ * Branded build loader (src/loader.ts). Shared by the workbench and the detail route.
+ *
+ * Every stage is written so a FROZEN frame still reads as the logo: a synchronous `build()` blocks
+ * the main thread for seconds on the heavy exhibits and CSS cannot advance while it does, so no
+ * stage passes through a near-invisible or half-collapsed state. Motion is a slow breath plus a
+ * sweeping hairline — indeterminate on purpose, because nothing in the pipeline reports progress.
+ */
+.ldr {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.7rem;
-  font-family: var(--mono);
-  font-size: 0.78rem;
-  color: var(--paper-dim);
-  background: color-mix(in srgb, var(--ink) 72%, transparent);
+  background: color-mix(in srgb, var(--ink) 86%, transparent);
+  opacity: 1;
+  transition: opacity 260ms var(--ease);
+}
+
+.ldr.is-done {
+  opacity: 0;
   pointer-events: none;
 }
 
-.wb-spin {
-  width: 11px;
-  height: 11px;
-  border: 1px solid var(--rule-strong);
-  border-top-color: var(--amber);
-  border-radius: 50%;
-  animation: wb-spin 700ms linear infinite;
+.ldr-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
 }
 
-@keyframes wb-spin {
-  to { transform: rotate(360deg); }
+.ldr-mark {
+  overflow: visible;
+  animation: ldr-breathe 2.4s var(--ease) infinite;
+}
+
+@keyframes ldr-breathe {
+  50% { transform: translateY(-3px); }
+}
+
+/* The three source pixels hand off to the cube in sequence: the image becoming the volume, which
+   is the whole product in one loop. Opacity floors at 0.25 so a frozen frame never looks empty. */
+.ldr-pixels rect {
+  fill: var(--amber);
+  animation: ldr-pixel 1.8s var(--ease) infinite;
+  animation-delay: calc(var(--d) * 200ms);
+}
+
+@keyframes ldr-pixel {
+  0%, 100% { opacity: 0.25; }
+  35% { opacity: 1; }
+}
+
+.ldr-top { fill: #2f3038; }
+.ldr-left { fill: #22232a; }
+.ldr-right { fill: #1a1b21; }
+
+.ldr-cube polygon {
+  animation: ldr-face 1.8s var(--ease) infinite;
+}
+
+.ldr-top { animation-delay: 200ms; }
+.ldr-left { animation-delay: 400ms; }
+.ldr-right { animation-delay: 600ms; }
+
+/* Faces lift toward the accent rather than fading, so the cube is always fully drawn. */
+@keyframes ldr-face {
+  0%, 100% { fill: #22232a; }
+  40% { fill: var(--amber-dim); }
+}
+
+.ldr-phase {
+  font-size: 0.74rem;
+  color: var(--paper-dim);
+  letter-spacing: 0.04em;
+}
+
+.ldr-bar {
+  width: 132px;
+  height: 1px;
+  background: var(--rule-strong);
+  overflow: hidden;
+}
+
+.ldr-bar span {
+  display: block;
+  width: 38%;
+  height: 100%;
+  background: var(--amber);
+  animation: ldr-sweep 1.5s var(--ease) infinite;
+}
+
+@keyframes ldr-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(264%); }
+}
+
+/* Reduced motion: hold the mark still and let the phase line carry the state. */
+@media (prefers-reduced-motion: reduce) {
+  .ldr-mark,
+  .ldr-pixels rect,
+  .ldr-cube polygon,
+  .ldr-bar span {
+    animation: none !important;
+  }
+  .ldr-pixels rect { opacity: 1; }
+  .ldr-bar span { width: 100%; }
 }
 
 /* ---- HUD: reference plate, top-left ---- */
@@ -1197,10 +1278,6 @@ body.intro-active { overflow: hidden; }
     height: 56dvh;
     inset: auto;
   }
-  .wb-status {
-    height: 56dvh;
-    inset: 0 0 auto 0;
-  }
   .wb-ref {
     top: 0.6rem;
     left: 0.6rem;
@@ -1258,7 +1335,6 @@ body.intro-active { overflow: hidden; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wb-spin,
   .wb-drawer,
   .pal-box {
     animation: none !important;

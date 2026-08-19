@@ -3,6 +3,7 @@ import { getDemo } from '../demos/registry';
 import { Viewer, type PartInfo } from '../scene';
 import { navigate } from '../router';
 import { brand, GITHUB_CORE as GITHUB_URL } from '../site-data';
+import { createLoader, whenViewerReady } from '../loader';
 
 /** Viewports where the info panel becomes a collapsible bottom sheet over the model. */
 const COMPACT_QUERY = '(max-width: 860px), (max-height: 520px)';
@@ -134,6 +135,20 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
   const toneMapping = (demo as { toneMapping?: 'aces' | 'agx' | 'neutral' }).toneMapping;
 
   const canvasMount = mount.querySelector<HTMLDivElement>('#demo-canvas-mount')!;
+
+  /**
+   * Branded build loader. Mounted BEFORE the Viewer so it is on screen for the whole build, and
+   * never during a capture run — the review harness screenshots this route as soon as the model
+   * reports ready, and an overlay would land in the evaluation frame.
+   *
+   * It is dismissed on the viewer's first-good-frame signal, and for the two `prewarm` demos only
+   * after that promise settles too: their geometry arrives after `build()` returns, so releasing on
+   * the ready flag alone would uncover an empty scene.
+   */
+  const loader = capture
+    ? null
+    : createLoader(canvasMount, demo.prewarm ? 'Precomputing field' : 'Building geometry');
+
   const viewer = new Viewer(canvasMount, {
     cameraPosition,
     cameraTarget: demo.cameraTarget,
@@ -507,6 +522,28 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     }
   }
   viewer.start();
+
+  /**
+   * Dismissal, owned in exactly one place so there is no second handler racing it.
+   *
+   * A `prewarm` demo's geometry lands AFTER `build()` returns, so waiting on the viewer's ready
+   * flag alone would uncover an empty scene. Awaiting `prewarm()` a second time here is safe and
+   * intended: the DemoEntry contract states it resolves twice as a no-op and caches its result for
+   * the module's lifetime, so this is the same settled promise the parts-rebuild handler uses, not
+   * a second expensive run. A rejection is treated as settled — the demo falls back to simpler
+   * geometry and the page should still be revealed rather than sitting behind the overlay.
+   */
+  if (loader) {
+    const geometryIn: Promise<unknown> = demo.prewarm
+      ? demo.prewarm().catch(() => undefined)
+      : Promise.resolve();
+    void geometryIn
+      .then(() => {
+        loader.phase('Framing');
+        return whenViewerReady();
+      })
+      .then(() => loader.done());
+  }
 
   // --- collapsible details sheet ---------------------------------------------------------
   const panel = mount.querySelector<HTMLElement>('#demo-panel')!;

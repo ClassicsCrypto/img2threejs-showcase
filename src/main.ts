@@ -73,11 +73,17 @@ function render(): void {
   pendingTransition = window.setTimeout(() => {
     pendingTransition = null;
     mountRoute();
+    /**
+     * Cleared in the SAME task as the mount, with no `route-entering` step in between.
+     *
+     * The previous version parked #app at opacity 0 after mounting and removed that class two
+     * rAFs later. Measured under an 8x CPU throttle, those callbacks were starved and #app stayed
+     * fully transparent long past the mount — so the build loader the detail route had just raised
+     * was rendered invisible, which is precisely the blank screen the loader exists to replace.
+     * Removing the class here instead lets the existing opacity transition run 0 → 1 on its own,
+     * which is the same fade-in without making visibility depend on a frame callback landing.
+     */
     app.classList.remove('route-leaving');
-    app.classList.add('route-entering');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => app.classList.remove('route-entering'));
-    });
   }, ROUTE_TRANSITION_MS);
 }
 

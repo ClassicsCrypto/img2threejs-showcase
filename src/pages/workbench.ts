@@ -1,6 +1,7 @@
 import { demos, getDemo, type DemoEntry } from '../demos/registry';
 import { Viewer, type PartInfo } from '../scene';
 import { parseRoute, replaceHashSilently } from '../router';
+import { createLoader, whenViewerReady, type Loader } from '../loader';
 import {
   ARROW_OUT,
   brand,
@@ -221,10 +222,6 @@ export function renderWorkbench(mount: HTMLElement, focusId?: string): () => voi
       <main class="wb-stage">
         <div class="wb-canvas" id="wb-canvas"></div>
 
-        <div class="wb-status" id="wb-status" role="status" aria-live="polite">
-          <span class="wb-spin" aria-hidden="true"></span>
-          <span id="wb-status-text">Building geometry</span>
-        </div>
 
         <!-- top-left: what the model was rebuilt from -->
         <figure class="wb-ref" id="wb-ref">
@@ -297,8 +294,6 @@ export function renderWorkbench(mount: HTMLElement, focusId?: string): () => voi
 
   /* ------------------------------------------------------------ element refs */
   const canvasMount = mount.querySelector<HTMLElement>('#wb-canvas')!;
-  const statusEl = mount.querySelector<HTMLElement>('#wb-status')!;
-  const statusText = mount.querySelector<HTMLElement>('#wb-status-text')!;
   const refImg = mount.querySelector<HTMLImageElement>('#wb-ref-img')!;
   const titleEl = mount.querySelector<HTMLElement>('#wb-title')!;
   const blurbEl = mount.querySelector<HTMLElement>('#wb-blurb')!;
@@ -324,6 +319,7 @@ export function renderWorkbench(mount: HTMLElement, focusId?: string): () => voi
 
   /* ------------------------------------------------------------ viewer state */
   let viewer: Viewer | null = null;
+  let loader: Loader | null = null;
   let unsubscribeAnimation: (() => void) | null = null;
   /** Bumped on every load; an async prewarm that resolves after a newer load started is discarded. */
   let loadToken = 0;
@@ -420,10 +416,19 @@ export function renderWorkbench(mount: HTMLElement, focusId?: string): () => voi
     animActions.innerHTML = '';
     showSelectedPart(null);
 
-    statusEl.hidden = false;
-    statusText.textContent = demo.prewarm ? 'Precomputing field' : 'Building geometry';
+    // One loader per load, torn down with the exhibit it belongs to, so a fast click-through of
+    // the rail cannot leave a stack of overlays behind.
+    loader?.done();
+    loader = createLoader(canvasMount, demo.prewarm ? 'Precomputing field' : 'Building geometry');
 
     teardownViewer();
+
+    // Yield one frame for EVERY exhibit, not just the heavy ones. Without it a demo with no
+    // `prewarm` created the loader and tore it down inside a single task, so the browser never
+    // painted it and a texture-heavy exhibit (the AWP decodes two 1.2MB plates) showed a bare
+    // canvas with no indication anything was happening.
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+    if (token !== loadToken || disposed) return;
 
     // Heavy demos precompute off the critical path; `prewarm` yields to the browser as it goes.
     if (demo.prewarm) {
@@ -433,8 +438,9 @@ export function renderWorkbench(mount: HTMLElement, focusId?: string): () => voi
         /* a failed prewarm still lets build() run, just slower */
       }
       if (token !== loadToken || disposed) return;
-      statusText.textContent = 'Building geometry';
-      // One frame so the status text paints before a synchronous multi-second build blocks.
+      loader?.phase('Building geometry');
+      // Another frame so the new phase paints before a synchronous multi-second build blocks the
+      // thread — after that point nothing on screen can update until build() returns.
       await new Promise((r) => requestAnimationFrame(() => r(null)));
       if (token !== loadToken || disposed) return;
     }
@@ -468,7 +474,14 @@ export function renderWorkbench(mount: HTMLElement, focusId?: string): () => voi
       return;
     }
 
-    statusEl.hidden = true;
+    // Held until the viewer reports a real frame, so the overlay does not lift onto a blank canvas
+    // while textures are still decoding and shaders compiling. Guarded by the token: a rail
+    // click-through must not let a stale load dismiss the loader the current one just raised.
+    const ownLoader = loader;
+    ownLoader?.phase('Framing');
+    void whenViewerReady().then(() => {
+      if (token === loadToken && !disposed) ownLoader?.done();
+    });
 
     const manifest = v.partManifest();
     const triangles = manifest
@@ -718,6 +731,10 @@ export function renderWorkbench(mount: HTMLElement, focusId?: string): () => voi
     loadToken++;
     for (const off of cleanups) off();
     teardownViewer();
+    // The loader lives in the canvas mount, which innerHTML would take with it anyway — removing it
+    // explicitly keeps its pending timer from firing against a detached node.
+    loader?.done();
+    loader = null;
     document.body.classList.remove('wb-overlay-open');
   };
 }
