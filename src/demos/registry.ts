@@ -141,7 +141,7 @@ export interface DemoEntry {
 }
 
 const BASE = import.meta.env.BASE_URL;
-const REPO = 'https://github.com/hoainho/img2threejs-showcase/blob/main';
+const REPO = 'https://github.com/img2threejs/img2threejs-showcase/blob/main';
 
 export const demos: DemoEntry[] = [
   {
