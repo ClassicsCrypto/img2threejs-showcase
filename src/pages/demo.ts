@@ -2,8 +2,7 @@ import * as THREE from 'three';
 import { getDemo } from '../demos/registry';
 import { Viewer, type PartInfo } from '../scene';
 import { navigate } from '../router';
-
-const GITHUB_URL = 'https://github.com/hoainho/img2threejs';
+import { brand, GITHUB_CORE as GITHUB_URL } from '../site-data';
 
 /** Viewports where the info panel becomes a collapsible bottom sheet over the model. */
 const COMPACT_QUERY = '(max-width: 860px), (max-height: 520px)';
@@ -50,7 +49,7 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
         <div class="demo-panel-body" id="demo-panel-body">
           <div class="demo-panel-inner">
             <header class="demo-panel-head">
-              <span class="demo-kicker">img2threejs · reconstruction</span>
+              <span class="demo-kicker">${brand('img2threejs')} · reconstruction</span>
               <h2>${demo.title}</h2>
               <p class="demo-author">by
                 <a href="${demo.authorUrl}" target="_blank" rel="noopener noreferrer">${demo.author}</a>
@@ -63,7 +62,7 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
             <div class="demo-meta">
               <div class="badges">
                 <span class="badge badge-${demo.subjectClass}">${demo.subjectClass}</span>
-                <span class="badge">${demo.generatedWith}</span>
+                <span class="badge">${brand(demo.generatedWith)}</span>
                 <span class="badge badge-status status-${demo.status}">${demo.status}</span>
               </div>
               <p>${demo.blurb}</p>
@@ -99,7 +98,7 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
                 &lt;/&gt; View generated source
               </a>
               <a class="btn btn-star" href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">
-                &#9733; Star img2threejs on GitHub
+                &#9733; Star ${brand('img2threejs')} on GitHub
               </a>
             </div>
           </div>
