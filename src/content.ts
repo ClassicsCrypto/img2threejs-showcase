@@ -438,10 +438,47 @@ function aboutDrawer(): string {
     </p>`;
 }
 
+/* --------------------------------------------------------------------- menu */
+
+/**
+ * Mobile navigation. The top bar's link row is hidden below 860px for width, which left every
+ * content page on this list unreachable by tapping — the command palette only searches exhibits.
+ * This is that row, as a list, reachable from the hamburger.
+ */
+function menuDrawer(): string {
+  const items: Array<[string, string, string]> = [
+    ['how-it-works', 'How it works', 'The pipeline, the gates, and what one photo cannot tell it'],
+    ['roadmap', 'Roadmap', 'Every release, what shipped and what deliberately did not'],
+    ['faq', 'FAQ', 'Straight answers, including the ones that are “ask a lawyer”'],
+    ['sponsor', 'Sponsors', 'Who pays for the compute, and how to help'],
+    ['attribution', 'Attribution', 'Whose designs these reconstructions belong to'],
+    ['privacy', 'Privacy', 'No analytics, no cookies — and how to verify that'],
+    ['about', 'About & contact', 'Official links, the maintainer, the licence'],
+  ];
+  return `
+    <h2>Menu</h2>
+    <nav class="mn-list" aria-label="Pages">
+      ${items
+        .map(
+          ([key, title, blurb]) => `
+        <button type="button" class="mn-item" data-drawer="${key}">
+          <span class="mn-title">${title}</span>
+          <span class="mn-blurb">${blurb}</span>
+        </button>`,
+        )
+        .join('')}
+    </nav>
+    <div class="dr-actions">
+      <a class="btn" href="${GITHUB_CORE}" target="_blank" rel="noopener noreferrer">Star on GitHub</a>
+      <a class="btn btn-accent" href="${COFFEE_URL}" target="_blank" rel="noopener noreferrer">${HEART} Sponsor</a>
+    </div>`;
+}
+
 /* --------------------------------------------------------------- public map */
 
 /** Drawer key → builder. Keys match `DRAWER_ROUTES` in router.ts, so each one is deep-linkable. */
 export const DRAWERS: Record<string, { title: string; build: () => string }> = {
+  menu: { title: 'Menu', build: menuDrawer },
   'how-it-works': { title: 'How it works', build: howItWorksDrawer },
   faq: { title: 'FAQ', build: faqDrawer },
   privacy: { title: 'Privacy', build: privacyDrawer },

@@ -15,7 +15,7 @@
  * attribution notice that cannot be pointed at is not much of a notice. They render as the
  * workbench's own drawer so there is no second layout to maintain.
  */
-export const DRAWER_ROUTES = ['how-it-works', 'faq', 'privacy', 'attribution', 'roadmap', 'sponsor', 'about'] as const;
+export const DRAWER_ROUTES = ['how-it-works', 'faq', 'privacy', 'attribution', 'roadmap', 'sponsor', 'about', 'menu'] as const;
 export type DrawerKey = (typeof DRAWER_ROUTES)[number];
 
 export type Route =

@@ -95,6 +95,11 @@ export function renderWorkbench(
           </button>
           <a class="wb-star" href="${GITHUB_CORE}" target="_blank" rel="noopener noreferrer">Star</a>
           <button type="button" class="wb-sponsor" data-drawer="sponsor">Sponsor</button>
+          <!-- Phone/tablet only: the link row above is hidden for width, and without this the
+               content pages have no tappable route in at all. -->
+          <button type="button" class="wb-menu" data-drawer="menu" aria-label="Open menu">
+            <span aria-hidden="true"></span>
+          </button>
         </div>
       </header>
 
@@ -487,9 +492,15 @@ export function renderWorkbench(
     if (syncUrl) replaceHashSilently(`#/${key}`);
   };
 
-  for (const btn of mount.querySelectorAll<HTMLButtonElement>('[data-drawer]')) {
-    on(btn, 'click', () => showDrawer(btn.dataset.drawer!));
-  }
+  /**
+   * Delegated at the root rather than bound per button: the menu drawer's own entries are
+   * `[data-drawer]` buttons that do not exist until that drawer is built, so a one-time query over
+   * the initial markup would have wired the top bar and left every menu item dead.
+   */
+  on(mount, 'click', (e: Event) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-drawer]');
+    if (btn?.dataset.drawer) showDrawer(btn.dataset.drawer);
+  });
   on(mount.querySelector<HTMLElement>('#wb-drawer-close')!, 'click', closeOverlays);
   on(scrim, 'click', closeOverlays);
 

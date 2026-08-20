@@ -219,6 +219,10 @@ body.intro-active { overflow: hidden; }
   align-items: center;
   gap: 1.5rem;
   padding: 0.85rem 1.1rem;
+  /* Notch / status bar. env() resolves to 0 on hardware without an inset, so this is free. */
+  padding-top: max(0.85rem, env(safe-area-inset-top));
+  padding-left: max(1.1rem, env(safe-area-inset-left));
+  padding-right: max(1.1rem, env(safe-area-inset-right));
   border-bottom: 1px solid var(--rule);
   background: var(--ink);
 }
@@ -825,6 +829,10 @@ body.intro-active { overflow: hidden; }
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
+  /* Home indicator: without this the last row of thumbnails is under the gesture bar. */
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
   border-top: 1px solid var(--rule);
   background: var(--ink);
 }
@@ -933,6 +941,8 @@ body.intro-active { overflow: hidden; }
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 1.6rem 1.7rem 3rem;
+  padding-top: max(1.6rem, env(safe-area-inset-top));
+  padding-bottom: max(3rem, calc(2rem + env(safe-area-inset-bottom)));
   animation: dr-in var(--slow) var(--ease);
 }
 
@@ -1433,6 +1443,232 @@ body.intro-active { overflow: hidden; }
   }
   .rail-count {
     display: none;
+  }
+}
+
+
+
+/* ---- mobile menu ---- */
+
+.wb-menu {
+  display: none;
+  width: 40px;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink-2);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Three rules drawn with one element: the bar itself plus its two pseudo-elements. */
+.wb-menu span,
+.wb-menu span::before,
+.wb-menu span::after {
+  content: '';
+  display: block;
+  width: 16px;
+  height: 1.5px;
+  background: var(--paper);
+}
+
+.wb-menu span {
+  position: relative;
+}
+
+.wb-menu span::before { position: absolute; top: -5px; }
+.wb-menu span::after { position: absolute; top: 5px; }
+
+.mn-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 0.4rem;
+}
+
+.mn-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  padding: 0.85rem 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.mn-title {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--paper);
+}
+
+.mn-blurb {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--paper-dim);
+}
+
+.mn-item:hover .mn-title {
+  color: var(--amber);
+}
+
+@media (max-width: 860px) {
+  .wb-menu {
+    display: inline-flex;
+  }
+  /* "Reference" at 0.7rem plus the label's 0.14em tracking overflowed the 74px plate and rendered
+     as "REFERENC". The plate is as wide as it should be, so the tracking gives way. */
+  .wb-ref figcaption {
+    letter-spacing: 0.04em;
+    font-size: 0.62rem;
+    text-align: center;
+  }
+}
+
+/* ---------------------------------------------- touch targets & legibility */
+
+/**
+ * Measured on a 390x844 phone before this block: 31 interactive elements were under 44px tall
+ * (the buttons sat at 33px, rail thumbnails at 36px) and the smallest rendered text was 9px.
+ * Pointer-precision is the right axis to key this on rather than width — a small laptop with a
+ * mouse does not need thumb-sized controls, and a large tablet with no mouse does.
+ */
+@media (hover: none) {
+  .btn,
+  .wb-sponsor,
+  .wb-star,
+  .wb-search,
+  .rail-arrow,
+  .wb-navlink,
+  .wb-brand,
+  .wb-drawer-close {
+    min-height: 44px;
+  }
+
+  /* The one control a reader needs on a full-screen content page, so it gets a full square. */
+  .wb-drawer-close {
+    min-width: 44px;
+  }
+
+  .wb-brand {
+    align-items: center;
+  }
+
+  .btn,
+  .wb-sponsor,
+  .wb-star,
+  .wb-search {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+  }
+
+  /* Dense data rows: 40px rather than 44px. These are list items inside their own scroller, not
+     primary actions, and 44px each would push a 150-part manifest to six screens of scrolling. */
+  .wb-part,
+  .pal-item {
+    min-height: 40px;
+  }
+
+  .faq-item summary {
+    min-height: 48px;
+    padding-right: 2.2rem;
+  }
+
+  /* The slider thumb is the hardest control to hit on a touch screen. */
+  .wb-explode input[type='range'] {
+    /* 44px of grabbable strip with a 2px visible track drawn inside it — the element box IS the
+       target area, and at 24px the thumb was the only part you could actually hit. */
+    height: 44px;
+    background: transparent;
+  }
+  .wb-explode input[type='range']::-webkit-slider-runnable-track {
+    height: 2px;
+    background: var(--rule-strong);
+  }
+  .wb-explode input[type='range']::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+    margin-top: -10px;
+  }
+  .wb-explode input[type='range']::-moz-range-track {
+    height: 2px;
+    background: var(--rule-strong);
+  }
+  .wb-explode input[type='range']::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Thumbnails have to be thumb-sized, and the number on them was the 9px text. */
+  .rail-item {
+    width: 62px;
+    height: 46px;
+  }
+  .rail-num {
+    font-size: 0.65rem;
+  }
+}
+
+/* Nothing on a phone should render below 11px. The 0.62rem labels and the 0.56rem rail number
+   were both under it. */
+@media (max-width: 860px) {
+  .label,
+  .wb-ver,
+  .wb-search kbd,
+  .rail-count,
+  .rail-num,
+  .pal-meta,
+  .wb-part-tri,
+  .wb-parts-count,
+  .rd-date,
+  .rd-status {
+    font-size: 0.7rem;
+  }
+  /* `.wb-panel > h2` carries the panel headings and is a class-plus-type selector, so it outranks
+     the `.label` class those headings also carry — bumping `.label` alone left them at 9.9px. */
+  .wb-panel > h2 {
+    font-size: 0.7rem;
+  }
+  .wb-part,
+  .card-pipeline {
+    font-size: 0.74rem;
+  }
+}
+
+/**
+ * Landscape phone. A 390px-tall viewport was giving 117px to chrome and 218px to the model, so the
+ * bars shrink and the rail loses its arrows — a horizontal swipe already scrolls it, and on a
+ * touch device that is the natural gesture anyway.
+ */
+@media (max-height: 460px) and (orientation: landscape) {
+  .wb-top {
+    padding-top: max(0.45rem, env(safe-area-inset-top));
+    padding-bottom: 0.45rem;
+  }
+  .wb-rail {
+    padding-top: 0.3rem;
+    padding-bottom: max(0.3rem, env(safe-area-inset-bottom));
+  }
+  .wb-stage {
+    grid-template-rows: 72dvh auto;
+  }
+  .wb-canvas {
+    height: 72dvh;
+  }
+  .rail-arrow {
+    display: none;
+  }
+  /* Narrower to fit the shorter viewport, but never below the 40px touch floor the block above
+     establishes — this rule runs later and would otherwise silently undo it. */
+  .rail-item {
+    width: 52px;
+    height: 40px;
+  }
+  .wb-pitch {
+    font-size: 1.3rem;
   }
 }
 
