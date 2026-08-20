@@ -40,7 +40,10 @@ function mountRoute(): void {
     cleanupCurrentRoute = renderDemo(app, route.id);
   } else {
     mountedKind = 'workbench';
-    cleanupCurrentRoute = renderWorkbench(app, route.name === 'workbench' ? route.id : undefined);
+    cleanupCurrentRoute = renderWorkbench(app, {
+      focusId: route.name === 'workbench' ? route.id : undefined,
+      drawer: route.name === 'drawer' ? route.key : undefined,
+    });
   }
 }
 

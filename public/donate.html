@@ -175,14 +175,19 @@
       }
       .paypal:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -10px var(--qr-shadow); }
 
+      /* Now a text button (the hosted badge image was a third-party request). Colours are set
+         explicitly: it used to be a white plate holding an image, so with only inherited colour
+         the label went invisible against #fff in dark mode. */
       .bmc {
-        flex: 1 1 0; display: flex; align-items: center; justify-content: center;
-        border-radius: 12px; background: #fff; padding: .35rem;
+        flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+        padding: .75rem 1rem; border-radius: 12px;
+        font-weight: 700; font-size: .95rem; text-decoration: none;
+        color: var(--text); background: var(--card);
+        border: 1px solid var(--line);
         box-shadow: 0 10px 26px -10px var(--qr-shadow);
         transition: transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s ease;
       }
       .bmc:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -10px var(--qr-shadow); }
-      .bmc img { height: 44px; width: auto; max-width: 100%; display: block; }
 
       footer { margin-top: 2rem; font-family: var(--mono); font-size: .85rem; color: var(--muted); }
       footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
@@ -230,8 +235,12 @@
           <a class="paypal" href="https://www.paypal.com/paypalme/NguyenHoai545" target="_blank" rel="noopener noreferrer">
             Donate via PayPal
           </a>
+          <!-- Text button, not the hosted badge image. The official <img> is served from
+               cdn.buymeacoffee.com, which made this the one page on the site that issued a
+               third-party request and handed a visitor's IP to a CDN before they had clicked
+               anything. The link still goes to the same place; only the tracking pixel is gone. -->
           <a class="bmc" href="https://www.buymeacoffee.com/hoainhowors" target="_blank" rel="noopener noreferrer">
-            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me a Coffee" />
+            Buy me a coffee
           </a>
         </div>
       </section>

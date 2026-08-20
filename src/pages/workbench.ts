@@ -2,25 +2,8 @@ import { demos, getDemo, type DemoEntry } from '../demos/registry';
 import { Viewer, type PartInfo } from '../scene';
 import { parseRoute, replaceHashSilently } from '../router';
 import { createLoader, whenViewerReady, type Loader } from '../loader';
-import {
-  ARROW_OUT,
-  brand,
-  CHANGELOG_URL,
-  COFFEE_URL,
-  CONTACT_EMAIL,
-  CONTACT_NAME,
-  CURRENT_VERSION,
-  DISCORD_URL,
-  DONATE_URL,
-  GITHUB_CORE,
-  GITHUB_SHOWCASE,
-  HEART,
-  LICENSE_URL,
-  ROADMAP,
-  ROADMAP_URL,
-  SITE_URL,
-  SPONSORS,
-} from '../site-data';
+import { DRAWERS } from '../content';
+import { brand, CURRENT_VERSION, GITHUB_CORE } from '../site-data';
 
 const VERSION_TAG = /v\d+(?:\.\d+){0,2}(?:-[a-z0-9.]+)?/i;
 
@@ -43,13 +26,6 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  shipped: 'Shipped',
-  latest: 'Latest release',
-  'in-progress': 'In progress',
-  planned: 'Planned',
-};
-
 type AnimationController = {
   actions: ReadonlyArray<{ id: string; label: string; loop: boolean }>;
   readonly active: string;
@@ -69,109 +45,6 @@ function defaultExhibit(): DemoEntry {
   return demos.find((demo) => !demo.prewarm) ?? demos[0];
 }
 
-/* ------------------------------------------------------------------ drawers */
-
-function roadmapDrawer(): string {
-  const rows = ROADMAP.map((entry) => {
-    const link = entry.status === 'planned' || entry.status === 'in-progress'
-      ? ''
-      : `<a class="rd-link" href="${CHANGELOG_URL}" target="_blank" rel="noopener noreferrer">Changelog ${ARROW_OUT}</a>`;
-    const notShipped = entry.notShipped
-      ? `<p class="rd-not">Not shipped &mdash; ${entry.notShipped}</p>`
-      : '';
-    return `
-      <li class="rd-row rd-${entry.status}">
-        <div class="rd-key">
-          <span class="rd-v mono">${entry.version}</span>
-          <span class="rd-status label">${STATUS_LABEL[entry.status]}</span>
-        </div>
-        <div class="rd-body">
-          <h3>${entry.theme}</h3>
-          <ul>${entry.highlights.map((h) => `<li>${brand(h)}</li>`).join('')}</ul>
-          ${notShipped}
-          ${link}
-        </div>
-        <span class="rd-date mono">${entry.date ?? ''}</span>
-      </li>`;
-  }).join('');
-
-  return `
-    <h2>Roadmap</h2>
-    <p class="dr-lede">
-      One theme per release, from single-object reconstruction toward whole scenes. Statuses and
-      dates are taken from ${brand('img2threejs')}&rsquo;s own ROADMAP, including what a release
-      deliberately did not deliver.
-      <a class="rd-link" href="${ROADMAP_URL}" target="_blank" rel="noopener noreferrer">Full roadmap ${ARROW_OUT}</a>
-    </p>
-    <ol class="rd-list">${rows}</ol>`;
-}
-
-function sponsorDrawer(): string {
-  const logos = SPONSORS.map(
-    (s) => `
-      <a class="sp-logo" href="${s.url}" target="_blank" rel="noopener noreferrer">
-        <img src="${s.logo}" alt="${escapeAttr(s.name)}" loading="lazy" />
-        <span class="sp-name">${escapeAttr(s.name)}</span>
-        <span class="sp-blurb">${escapeAttr(s.blurb)}</span>
-      </a>`,
-  ).join('');
-
-  return `
-    <h2>Sponsors</h2>
-    <p class="dr-lede">
-      ${brand('img2threejs')} is free and open source under Apache&nbsp;2.0. Sponsorship pays for the
-      compute the reconstruction loop burns.
-    </p>
-    <div class="sp-grid">${logos}</div>
-    <div class="dr-actions">
-      <a class="btn btn-accent" href="${COFFEE_URL}" target="_blank" rel="noopener noreferrer">${HEART} Buy me a coffee</a>
-      <a class="btn" href="${DONATE_URL}" target="_blank" rel="noopener noreferrer">VietQR &middot; MoMo &middot; PayPal</a>
-      <a class="btn" href="${DISCORD_URL}" target="_blank" rel="noopener noreferrer">Join the Discord</a>
-    </div>
-    <p class="dr-note">
-      Want your logo in this row? Write to
-      <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.
-    </p>`;
-}
-
-function aboutDrawer(): string {
-  const host = SITE_URL.replace(/^https:\/\//, '').replace(/\/$/, '');
-  return `
-    <h2>About &amp; contact</h2>
-    <p class="dr-lede">
-      Every model in this workbench is a TypeScript factory function. There are no imported meshes,
-      no downloaded art packs and no runtime network calls &mdash; the geometry is executed in your
-      browser from code that ${brand('img2threejs')} generated from a single reference photo.
-    </p>
-
-    <h3 class="dr-h3">This is the official site</h3>
-    <p class="dr-copy">
-      ${brand('img2threejs')} does not sell reconstructions, and takes money only through the channels
-      listed below. A site that claims to be ${brand('img2threejs')} without linking back to these
-      repositories is not affiliated with this project.
-    </p>
-    <dl class="dr-defs">
-      <div><dt class="label">This site</dt><dd><a href="${SITE_URL}">${host}</a></dd></div>
-      <div><dt class="label">Core tool</dt><dd><a href="${GITHUB_CORE}" target="_blank" rel="noopener noreferrer">${GITHUB_CORE.replace(/^https:\/\//, '')}</a></dd></div>
-      <div><dt class="label">This gallery</dt><dd><a href="${GITHUB_SHOWCASE}" target="_blank" rel="noopener noreferrer">${GITHUB_SHOWCASE.replace(/^https:\/\//, '')}</a></dd></div>
-      <div><dt class="label">Community</dt><dd><a href="${DISCORD_URL}" target="_blank" rel="noopener noreferrer">discord.gg/8DS8RTyuR</a></dd></div>
-      <div><dt class="label">Payments</dt><dd>buymeacoffee.com/hoainhowors, the donate page on this domain, GitHub Sponsors &mdash; nothing else</dd></div>
-    </dl>
-
-    <h3 class="dr-h3">Contact</h3>
-    <dl class="dr-defs">
-      <div><dt class="label">Maintainer</dt><dd>${CONTACT_NAME} (Hoài Nhớ)</dd></div>
-      <div><dt class="label">Email</dt><dd><a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a></dd></div>
-      <div><dt class="label">Impersonation</dt><dd>report it to the same address</dd></div>
-    </dl>
-
-    <p class="dr-note">
-      &copy; ${new Date().getFullYear()} Hoài Nhớ &middot;
-      <a href="${LICENSE_URL}" target="_blank" rel="noopener noreferrer">Apache License 2.0</a> &middot;
-      free and open source.
-    </p>`;
-}
-
 /* ------------------------------------------------------------------- render */
 
 /**
@@ -181,7 +54,11 @@ function aboutDrawer(): string {
  * the existing `Viewer` API rather than restated in this file, so a number on screen cannot drift
  * from the geometry that is actually running.
  */
-export function renderWorkbench(mount: HTMLElement, focusId?: string): () => void {
+export function renderWorkbench(
+  mount: HTMLElement,
+  opts: { focusId?: string; drawer?: string } = {},
+): () => void {
+  const { focusId, drawer: initialDrawer } = opts;
   const initial = (focusId && getDemo(focusId)) || defaultExhibit();
   let index = Math.max(0, demos.indexOf(initial));
 
@@ -206,7 +83,9 @@ export function renderWorkbench(mount: HTMLElement, focusId?: string): () => voi
           <span class="wb-ver mono">${CURRENT_VERSION}</span>
         </a>
         <nav class="wb-nav" aria-label="Sections">
+          <button type="button" class="wb-navlink" data-drawer="how-it-works">How it works</button>
           <button type="button" class="wb-navlink" data-drawer="roadmap">Roadmap</button>
+          <button type="button" class="wb-navlink" data-drawer="faq">FAQ</button>
           <button type="button" class="wb-navlink" data-drawer="sponsor">Sponsors</button>
           <button type="button" class="wb-navlink" data-drawer="about">About</button>
         </nav>
@@ -571,36 +450,41 @@ export function renderWorkbench(mount: HTMLElement, focusId?: string): () => voi
   });
 
   /* ---- drawers ---- */
-  const drawerContent: Record<string, () => string> = {
-    roadmap: roadmapDrawer,
-    sponsor: sponsorDrawer,
-    about: aboutDrawer,
-  };
   let openDrawer: string | null = null;
 
   const closeOverlays = (): void => {
+    const wasDrawer = openDrawer !== null;
     openDrawer = null;
     drawer.hidden = true;
     palette.hidden = true;
     scrim.hidden = true;
     document.body.classList.remove('wb-overlay-open');
+    // Hand the URL back to the exhibit, so closing the privacy page does not leave the address bar
+    // claiming you are still on it.
+    if (wasDrawer) replaceHashSilently(`#/x/${demos[index].id}`);
   };
 
-  const showDrawer = (key: string): void => {
-    const build = drawerContent[key];
-    if (!build) return;
+  /**
+   * `syncUrl` is false only when the caller IS the URL — i.e. this open came from a deep link or a
+   * back/forward step, so writing the hash again would be circular.
+   */
+  const showDrawer = (key: string, syncUrl = true): void => {
+    const entry = DRAWERS[key];
+    if (!entry) return;
     if (openDrawer === key) {
       closeOverlays();
       return;
     }
     openDrawer = key;
-    drawerBody.innerHTML = build();
+    drawerBody.innerHTML = entry.build();
     drawer.hidden = false;
     palette.hidden = true;
     scrim.hidden = false;
     document.body.classList.add('wb-overlay-open');
     drawer.scrollTop = 0;
     mount.querySelector<HTMLElement>('#wb-drawer-close')?.focus();
+    // Content pages are linkable: /#/privacy has to survive being copied out of the address bar.
+    if (syncUrl) replaceHashSilently(`#/${key}`);
   };
 
   for (const btn of mount.querySelectorAll<HTMLButtonElement>('[data-drawer]')) {
@@ -717,14 +601,31 @@ export function renderWorkbench(mount: HTMLElement, focusId?: string): () => voi
    */
   on(window, 'hashchange', () => {
     const route = parseRoute(window.location.hash);
-    if (route.name !== 'workbench') return;
-    const target = demos.findIndex((d) => d.id === route.id);
-    if (target >= 0 && target !== index) void loadExhibit(target);
+    if (route.name === 'drawer') {
+      // `false`: the URL is already what it should be — this open came FROM it.
+      showDrawer(route.key, false);
+      return;
+    }
+    if (route.name === 'workbench') {
+      if (openDrawer) closeOverlays();
+      const target = demos.findIndex((d) => d.id === route.id);
+      if (target >= 0 && target !== index) void loadExhibit(target);
+      return;
+    }
+    if (route.name === 'home' && openDrawer) closeOverlays();
   });
 
   /* ------------------------------------------------------------------ start */
   railCount.textContent = `${String(index + 1).padStart(2, '0')} / ${demos.length}`;
   void loadExhibit(index);
+  // A deep link straight to a content page opens it over the workbench, which keeps loading behind
+  // it — the reader gets the page immediately and the exhibit is already there when they close it.
+  //
+  // Writes the URL (rather than trusting the one that got us here) because `loadExhibit` above
+  // already replaced the hash with its exhibit synchronously. Skipping the write left a visitor who
+  // opened /#/how-it-works looking at /#/x/awp-medusa-v2, so the link they were about to share no
+  // longer pointed at the page they were reading.
+  if (initialDrawer) showDrawer(initialDrawer);
 
   return () => {
     disposed = true;

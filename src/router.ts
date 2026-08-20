@@ -10,9 +10,18 @@
  *                 globals that `pages/demo.ts` publishes, and README links point here. Routing it
  *                 anywhere else would silently break the capture gate, so it keeps its own page.
  */
+/**
+ * The content pages are routes, not just drawer state, because people link to them: a privacy or
+ * attribution notice that cannot be pointed at is not much of a notice. They render as the
+ * workbench's own drawer so there is no second layout to maintain.
+ */
+export const DRAWER_ROUTES = ['how-it-works', 'faq', 'privacy', 'attribution', 'roadmap', 'sponsor', 'about'] as const;
+export type DrawerKey = (typeof DRAWER_ROUTES)[number];
+
 export type Route =
   | { name: 'home' }
   | { name: 'workbench'; id: string }
+  | { name: 'drawer'; key: DrawerKey }
   | { name: 'demo'; id: string };
 
 /** Parses `location.hash` into a Route. Defaults to home for anything unrecognized. */
@@ -28,6 +37,9 @@ export function parseRoute(hash: string): Route {
   }
   if (parts[0] === 'x' && parts[1]) {
     return { name: 'workbench', id: parts[1] };
+  }
+  if (parts.length === 1 && (DRAWER_ROUTES as readonly string[]).includes(parts[0])) {
+    return { name: 'drawer', key: parts[0] as DrawerKey };
   }
   return { name: 'home' };
 }
