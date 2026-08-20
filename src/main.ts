@@ -1,6 +1,6 @@
 import './styles.css';
 import { currentRoute, onRouteChange } from './router';
-import { renderHome } from './pages/home';
+import { renderWorkbench } from './pages/workbench';
 import { renderDemo } from './pages/demo';
 import { hasSeenIntro, runIntro } from './intro';
 
@@ -9,28 +9,13 @@ const app = document.getElementById('app')!;
 let cleanupCurrentRoute: (() => void) | null = null;
 let firstRender = true;
 let pendingTransition: number | null = null;
-
-function mountRoute(): void {
-  if (cleanupCurrentRoute) {
-    cleanupCurrentRoute();
-    cleanupCurrentRoute = null;
-  }
-
-  const route = currentRoute();
-  if (route.name === 'demo') {
-    cleanupCurrentRoute = renderDemo(app, route.id);
-  } else {
-    cleanupCurrentRoute = renderHome(app);
-  }
-}
-
-const ROUTE_TRANSITION_MS = 220;
+/** The route the mounted view belongs to, so an in-place exhibit swap does not remount. */
+let mountedKind: 'workbench' | 'demo' | null = null;
 
 /**
- * The headless review harness loads `#/demo/<id>?capture=1` (and some capture scripts drop the
- * flag and rely on `?back=`/`?mask=`), then screenshots as soon as the model reports ready. A
- * full-viewport intro overlay would be *in* that screenshot, so every capture path has to be able
- * to opt out. Checked against both the hash and the query string because the flags appear in both.
+ * The headless review harness loads `#/demo/<id>` with flags like `capture=1` / `back=1` / `mask=`
+ * and screenshots as soon as the model reports ready, so nothing decorative may be on screen for
+ * those runs — no intro overlay, no route cross-fade.
  */
 function isCaptureRun(): boolean {
   const hash = window.location.hash;
@@ -39,46 +24,69 @@ function isCaptureRun(): boolean {
   return ['capture', 'mask', 'back', 'bg', 'reviewWhite'].some((key) => search.has(key));
 }
 
-/**
- * Every navigation — including the very first one — mounts through here. On first load the
- * page renders immediately and the one-time brand intro plays as an overlay on top of it (so
- * there is never a blank frame under the intro). On every later hash change, #app cross-fades
- * out and back in around the swap, so a route change always reads as a deliberate transition
- * rather than a jump-cut.
- */
+function mountRoute(): void {
+  const route = currentRoute();
+
+  // `#/x/:id` is the workbench pointed at one exhibit. If the workbench is already mounted, the
+  // hash changed because IT changed the hash (or the user hit back), and the workbench swaps
+  // models in place — remounting would dispose a live viewer and rebuild it identically.
+  if (route.name !== 'demo' && mountedKind === 'workbench') return;
+
+  cleanupCurrentRoute?.();
+  cleanupCurrentRoute = null;
+
+  if (route.name === 'demo') {
+    mountedKind = 'demo';
+    cleanupCurrentRoute = renderDemo(app, route.id);
+  } else {
+    mountedKind = 'workbench';
+    cleanupCurrentRoute = renderWorkbench(app, {
+      focusId: route.name === 'workbench' ? route.id : undefined,
+      drawer: route.name === 'drawer' ? route.key : undefined,
+    });
+  }
+}
+
+const ROUTE_TRANSITION_MS = 200;
+
 function render(): void {
   if (firstRender) {
     firstRender = false;
     mountRoute();
-    // Home only: a deep link straight to a demo wants the model, not a splash — and the review
-    // harness deep-links exactly that way, so this keeps the intro out of every capture.
-    const introWanted = currentRoute().name === 'home' && !isCaptureRun() && !hasSeenIntro();
-    if (introWanted) {
+    // Home only, and never during a capture run: a deep link to an exhibit or the full viewer
+    // wants the model, not a splash.
+    if (currentRoute().name === 'home' && !isCaptureRun() && !hasSeenIntro()) {
       document.body.classList.add('intro-active');
       runIntro(() => document.body.classList.remove('intro-active'));
     }
     return;
   }
 
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  // An in-place exhibit swap must not fade the page.
+  const route = currentRoute();
+  if (route.name !== 'demo' && mountedKind === 'workbench') return;
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || isCaptureRun()) {
     mountRoute();
     return;
   }
 
-  // A second navigation while one is mid-fade replaces it rather than stacking: two pending
-  // timers would each mount a route and fight over the transition classes, which can strand
-  // #app at opacity 0.
   if (pendingTransition !== null) window.clearTimeout(pendingTransition);
-
   app.classList.add('route-leaving');
   pendingTransition = window.setTimeout(() => {
     pendingTransition = null;
     mountRoute();
+    /**
+     * Cleared in the SAME task as the mount, with no `route-entering` step in between.
+     *
+     * The previous version parked #app at opacity 0 after mounting and removed that class two
+     * rAFs later. Measured under an 8x CPU throttle, those callbacks were starved and #app stayed
+     * fully transparent long past the mount — so the build loader the detail route had just raised
+     * was rendered invisible, which is precisely the blank screen the loader exists to replace.
+     * Removing the class here instead lets the existing opacity transition run 0 → 1 on its own,
+     * which is the same fade-in without making visibility depend on a frame callback landing.
+     */
     app.classList.remove('route-leaving');
-    app.classList.add('route-entering');
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => app.classList.remove('route-entering'));
-    });
   }, ROUTE_TRANSITION_MS);
 }
 
