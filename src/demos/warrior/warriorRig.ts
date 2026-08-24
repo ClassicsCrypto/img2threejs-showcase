@@ -9,7 +9,7 @@ import {
   type CharacterIR,
   type RigJoint,
   type SkeletonBuildResult,
-} from 'img2threejs-character';
+} from '../../character';
 import {
   WARRIOR_SOURCE_ACTIONS,
   WARRIOR_SOURCE_ANIMATION_SHA256,

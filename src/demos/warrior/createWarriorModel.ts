@@ -437,7 +437,7 @@ export function createWarriorModel(options: WarriorOptions = {}): THREE.Group {
         garmentCoverage: 'rigid coat-driver follows measured hip-to-knee direction; symmetric outward translation equals half of measured knee-gap increase',
         evidence: 'pipelines/warrior/evidence/tripo-motion-4-surface-integrity-47-50-64-84.json',
       },
-      backend: 'img2threejs-character CharacterIR + Three.js AnimationMixer',
+      backend: 'img2threejs CharacterIR + Three.js AnimationMixer',
       staffDriverChain: ['right-clavicle', 'right-shoulder', 'right-elbow', 'right-wrist', 'right-hand', 'staff-grip'],
       weaponAttachment: {
         gripJoint: 'staff-grip',
