@@ -30,9 +30,35 @@
  *               express. On the default level that was 18 quads in 2.11 million; carrying them verbatim
  *               is what makes the rebuild exact rather than nearly exact.
  */
+export type EncodedSurfaceMaterial = {
+  materialIndex: number;
+  baseColorFactor: [number, number, number, number];
+  metallicFactor: number;
+  roughnessFactor: number;
+  doubleSided: boolean;
+  alphaMode: string;
+  alphaCutoff: number;
+  emissiveFactor: [number, number, number];
+  normalScale: number;
+  occlusionStrength: number;
+  hasBaseColorTexture: boolean;
+  hasMetallicRoughnessTexture: boolean;
+  hasNormalTexture: boolean;
+  hasOcclusionTexture: boolean;
+  hasEmissiveTexture: boolean;
+  roughnessMedian: number;
+  roughnessP25: number;
+  roughnessP75: number;
+  metalnessMedian: number;
+  metalnessP25: number;
+  metalnessP75: number;
+  surfaceColourEncoding: string;
+};
+
 export type EncodedNode = {
   node: number;
   region: string;
+  material?: EncodedSurfaceMaterial | null;
   cellMillimetres: number;
   vertexCount: number;
   origin: [number, number, number];
@@ -44,6 +70,7 @@ export type EncodedNode = {
 export type DecodedSurface = {
   node: number;
   region: string;
+  material: EncodedSurfaceMaterial | null;
   cellMillimetres: number;
   position: Float32Array;
   colour: Uint8Array;
@@ -186,6 +213,7 @@ export function decodeSurfaces(base64: string, nodes: readonly EncodedNode[]): D
     return {
       node: meta.node,
       region: meta.region,
+      material: meta.material ?? null,
       cellMillimetres: meta.cellMillimetres,
       position,
       colour,
