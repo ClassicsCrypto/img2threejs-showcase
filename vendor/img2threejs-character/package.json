@@ -1,0 +1,23 @@
+{
+  "name": "img2threejs-character",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Vendored CharacterIR runtime for the img2threejs showcase",
+  "main": "dist/plugin.js",
+  "types": "dist/plugin.d.ts",
+  "exports": {
+    ".": "./dist/plugin.js",
+    "./ir": "./dist/ir/character-ir.js",
+    "./compiler": "./dist/compiler/character-compiler.js",
+    "./evaluation": "./dist/evaluation/index.js",
+    "./archetypes": "./dist/archetypes/index.js",
+    "./runtime": "./dist/runtime/index.js",
+    "./fibers": "./dist/fibers/index.js",
+    "./materials": "./dist/materials/index.js",
+    "./accessories": "./dist/accessories/index.js"
+  },
+  "dependencies": {
+    "three": "^0.169.0"
+  }
+}
