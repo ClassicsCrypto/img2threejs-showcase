@@ -18,7 +18,7 @@ export const BASE = import.meta.env.BASE_URL;
  */
 export const GITHUB_CORE = 'https://github.com/img2threejs/img2threejs';
 export const GITHUB_SHOWCASE = 'https://github.com/img2threejs/img2threejs-showcase';
-export const SITE_URL = 'https://img2threejs.github.io/img2threejs-showcase/';
+export const SITE_URL = 'https://img2threejs.io/';
 export const CHANGELOG_URL = `${GITHUB_CORE}/blob/main/CHANGELOG.md`;
 export const ROADMAP_URL = `${GITHUB_CORE}/blob/main/ROADMAP.md`;
 export const LICENSE_URL = `${GITHUB_CORE}/blob/main/LICENSE`;
