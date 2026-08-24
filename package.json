@@ -10,7 +10,6 @@
     "new-demo": "node scripts/new-showcase.mjs"
   },
   "dependencies": {
-    "img2threejs-character": "file:vendor/img2threejs-character",
     "meshoptimizer": "~0.18.1",
     "three": "^0.169.0"
   },
