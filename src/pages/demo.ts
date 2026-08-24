@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { getDemo } from '../demos/registry';
+import { extractVersion, escapeAttr } from '../site-data';
 import { Viewer, type PartInfo } from '../scene';
 import { navigate } from '../router';
 import { brand, GITHUB_CORE as GITHUB_URL } from '../site-data';
@@ -31,6 +32,15 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
   const compact = window.matchMedia(COMPACT_QUERY);
   const expanded = panelExpanded ?? !compact.matches;
 
+  // Read structurally, like `toneMapping`, so this file stays independent of the fields being declared
+  // on DemoEntry. `image` is the default because every demo predating the field was built from
+  // photographs -- the honest default rather than the flattering one.
+  const refKind = (demo as { referenceKind?: 'image' | 'model' }).referenceKind ?? 'image';
+  const turntable = (demo as { turntable?: boolean }).turntable ?? false;
+  // The version gets a badge of its own; the rest of `generatedWith` -- adapter names, pipeline notes --
+  // moves to its tooltip. It is a sentence, and a sentence in a pill is not a badge.
+  const version = extractVersion(demo.generatedWith);
+
   mount.innerHTML = `
     <div class="demo-page">
       <div class="demo-canvas-mount" id="demo-canvas-mount"></div>
@@ -58,12 +68,16 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
             </header>
             <figure class="demo-ref">
               <img class="demo-ref-thumb" src="${demo.referenceImage}" alt="${demo.title} reference" />
-              <figcaption>source reference</figcaption>
+              <figcaption>${refKind === 'model' ? 'reference model &middot; rendered view' : 'source reference'}</figcaption>
             </figure>
             <div class="demo-meta">
               <div class="badges">
+                <span class="badge badge-ref badge-ref-${refKind}" title="${refKind === 'model'
+                  ? 'Rebuilt from a 3D asset: geometry is measured, so triangle counts and cross-sections are read off the reference.'
+                  : 'Rebuilt from images: depth and every hidden face are inferred, not measured.'}">${refKind} reference</span>
                 <span class="badge badge-${demo.subjectClass}">${demo.subjectClass}</span>
-                <span class="badge">${brand(demo.generatedWith)}</span>
+                ${version ? `<span class="badge badge-version"
+                  title="${escapeAttr(demo.generatedWith)}">${version}</span>` : ''}
                 <span class="badge badge-status status-${demo.status}">${demo.status}</span>
               </div>
               <p>${demo.blurb}</p>
@@ -95,9 +109,16 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
               <button class="btn btn-explode" id="demo-explode" type="button" aria-pressed="false" hidden>
                 <span class="explode-glyph">&#10021;</span> <span class="explode-label">Explode parts</span>
               </button>
+              <button class="btn btn-spin" id="demo-spin" type="button" aria-pressed="false" hidden>
+                <span class="explode-glyph">&#8635;</span> <span class="spin-label">Stop turntable</span>
+              </button>
               <a class="btn" href="${demo.sourceUrl}" target="_blank" rel="noopener noreferrer">
                 &lt;/&gt; View generated source
               </a>
+              ${demo.referenceUrl ? `<a class="btn btn-ref-link" href="${demo.referenceUrl}"
+                target="_blank" rel="noopener noreferrer">
+                <span class="ref-glyph">&#9670;</span> Open 3D reference
+              </a>` : ''}
               <a class="btn btn-star" href="${GITHUB_URL}" target="_blank" rel="noopener noreferrer">
                 &#9733; Star ${brand('img2threejs')} on GitHub
               </a>
@@ -159,6 +180,7 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     installLights: demo.installLights,
     toneMapping,
     capture,
+    turntable,
   });
 
   const model = demo.build(viewer.scene);
@@ -307,6 +329,24 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
 
   // Explode control. Hidden for single-mesh demos and in capture mode, where the panel is
   // hidden anyway and the evaluation frame must stay deterministic.
+  // Turntable control. Only for demos that ask for one -- a toggle on a subject with one interesting
+  // side is a button nobody wanted -- and never in capture mode, where the camera is frozen.
+  const spinBtn = mount.querySelector<HTMLButtonElement>('#demo-spin');
+  if (spinBtn && turntable && !capture) {
+    spinBtn.hidden = false;
+    const syncSpin = (): void => {
+      const on = viewer.turntable;
+      spinBtn.setAttribute('aria-pressed', String(on));
+      spinBtn.classList.toggle('is-active', on);
+      spinBtn.querySelector('.spin-label')!.textContent = on ? 'Stop turntable' : 'Turntable';
+    };
+    spinBtn.addEventListener('click', () => {
+      viewer.setTurntable(!viewer.turntable);
+      syncSpin();
+    });
+    syncSpin();
+  }
+
   const explodeBtn = mount.querySelector<HTMLButtonElement>('#demo-explode');
   /**
    * Re-checked, not decided once. A demo whose geometry arrives through `prewarm` has an EMPTY model
