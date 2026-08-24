@@ -68,6 +68,11 @@ import {
   createLowPolyHumanoidModel,
   prewarmLowPolyHumanoidField,
 } from './low-poly-humanoid/createLowPolyHumanoidModel';
+import {
+  createWarriorLookDevLights,
+  createWarriorModel,
+  prewarmWarrior,
+} from './warrior/createWarriorModel';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -144,6 +149,43 @@ const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/img2threejs/img2threejs-showcase/blob/main';
 
 export const demos: DemoEntry[] = [
+  {
+    id: 'warrior',
+    title: 'Mouse Warrior — Rigged Surface Character',
+    subjectClass: 'character',
+    blurb:
+      'A code-only measured reconstruction with 47 embedded Surface Nets regions bound to a human-structured '
+      + 'CharacterIR rig. The retained Tripo Motion 4 clip is embedded as code-native keyframes while '
+      + 'procedural-only regions add measured secondary movement. '
+      + 'Wood Staff Attack is driven by the clavicle-to-hand chain. '
+      + 'Visual deformation fidelity remains conditional until browser multi-angle review is available.',
+    referenceImage: `${BASE}references/warrior/mouse-warrior-reference.png`,
+    sourcePath: 'src/demos/warrior/createWarriorModel.ts',
+    sourceUrl: `${REPO}/src/demos/warrior/createWarriorModel.ts`,
+    generatedWith: 'img2threejs v1.5.1 · CharacterIR retarget · procedural Surface Nets',
+    prompt:
+      'Build a procedural Three.js mouse warrior from the supplied GLB measurement instrument, '
+      + 'retarget every measured animation channel above the GLB export-noise floor into code, '
+      + 'then retain the hand-driven wooden-staff attack and secondary motion.',
+    author: 'Hoài Nhớ',
+    authorUrl: 'https://github.com/hoainho',
+    status: 'placeholder',
+    cameraPosition: [0, 0.4826, 5.8338],
+    cameraTarget: [0, 0.4826, 0],
+    cameraFov: 25,
+    accent: '#9d714f',
+    backgroundGradient: { inner: '#24201c', outer: '#0e0d0c' },
+    exposure: 0.9,
+    environmentIntensity: 0.7,
+    toneMapping: 'aces',
+    prewarm: prewarmWarrior,
+    installLights: (scene) => scene.add(createWarriorLookDevLights()),
+    build: (scene) => {
+      const group = createWarriorModel({ castShadow: true, receiveShadow: true });
+      scene.add(group);
+      return group;
+    },
+  },
   {
     id: 'girl-character',
     title: 'Dual-Sword Warrior — TypeScript procedural surfaces',
