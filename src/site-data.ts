@@ -7,14 +7,19 @@
 export const BASE = import.meta.env.BASE_URL;
 
 /**
- * Canonical identity is the `img2threejs` org, confirmed by the maintainer: it is what the core
- * tool's own README and its git origin use. `hoainho/…` (this showcase's README, and `registry.ts`
- * before it was aligned) is the personal fork, and `img2threejs-showcase.pages.dev` — cited in the
- * core ROADMAP — is a secondary deploy. The authenticity section states these verbatim, so they
- * must not drift: `registry.ts`'s `REPO` is aligned to the same org.
+ * Canonical identity is the `img2threejs` org: it is what the core tool's own README and its git
+ * origin use, and `registry.ts`'s `REPO` is aligned to it. The authenticity section renders these
+ * verbatim, so they must not drift.
  *
- * Still stale and worth a follow-up commit outside this redesign: this repo's own README.md links
- * `hoainho.github.io/img2threejs-showcase/` in 8 places.
+ * `SITE_URL` is the apex custom domain, which is now the only address the project publishes. The
+ * three URLs that used to appear in its place are all retired: `img2threejs.github.io/
+ * img2threejs-showcase/` (the org's Pages project path, which GitHub now 301s here),
+ * `hoainho.github.io/…` (a personal fork's Pages, never canonical) and
+ * `img2threejs-showcase.pages.dev` (a secondary Cloudflare deploy). Reintroducing any of them
+ * would split the site's identity across hosts again.
+ *
+ * `index.html` hardcodes this same origin in `og:image`, `og:url` and `link[rel=canonical]`,
+ * because a static document cannot import from here — change both together.
  */
 export const GITHUB_CORE = 'https://github.com/img2threejs/img2threejs';
 export const GITHUB_SHOWCASE = 'https://github.com/img2threejs/img2threejs-showcase';
