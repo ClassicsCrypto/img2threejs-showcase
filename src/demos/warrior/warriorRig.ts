@@ -1,15 +1,19 @@
 import * as THREE from 'three';
 import {
-  buildRigidSemanticWeights,
   buildSkeleton,
+  type SkeletonBuildResult,
+} from '../../../vendor/img2threejs-character/dist/rig/skeleton/index.js';
+import { buildRigidSemanticWeights } from '../../../vendor/img2threejs-character/dist/rig/weights/index.js';
+import {
   compileCharacterActions,
-  createStylizedCharacterIR,
   type CharacterActionSpec,
   type CharacterAnimationController,
-  type CharacterIR,
-  type RigJoint,
-  type SkeletonBuildResult,
-} from 'img2threejs-character';
+} from '../../../vendor/img2threejs-character/dist/runtime/animation.js';
+import { createStylizedCharacterIR } from '../../../vendor/img2threejs-character/dist/archetypes/stylized/index.js';
+import type {
+  CharacterIR,
+  RigJoint,
+} from '../../../vendor/img2threejs-character/dist/ir/character-ir.js';
 import {
   WARRIOR_SOURCE_ACTIONS,
   WARRIOR_SOURCE_ANIMATION_SHA256,

@@ -73,6 +73,10 @@ import {
   createWarriorModel,
   prewarmWarrior,
 } from './warrior/createWarriorModel';
+import {
+  createRegretWarriorLookDevLights,
+  createRegretWarriorModel,
+} from './regret-warrior-reconstruction/createRegretWarriorModel';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -149,6 +153,43 @@ const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/hoainho/img2threejs-showcase/blob/main';
 
 export const demos: DemoEntry[] = [
+  {
+    id: 'regret-warrior-reconstruction',
+    title: 'Regret Warrior — Source-Preserving Code Reconstruction',
+    subjectClass: 'character',
+    blurb:
+      'A deterministic TypeScript reconstruction of the verified GLB 2 payload: 92 code-native '
+      + 'BufferGeometry primitives, 184 embedded code-owned textures and the exact 42-joint skin. '
+      + 'The original character GLB contains no animation clips or morph targets; the separate animation '
+      + 'GLB contains three archived transform-only clips. Runtime actions include Review Turn and a new '
+      + 'one-shot Revive animation that raises the character back to its measured bind pose while keeping '
+      + 'the sword intact. A deterministic energy reveal, revive aura and moving specular light add '
+      + 'presentation polish without changing the source textures or materials.',
+    referenceImage: `${BASE}references/regret-warrior-reconstruction/1.jpg`,
+    sourcePath: 'src/demos/regret-warrior-reconstruction/createRegretWarriorModel.ts',
+    sourceUrl: `${REPO}/src/demos/regret-warrior-reconstruction/createRegretWarriorModel.ts`,
+    generatedWith: 'img2threejs v1.5.1 · generated Three.js BufferGeometry and Skeleton',
+    prompt:
+      'Reconstruct the supplied Regret Warrior GLB as a deterministic, animation-ready, code-only '
+      + 'Three.js group while preserving every discovered source field and making no GLB/GLTF/BIN request.',
+    author: 'Hoài Nhớ',
+    authorUrl: 'https://github.com/hoainho',
+    status: 'placeholder',
+    cameraPosition: [0, 0.85, 4.4],
+    cameraTarget: [0, 0.85, 0],
+    cameraFov: 25,
+    accent: '#d89a3d',
+    backgroundGradient: { inner: '#222631', outer: '#0f1117' },
+    exposure: 1,
+    environmentIntensity: 0.8,
+    toneMapping: 'aces',
+    installLights: (scene) => scene.add(createRegretWarriorLookDevLights()),
+    build: (scene) => {
+      const group = createRegretWarriorModel({ castShadow: true, receiveShadow: true });
+      scene.add(group);
+      return group;
+    },
+  },
   {
     id: 'warrior',
     title: 'Mouse Warrior — Rigged Surface Character',
