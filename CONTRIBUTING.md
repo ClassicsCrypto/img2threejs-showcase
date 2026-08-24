@@ -1,7 +1,7 @@
 # How to contribute a showcase demo
 
 This turns a model you generated with [img2threejs](https://github.com/hoainho/img2threejs)
-into a live entry on the [gallery](https://hoainho.github.io/img2threejs-showcase/).
+into a live entry on the [gallery](https://img2threejs.io/).
 Every step below has a copy-paste command — you shouldn't need to write anything
 from scratch except the factory code itself and the demo's description.
 

@@ -14,7 +14,7 @@ TypeScript factory function, running live in your browser.
   <img src=".github/readme-assets/hero-gallery.png" alt="img2threejs-showcase live gallery" width="100%">
 </p>
 
-**Live gallery →** https://hoainho.github.io/img2threejs-showcase/
+**Live gallery →** https://img2threejs.io/
 Click any card for the full-viewport viewer (`#/demo/:id`): drag to orbit,
 scroll to zoom, and read the reference photo it was rebuilt from.
 
@@ -25,7 +25,7 @@ scroll to zoom, and read the reference photo it was rebuilt from.
 <td width="240"><img src=".github/readme-assets/sony-wf1000xm3.png" width="220"></td>
 <td>
 
-**[Sony WF-1000XM3 Earbuds + Case](https://hoainho.github.io/img2threejs-showcase/#/demo/sony-wf1000xm3)**
+**[Sony WF-1000XM3 Earbuds + Case](https://img2threejs.io/#/demo/sony-wf1000xm3)**
 Matte-black true-wireless earbuds + case with rose-gold trim; the lid opens
 and both buds spin in a looping animation.
 `object` · `final` · by [Hoài Nhớ](https://github.com/hoainho)
@@ -36,7 +36,7 @@ and both buds spin in a looping animation.
 <td width="240"><img src=".github/readme-assets/issaca-shotgun.png" width="220"></td>
 <td>
 
-**[ISSACA 12 Gauge Shotgun](https://hoainho.github.io/img2threejs-showcase/#/demo/issaca-shotgun)**
+**[ISSACA 12 Gauge Shotgun](https://img2threejs.io/#/demo/issaca-shotgun)**
 Stylized bullpup shotgun with a working muzzle flash, full recoil kick, and
 an ejecting shell.
 `object` · `final` · by [Hoài Nhớ](https://github.com/hoainho)
@@ -47,7 +47,7 @@ an ejecting shell.
 <td width="240"><img src=".github/readme-assets/gerber-knife.png" width="220"></td>
 <td>
 
-**[Gerber Paracord Knife](https://hoainho.github.io/img2threejs-showcase/#/demo/gerber-knife)**
+**[Gerber Paracord Knife](https://img2threejs.io/#/demo/gerber-knife)**
 Skeletonized tactical knife wrapped in orange paracord, slowly rocking on a
 studio turntable to catch the stonewash finish.
 `object` · `final` · by [Hoài Nhớ](https://github.com/hoainho)
@@ -58,7 +58,7 @@ studio turntable to catch the stonewash finish.
 <td width="240"><img src=".github/readme-assets/doraemon-house.png" width="220"></td>
 <td>
 
-**[Doraemon House (isometric diorama)](https://hoainho.github.io/img2threejs-showcase/#/demo/doraemon-house)**
+**[Doraemon House (isometric diorama)](https://img2threejs.io/#/demo/doraemon-house)**
 Isometric residential diorama with swaying trees, twinkling dusk windows,
 and both characters resting on the roof.
 `object` · `final` · by [Hoài Nhớ](https://github.com/hoainho)
@@ -69,7 +69,7 @@ and both characters resting on the roof.
 <td width="240"><img src=".github/readme-assets/warhauler.png" width="220"></td>
 <td>
 
-**[War-Hauler "SECTOR 07"](https://hoainho.github.io/img2threejs-showcase/#/demo/warhauler)**
+**[War-Hauler "SECTOR 07"](https://img2threejs.io/#/demo/warhauler)**
 Armored 6-wheeled hauler with glowing reactor hubs, exhaust smoke, and
 rolling wheels.
 `object` · `final` · by [Hoài Nhớ](https://github.com/hoainho)
@@ -80,7 +80,7 @@ rolling wheels.
 <td width="240"><img src=".github/readme-assets/crown-chest.png" width="220"></td>
 <td>
 
-**[Crowned Loot Chest](https://hoainho.github.io/img2threejs-showcase/#/demo/crown-chest)**
+**[Crowned Loot Chest](https://img2threejs.io/#/demo/crown-chest)**
 Rounded loot chest with a purple-to-teal enamel gradient and an emissive
 crown emblem. *(placeholder mesh — not yet a final img2threejs reconstruction)*
 `object` · `placeholder` · by [Hoài Nhớ](https://github.com/hoainho)
@@ -192,7 +192,7 @@ supporting continued development:
 
 <a href="https://www.buymeacoffee.com/hoainhowors" target="_blank" rel="noopener noreferrer"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me a Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
-VietQR / MoMo / PayPal also work — see the [donate page](https://hoainho.github.io/img2threejs-showcase/donate.html).
+VietQR / MoMo / PayPal also work — see the [donate page](https://img2threejs.io/donate.html).
 
 ## Star History
 
