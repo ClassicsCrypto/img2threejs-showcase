@@ -33,7 +33,7 @@ export const DONATE_URL = `${BASE}donate.html`;
 
 export const CONTACT_EMAIL = 'hoainho.work@gmail.com';
 export const CONTACT_NAME = 'Nick';
-export const CURRENT_VERSION = 'v1.5.0';
+export const CURRENT_VERSION = 'v1.5.1';
 
 /**
  * Wraps every occurrence of the product name in the animated gradient span, so the brand reads the
