@@ -322,7 +322,7 @@ const authored: DemoEntry[] = [
     referenceImage: `${BASE}front-medusa.webp`,
     sourcePath: 'src/demos/awp-medusa-v2/createAwpMedusaModelV2.ts',
     sourceUrl: `${REPO}/src/demos/awp-medusa-v2/createAwpMedusaModelV2.ts`,
-    generatedWith: 'img2threejs V2 · custom AWP rifle adapter · blockout + projection + interactions complete',
+    generatedWith: 'img2threejs v1.4.4 · custom AWP rifle adapter · blockout + projection + interactions complete',
     author: 'kokorolx',
     authorUrl: 'https://github.com/kokorolx',
     status: 'final',
