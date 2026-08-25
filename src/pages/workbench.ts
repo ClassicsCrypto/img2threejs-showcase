@@ -4,8 +4,30 @@ import { parseRoute, replaceHashSilently } from '../router';
 import { createLoader, whenViewerReady, type Loader } from '../loader';
 import { DRAWERS } from '../content';
 import {
-  brand, CURRENT_VERSION, GITHUB_CORE, extractVersion, escapeAttr,
+  brand, CURRENT_VERSION, GITHUB_CORE, SPONSORS, extractVersion, escapeAttr,
 } from '../site-data';
+import {
+  trackAnimationPlay,
+  trackAnimationStop,
+  trackDrawerOpen,
+  trackExhibitPrewarmFailed,
+  trackExhibitReady,
+  trackExhibitView,
+  trackExplode,
+  trackFaqOpen,
+  trackLinkClick,
+  trackOpenFullViewer,
+  trackPageView,
+  trackPaletteOpen,
+  trackPartSelect,
+  trackSearch,
+  trackSourceClick,
+  trackSponsorImpression,
+  trackViewerInteract,
+  resetExhibitOnceKeys,
+  setAnalyticsOptOut,
+  type ExhibitEntry,
+} from '../analytics';
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
@@ -109,7 +131,7 @@ export function renderWorkbench(
           <p class="wb-blurb" id="wb-blurb"></p>
           <div class="wb-caption-actions">
             <a class="btn btn-accent" id="wb-open-full" href="#/demo/${initial.id}">Open full viewer</a>
-            <a class="btn" id="wb-open-source" href="${initial.sourceUrl}" target="_blank" rel="noopener noreferrer">Read the source</a>
+            <a class="btn" id="wb-open-source" href="${initial.sourceUrl}" target="_blank" rel="noopener noreferrer" data-track-skip>Read the source</a>
           </div>
         </section>
 
@@ -195,6 +217,19 @@ export function renderWorkbench(
   /** Bumped on every load; an async prewarm that resolves after a newer load started is discarded. */
   let loadToken = 0;
   let disposed = false;
+  /**
+   * False until the initial synchronous mount has finished. `main.ts` sends the first `page_view`
+   * for whatever route this mount settles on, so the exhibit load and the deep-linked drawer that
+   * run during mount must not each send one of their own — the same visit would be three pages.
+   */
+  let booted = false;
+  /**
+   * Incremented every time the sponsor drawer is opened. Sponsor impressions are deduplicated per
+   * round, so a visitor who scrolls a card out of view and back is one impression, while a visitor
+   * who genuinely returns to the sponsor page later is a second — which is the distinction a CTR
+   * reported to a sponsor stands or falls on.
+   */
+  let sponsorRound = 0;
 
   const teardownViewer = (): void => {
     unsubscribeAnimation?.();
@@ -254,11 +289,16 @@ export function renderWorkbench(
 
   /* ------------------------------------------------------------------- load */
 
-  async function loadExhibit(nextIndex: number): Promise<void> {
+  async function loadExhibit(nextIndex: number, entry: ExhibitEntry = 'rail'): Promise<void> {
     const demo = demos[nextIndex];
     if (!demo || disposed) return;
     const token = ++loadToken;
     index = nextIndex;
+    const startedAt = performance.now();
+    // First-orbit is measured once per exhibit LOAD, not once per page: coming back to an exhibit
+    // and orbiting it again is a fresh engagement signal.
+    resetExhibitOnceKeys(demo.id);
+    trackExhibitView(demo, entry, 'workbench');
 
     // Rail + copy update immediately, so the UI answers the click before geometry exists.
     for (const b of railTrack.querySelectorAll<HTMLButtonElement>('.rail-item')) {
@@ -275,6 +315,14 @@ export function renderWorkbench(
     openFull.href = `#/demo/${demo.id}`;
     openSource.href = demo.sourceUrl;
     replaceHashSilently(`#/x/${demo.id}`);
+    // `replaceHashSilently` fires no `hashchange`, so the listener in `main.ts` never sees an
+    // in-place exhibit swap. Without this, the standard Pages report would credit every exhibit on
+    // the site to whichever one the visitor happened to land on first.
+    //
+    // Except when the swap CAME FROM a hashchange — a back/forward step — because that is the one
+    // case the listener in `main.ts` did see and has already counted. Same guard the drawer path
+    // spells as `syncUrl`: whoever owns the URL change owns the page view.
+    if (booted && entry !== 'hashchange') trackPageView(`Workbench — ${demo.title}`);
 
     setSpecs([
       ['Generated with', demo.generatedWith],
@@ -307,6 +355,7 @@ export function renderWorkbench(
         await demo.prewarm();
       } catch {
         /* a failed prewarm still lets build() run, just slower */
+        trackExhibitPrewarmFailed(demo.id, 'workbench');
       }
       if (token !== loadToken || disposed) return;
       loader?.phase('Building geometry');
@@ -351,7 +400,23 @@ export function renderWorkbench(
     const ownLoader = loader;
     ownLoader?.phase('Framing');
     void whenViewerReady().then(() => {
-      if (token === loadToken && !disposed) ownLoader?.done();
+      if (token !== loadToken || disposed) return;
+      ownLoader?.done();
+      // Reported here rather than after `build()` because this is the moment the visitor can see
+      // something: it includes prewarm, geometry, texture decode and shader compile.
+      const readyManifest = v.partManifest();
+      trackExhibitReady(
+        demo,
+        {
+          loadMs: performance.now() - startedAt,
+          triangles: readyManifest
+            ? readyManifest.parts.reduce((sum, part) => sum + part.triangles, 0)
+            : 0,
+          partCount: readyManifest ? readyManifest.parts.length : 0,
+          prewarm: !!demo.prewarm,
+        },
+        'workbench',
+      );
     });
 
     const manifest = v.partManifest();
@@ -390,8 +455,13 @@ export function renderWorkbench(
         b.textContent = action.label;
         b.title = action.loop ? `${action.label} (loops)` : `${action.label} (plays once)`;
         b.addEventListener('click', () => {
-          if (controller.active === action.id) controller.stop();
-          else controller.play(action.id);
+          if (controller.active === action.id) {
+            controller.stop();
+            trackAnimationStop(demo.id, 'workbench');
+          } else {
+            controller.play(action.id);
+            trackAnimationPlay(demo.id, action, 'workbench');
+          }
         });
         buttons.set(action.id, b);
         animActions.appendChild(b);
@@ -419,19 +489,33 @@ export function renderWorkbench(
   on(railTrack, 'click', (e: Event) => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.rail-item');
     if (!btn?.dataset.index) return;
-    void loadExhibit(Number(btn.dataset.index));
+    void loadExhibit(Number(btn.dataset.index), 'rail');
   });
 
-  const step = (delta: number): void => {
-    void loadExhibit((index + delta + demos.length) % demos.length);
+  const step = (delta: number, entry: ExhibitEntry = 'arrow'): void => {
+    void loadExhibit((index + delta + demos.length) % demos.length, entry);
   };
   on(mount.querySelector<HTMLElement>('#rail-prev')!, 'click', () => step(-1));
   on(mount.querySelector<HTMLElement>('#rail-next')!, 'click', () => step(1));
 
+  /**
+   * The slider emits an `input` event per pixel of travel. Reporting each one would spend the
+   * property's event quota on a single drag and tell us nothing the settled value does not, so only
+   * where the visitor let go is measured.
+   */
+  let explodeReportTimer: number | null = null;
   on(explodeRange, 'input', () => {
     const t = Number(explodeRange.value);
     explodeOut.value = t.toFixed(2);
     viewer?.setExplode(t);
+    if (explodeReportTimer !== null) window.clearTimeout(explodeReportTimer);
+    explodeReportTimer = window.setTimeout(() => {
+      explodeReportTimer = null;
+      if (t > 0) trackExplode(demos[index].id, t, 'workbench');
+    }, 700);
+  });
+  cleanups.push(() => {
+    if (explodeReportTimer !== null) window.clearTimeout(explodeReportTimer);
   });
 
   on(partList, 'click', (e: Event) => {
@@ -439,7 +523,23 @@ export function renderWorkbench(
     if (!btn?.dataset.part) return;
     const already = btn.classList.contains('is-active');
     viewer?.selectByName(already ? null : btn.dataset.part);
+    if (!already) {
+      const part = viewer?.partManifest()?.parts.find((candidate) => candidate.name === btn.dataset.part);
+      if (part) trackPartSelect(demos[index].id, part, 'workbench');
+    }
   });
+
+  /**
+   * Did the visitor actually touch the model? Answered once per exhibit load, from the canvas's own
+   * first input — this is the difference between "the exhibit was on screen" and "the exhibit was
+   * used", and it is the number that says whether the 3D is doing its job at all.
+   */
+  const reportFirstInput = (input: 'pointer' | 'wheel' | 'touch') => (): void => {
+    trackViewerInteract(demos[index].id, input, 'workbench');
+  };
+  on(canvasMount, 'pointerdown', reportFirstInput('pointer'));
+  on(canvasMount, 'wheel', reportFirstInput('wheel'), { passive: true });
+  on(canvasMount, 'touchstart', reportFirstInput('touch'), { passive: true });
 
   /* ---- drawers ---- */
   let openDrawer: string | null = null;
@@ -460,7 +560,7 @@ export function renderWorkbench(
    * `syncUrl` is false only when the caller IS the URL — i.e. this open came from a deep link or a
    * back/forward step, so writing the hash again would be circular.
    */
-  const showDrawer = (key: string, syncUrl = true): void => {
+  const showDrawer = (key: string, source: string, syncUrl = true): void => {
     const entry = DRAWERS[key];
     if (!entry) return;
     if (openDrawer === key) {
@@ -469,6 +569,9 @@ export function renderWorkbench(
     }
     openDrawer = key;
     drawerBody.innerHTML = entry.build();
+    // Every link inside a drawer inherits its placement from the drawer it is in, so the delegated
+    // click handler below does not need a per-link annotation to say where a click came from.
+    drawerBody.dataset.placement = `drawer_${key}`;
     drawer.hidden = false;
     palette.hidden = true;
     scrim.hidden = false;
@@ -477,17 +580,150 @@ export function renderWorkbench(
     mount.querySelector<HTMLElement>('#wb-drawer-close')?.focus();
     // Content pages are linkable: /#/privacy has to survive being copied out of the address bar.
     if (syncUrl) replaceHashSilently(`#/${key}`);
+
+    trackDrawerOpen(key, source);
+    // `replaceHashSilently` fires no `hashchange`, so a drawer opened by tapping a nav button is
+    // invisible to the page-view listener in `main.ts`. Deep links and back/forward steps arrive
+    // with `syncUrl` false, and those the listener has already counted.
+    if (booted && syncUrl) trackPageView(entry.title);
+    if (key === 'sponsor') watchSponsorImpressions();
   };
+
+  /**
+   * Sponsor impressions, measured from the card actually being on screen rather than from the
+   * drawer being opened.
+   *
+   * This is the denominator of the click-through rate a sponsor is sent, so it has to mean
+   * something: a visitor who opens the sponsor page and closes it without scrolling has seen the
+   * first card and not the third, and reporting three impressions for that would overstate reach
+   * and understate CTR for every sponsor below the fold.
+   *
+   * 25% of the card, once, per opening. Not the IAB display-ad standard (50% for one continuous
+   * second) on purpose: these are prose cards that can stand taller than a phone's drawer, where a
+   * 50% threshold would never fire at all and the sponsor at the bottom would look unseen rather
+   * than unscrolled. `docs/ANALYTICS.md` states this in the same words, so a sponsor being sent the
+   * number is told what it counts.
+   */
+  let sponsorObserver: IntersectionObserver | null = null;
+
+  function watchSponsorImpressions(): void {
+    sponsorObserver?.disconnect();
+    sponsorObserver = null;
+    const cards = Array.from(drawerBody.querySelectorAll<HTMLElement>('[data-sponsor]'));
+    if (cards.length === 0) return;
+
+    const round = ++sponsorRound;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const card = entry.target as HTMLElement;
+          const sponsor = SPONSORS.find((candidate) => candidate.id === card.dataset.sponsor);
+          if (sponsor) trackSponsorImpression(sponsor, 'sponsor_drawer', round);
+          // Stop watching a card that has been counted: the dedupe in `analytics.ts` would drop the
+          // repeat anyway, but there is no reason to keep paying for the callback.
+          observer.unobserve(card);
+        }
+      },
+      { root: drawer, threshold: 0.25 },
+    );
+    for (const card of cards) observer.observe(card);
+    sponsorObserver = observer;
+  }
+  cleanups.push(() => sponsorObserver?.disconnect());
 
   /**
    * Delegated at the root rather than bound per button: the menu drawer's own entries are
    * `[data-drawer]` buttons that do not exist until that drawer is built, so a one-time query over
    * the initial markup would have wired the top bar and left every menu item dead.
    */
+  /** Which control opened a drawer. `Sponsor` in the top bar and `Sponsors` in the nav are the same
+   *  drawer reached two different ways, and knowing which one people use is how the CTA earns its
+   *  place in the header. */
+  const drawerSource = (btn: HTMLElement): string => {
+    if (btn.classList.contains('wb-sponsor')) return 'header_cta';
+    if (btn.classList.contains('wb-navlink')) return 'header_nav';
+    if (btn.classList.contains('wb-menu')) return 'menu_button';
+    if (btn.classList.contains('mn-item')) return 'menu_drawer';
+    return 'other';
+  };
+
   on(mount, 'click', (e: Event) => {
     const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-drawer]');
-    if (btn?.dataset.drawer) showDrawer(btn.dataset.drawer);
+    if (btn?.dataset.drawer) showDrawer(btn.dataset.drawer, drawerSource(btn));
   });
+
+  /**
+   * The opt-out switch on the privacy page. Rebuilds the drawer afterwards so the page states the
+   * choice that is now in force — a privacy control that leaves you guessing whether it took effect
+   * is not much of a control. `setAnalyticsOptOut` applies immediately, without a reload.
+   */
+  on(mount, 'click', (e: Event) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-analytics-toggle]');
+    if (!btn) return;
+    setAnalyticsOptOut(btn.dataset.analyticsToggle === 'off');
+    const privacy = DRAWERS.privacy;
+    if (openDrawer === 'privacy' && privacy) drawerBody.innerHTML = privacy.build();
+  });
+
+  /**
+   * Every outbound link on the page, in one handler.
+   *
+   * Delegated rather than bound per link because drawer content is rebuilt from a string each time
+   * it opens — a sponsor CTA, a mailto, a Discord invite and a licence link do not exist until then.
+   * `trackLinkClick` decides whether a destination is a sponsor, a support channel or a plain
+   * outbound click, so this stays a routing decision about WHERE the click happened.
+   */
+  const placementFor = (anchor: HTMLElement): string => {
+    const declared = anchor.closest<HTMLElement>('[data-placement]')?.dataset.placement;
+    if (declared) return declared;
+    if (anchor.closest('.wb-top')) return 'header';
+    if (anchor.closest('.wb-caption')) return 'exhibit_caption';
+    return 'other';
+  };
+
+  on(mount, 'click', (e: Event) => {
+    const anchor = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[href]');
+    if (!anchor || anchor.hasAttribute('data-track-skip')) return;
+    const href = anchor.getAttribute('href') ?? '';
+    // In-site navigation. The route it leads to reports itself as a page view, and the two links
+    // that deserve more than that (`Open full viewer`, `Read the source`) have their own events.
+    if (!href || href.startsWith('#')) return;
+
+    const card = anchor.closest<HTMLElement>('[data-sponsor]');
+    trackLinkClick({
+      url: anchor.href,
+      label: anchor.textContent?.trim().replace(/\s+/g, ' '),
+      placement: placementFor(anchor),
+      sponsorId: card?.dataset.sponsor,
+      // An exhibit is only context for a link rendered over the exhibit itself; a sponsor click
+      // from inside the privacy page has nothing to do with whatever model is loaded behind it.
+      exhibitId: drawerBody.contains(anchor) ? undefined : demos[index].id,
+    });
+  });
+
+  /**
+   * Which FAQ answers get opened — the site's own list of what it failed to explain up front.
+   *
+   * `toggle` does not bubble, so this listens in the CAPTURE phase: a capture-phase listener on an
+   * ancestor still receives a non-bubbling event, which is what makes one delegated handler work
+   * for questions that are rebuilt from a string every time the drawer opens.
+   */
+  on(
+    drawerBody,
+    'toggle',
+    (e: Event) => {
+      const details = e.target as HTMLElement;
+      if (!(details instanceof HTMLDetailsElement) || !details.open) return;
+      if (!details.classList.contains('faq-item')) return;
+      const items = Array.from(drawerBody.querySelectorAll<HTMLElement>('.faq-item'));
+      trackFaqOpen(
+        items.indexOf(details) + 1,
+        details.querySelector('summary')?.textContent?.trim() ?? '',
+      );
+    },
+    { capture: true },
+  );
   on(mount.querySelector<HTMLElement>('#wb-drawer-close')!, 'click', closeOverlays);
   on(scrim, 'click', closeOverlays);
 
@@ -524,7 +760,8 @@ export function renderWorkbench(
       : `<li class="pal-empty">No exhibit matches that.</li>`;
   };
 
-  const openPalette = (): void => {
+  const openPalette = (source: 'button' | 'keyboard'): void => {
+    trackPaletteOpen(source);
     palette.hidden = false;
     drawer.hidden = true;
     openDrawer = null;
@@ -541,14 +778,31 @@ export function renderWorkbench(
     const target = id ?? matches[palIndex]?.id;
     if (!target) return;
     const i = demos.findIndex((d) => d.id === target);
-    if (i >= 0) void loadExhibit(i);
+    if (i >= 0) void loadExhibit(i, 'palette');
     closeOverlays();
   };
 
-  on(mount.querySelector<HTMLElement>('#wb-open-palette')!, 'click', openPalette);
+  on(openFull, 'click', () => trackOpenFullViewer(demos[index].id));
+  on(openSource, 'click', () => trackSourceClick(demos[index].id, 'workbench'));
+
+  on(mount.querySelector<HTMLElement>('#wb-open-palette')!, 'click', () => openPalette('button'));
+  /**
+   * Reported as GA4's own `search` event so the palette shows up in the built-in site-search
+   * reporting, and debounced to the settled query: sending a measurement per keystroke would turn
+   * one search for "medusa" into six rows reading m, me, med, medu, medus, medusa.
+   */
+  let searchReportTimer: number | null = null;
   on(palInput, 'input', () => {
     palIndex = 0;
     drawPalette();
+    if (searchReportTimer !== null) window.clearTimeout(searchReportTimer);
+    searchReportTimer = window.setTimeout(() => {
+      searchReportTimer = null;
+      trackSearch(palInput.value, palMatches().length);
+    }, 900);
+  });
+  cleanups.push(() => {
+    if (searchReportTimer !== null) window.clearTimeout(searchReportTimer);
   });
   on(palList, 'click', (e: Event) => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.pal-item');
@@ -560,7 +814,7 @@ export function renderWorkbench(
 
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
-      if (palette.hidden) openPalette();
+      if (palette.hidden) openPalette('keyboard');
       else closeOverlays();
       return;
     }
@@ -586,8 +840,8 @@ export function renderWorkbench(
     }
     // Arrow keys walk the rail, but never while typing or with a drawer in front.
     if (inField || openDrawer) return;
-    if (e.key === 'ArrowLeft') step(-1);
-    else if (e.key === 'ArrowRight') step(1);
+    if (e.key === 'ArrowLeft') step(-1, 'keyboard');
+    else if (e.key === 'ArrowRight') step(1, 'keyboard');
   });
 
   /**
@@ -601,13 +855,13 @@ export function renderWorkbench(
     const route = parseRoute(window.location.hash);
     if (route.name === 'drawer') {
       // `false`: the URL is already what it should be — this open came FROM it.
-      showDrawer(route.key, false);
+      showDrawer(route.key, 'deeplink', false);
       return;
     }
     if (route.name === 'workbench') {
       if (openDrawer) closeOverlays();
       const target = demos.findIndex((d) => d.id === route.id);
-      if (target >= 0 && target !== index) void loadExhibit(target);
+      if (target >= 0 && target !== index) void loadExhibit(target, 'hashchange');
       return;
     }
     if (route.name === 'home' && openDrawer) closeOverlays();
@@ -615,7 +869,7 @@ export function renderWorkbench(
 
   /* ------------------------------------------------------------------ start */
   railCount.textContent = `${String(index + 1).padStart(2, '0')} / ${demos.length}`;
-  void loadExhibit(index);
+  void loadExhibit(index, focusId ? 'deeplink' : 'default');
   // A deep link straight to a content page opens it over the workbench, which keeps loading behind
   // it — the reader gets the page immediately and the exhibit is already there when they close it.
   //
@@ -623,7 +877,12 @@ export function renderWorkbench(
   // already replaced the hash with its exhibit synchronously. Skipping the write left a visitor who
   // opened /#/how-it-works looking at /#/x/awp-medusa-v2, so the link they were about to share no
   // longer pointed at the page they were reading.
-  if (initialDrawer) showDrawer(initialDrawer);
+  if (initialDrawer) showDrawer(initialDrawer, 'deeplink');
+
+  // Everything above is the initial mount, which `main.ts` reports as one page view for whatever
+  // route it settles on. From here on, an exhibit swap or a drawer opening is a navigation of its
+  // own and reports itself.
+  booted = true;
 
   return () => {
     disposed = true;

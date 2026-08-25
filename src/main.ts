@@ -1,8 +1,12 @@
 import './styles.css';
-import { currentRoute, onRouteChange } from './router';
+import { currentRoute, onRouteChange, type Route } from './router';
 import { renderWorkbench } from './pages/workbench';
 import { renderDemo } from './pages/demo';
 import { hasSeenIntro, runIntro } from './intro';
+import { isCaptureRun } from './capture-run';
+import { initAnalytics, trackPageView } from './analytics';
+import { getDemo } from './demos/registry';
+import { DRAWERS } from './content';
 
 const app = document.getElementById('app')!;
 
@@ -13,15 +17,17 @@ let pendingTransition: number | null = null;
 let mountedKind: 'workbench' | 'demo' | null = null;
 
 /**
- * The headless review harness loads `#/demo/<id>` with flags like `capture=1` / `back=1` / `mask=`
- * and screenshots as soon as the model reports ready, so nothing decorative may be on screen for
- * those runs — no intro overlay, no route cross-fade.
+ * The title reported to GA4 for a route, so the Pages report reads as a list of places on the site
+ * rather than eleven thousand rows of the one static `<title>` this single-document app ships with.
+ *
+ * Only ever a name already on screen — an exhibit title from the registry, a drawer's own heading —
+ * never anything derived from what a visitor typed.
  */
-function isCaptureRun(): boolean {
-  const hash = window.location.hash;
-  if (/[?&](capture|mask|back|bg|reviewWhite)=/.test(hash)) return true;
-  const search = new URLSearchParams(window.location.search);
-  return ['capture', 'mask', 'back', 'bg', 'reviewWhite'].some((key) => search.has(key));
+function routeTitle(route: Route): string {
+  if (route.name === 'demo') return `Viewer — ${getDemo(route.id)?.title ?? route.id}`;
+  if (route.name === 'workbench') return `Workbench — ${getDemo(route.id)?.title ?? route.id}`;
+  if (route.name === 'drawer') return DRAWERS[route.key]?.title ?? route.key;
+  return 'Workbench';
 }
 
 function mountRoute(): void {
@@ -90,5 +96,25 @@ function render(): void {
   }, ROUTE_TRANSITION_MS);
 }
 
+/**
+ * Before the first render, so an event fired during mount is queued on `dataLayer` rather than
+ * dropped. Sends nothing on a capture run, an automated browser, a non-production host, or for a
+ * visitor who has opted out — `analytics.ts` owns all four decisions.
+ */
+initAnalytics();
+
 onRouteChange(render);
 render();
+trackPageView(routeTitle(currentRoute()));
+
+/**
+ * Page views for the hash router, and the reason they are not inside `render()`: the workbench
+ * deliberately does NOT remount when it swaps exhibit or opens a drawer, so `render()` returns
+ * early for most route changes on the site. Listening to the route directly is what keeps
+ * `#/privacy`, `#/faq` and every `#/x/<exhibit>` in the Pages report.
+ *
+ * `replaceHashSilently` (the workbench's own URL writes) uses replaceState and fires no
+ * `hashchange`, so an in-place exhibit swap does not double-count here — the workbench sends its
+ * own `exhibit_view` for that, which is the event that actually describes what happened.
+ */
+onRouteChange((route) => trackPageView(routeTitle(route)));
