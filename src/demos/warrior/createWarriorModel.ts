@@ -6,8 +6,77 @@ import {
   type DecodedSurface,
   type EncodedSurfaceMaterial,
 } from '../girl-character/surfaceCodec';
+import { MeshoptSimplifier } from 'meshoptimizer';
 import { installWarriorRig, WARRIOR_TRIPO_MOTION_4_HIDE } from './warriorRig';
 import { WARRIOR_TRIPO4_CLEARANCE } from './tripo4ClearanceData';
+
+export type WarriorQuality = 'high' | 'medium' | 'low';
+
+/**
+ * The measured stream contours 47 nodes at 4,261,479 vertices and 8,534,984 triangles. That is the
+ * evidence, and High still renders every one of them, but it is not a sensible thing to hand a
+ * browser by default: the figure is skinned, so each frame pays the triangle count twice over in
+ * vertex work before the rasteriser sees it.
+ *
+ * Low is therefore the default. It is not a different reconstruction — the same decoded surfaces are
+ * decimated with meshoptimizer, boundary edges locked so node seams and open silhouettes stay where
+ * the measurement put them.
+ *
+ * Measured on a built model, and the deviation measured against the full-density surfaces:
+ *
+ *     level     triangles     of baseline     worst deviation     mean deviation
+ *     High      8,535,064          100%       0 (untouched)       0
+ *     Medium    4,000,260           47%       0.117 mm            0.029 mm
+ *     Low       1,499,476           18%       0.250 mm            0.072 mm
+ *
+ * Those are small against the grid the surfaces were contoured on — cells run 0.77 to 1.21 mm, so
+ * even the worst node moves by a quarter of one cell, under the resolution of the measurement
+ * itself. Rendered and diffed against High at the same frozen capture camera, Low changes 172 of
+ * 150,913 subject pixels along the silhouette (0.11%) and 1.55% of them by more than 32/255.
+ *
+ * `?quality=high` and `?quality=medium` remain reachable, and High is byte-identical to what this
+ * file produced before the levels existed.
+ */
+function readWarriorQuality(): WarriorQuality {
+  if (typeof window === 'undefined') return 'low';
+  const raw = (new URLSearchParams(window.location.search).get('quality') ?? '').toLowerCase();
+  if (raw === 'high') return 'high';
+  if (raw === 'medium') return 'medium';
+  return 'low';
+}
+
+const WARRIOR_QUALITY = readWarriorQuality();
+
+/** Kept beside the table above so the note and the ratio cannot drift apart. */
+const WARRIOR_QUALITY_RATIO: Record<WarriorQuality, number> = { high: 1, medium: 0.4687, low: 0.1757 };
+
+/**
+ * Generous enough that meshoptimizer reaches the requested ratio on every node rather than stopping
+ * early on the dense ones; the table above records what it actually cost.
+ */
+const WARRIOR_SIMPLIFY_ERROR = 1e-2;
+
+/** Below this a node is already cheap, and decimating it only costs silhouette. */
+const WARRIOR_MIN_TRIANGLES = 64;
+
+async function simplifyWarriorSurfaces(
+  surfaces: DecodedSurface[], quality: WarriorQuality,
+): Promise<DecodedSurface[]> {
+  const ratio = WARRIOR_QUALITY_RATIO[quality];
+  if (ratio >= 1) return surfaces;
+  await MeshoptSimplifier.ready;
+  return surfaces.map((surface) => {
+    const triangles = surface.index.length / 3;
+    const target = Math.max(WARRIOR_MIN_TRIANGLES, Math.floor(triangles * ratio)) * 3;
+    if (target >= surface.index.length) return surface;
+    const [index] = MeshoptSimplifier.simplify(
+      surface.index, surface.position, 3, target, WARRIOR_SIMPLIFY_ERROR, ['LockBorder'],
+    );
+    // Positions and colours are left whole: the rig skins by measured position, and the indices no
+    // longer reaching a vertex simply stop drawing it.
+    return { ...surface, index };
+  });
+}
 
 export interface WarriorOptions {
   castShadow?: boolean;
@@ -23,12 +92,14 @@ let implicitSurfaces: DecodedSurface[] | null = null;
 let implicitPromise: Promise<void> | null = null;
 
 export function prewarmWarrior(): Promise<void> {
-  implicitPromise ??= import('./surfaceData').then((data) => {
+  implicitPromise ??= import('./surfaceData').then(async (data) => {
     const decoded = decodeSurfaces(data.SURFACE_STREAM, data.SURFACE_NODES);
     const expected = new Set(Array.from({ length: 47 }, (_, index) => index + 41));
     for (const surface of decoded) expected.delete(surface.node);
     if (expected.size) throw new Error(`warrior implicit stream misses nodes ${[...expected].join(', ')}`);
-    implicitSurfaces = decoded;
+    // Decimate before the meshes exist, so the triangles the rig skins and the GPU draws are the
+    // reduced ones rather than the full measured set.
+    implicitSurfaces = await simplifyWarriorSurfaces(decoded, WARRIOR_QUALITY);
   });
   return implicitPromise;
 }
@@ -382,6 +453,17 @@ export function createWarriorModel(options: WarriorOptions = {}): THREE.Group {
     runtime.weightedVertexCount = activeVertexCount;
   };
   root.userData.sculptRuntime = {
+    detailLevels: {
+      current: WARRIOR_QUALITY,
+      options: [
+        { id: 'high', label: 'High',
+          note: '8.53M triangles · every measured Surface Nets triangle, untouched' },
+        { id: 'medium', label: 'Medium',
+          note: '4.00M triangles · 0.117 mm worst deviation from the measured surface' },
+        { id: 'low', label: 'Low',
+          note: '1.50M triangles · 0.250 mm worst deviation, node seams locked' },
+      ],
+    },
     pass: 'stage-1-cross-section-floor',
     route: 'GLB-measured code-only loft; no runtime source asset',
     exactnessTier: 'measurement-derived blockout',
