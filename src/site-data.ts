@@ -48,7 +48,7 @@ export const CURRENT_VERSION = 'v1.5.1';
  * all and says why in the console under `?analytics_debug=1`.
  */
 export const GA_MEASUREMENT_ID_PLACEHOLDER = 'G-XXXXXXXXXX';
-export const GA_MEASUREMENT_ID: string = 'G-1EH8W9VJL4';
+export const GA_MEASUREMENT_ID: string = 'G-4MSYRF7901';
 
 /**
  * Hostnames allowed to send measurements, so `localhost`, a `vite preview`, a fork's Pages build
