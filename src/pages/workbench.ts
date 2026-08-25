@@ -44,14 +44,20 @@ type AnimationController = {
 };
 
 /**
- * The exhibit the workbench opens on. Derived, not hardcoded: the two character demos declare
- * `prewarm` because their fields are expensive enough to be felt as a frozen page (one is a
- * 2.12M-sample SDF), and making a visitor wait through that before seeing anything is the wrong
- * first impression. The first exhibit without one is the landing hero, so adding or reordering
- * demos keeps working without touching this.
+ * The exhibit the workbench opens on: the first one in the gallery, whatever that is.
+ *
+ * The registry sorts newest-first, so this is the most recent piece of work — which is the one a
+ * first-time visitor should meet. It used to skip any exhibit declaring `prewarm`, on the reasoning
+ * that a multi-second field precompute is a poor first impression. That trade stopped being worth
+ * it once the newest exhibits became the heavy ones: the site opened on a months-old model while
+ * the work it exists to show sat three places down the rail, and the landing URL was rewritten to
+ * that older exhibit as if the visitor had asked for it.
+ *
+ * The wait is real and is handled where it belongs — the heavy exhibits ship `detailLevels` and
+ * open at their lowest, and the loader covers the gap — rather than by showing something else.
  */
 function defaultExhibit(): DemoEntry {
-  return demos.find((demo) => !demo.prewarm) ?? demos[0];
+  return demos[0];
 }
 
 /* ------------------------------------------------------------------- render */
@@ -70,6 +76,15 @@ export function renderWorkbench(
   const { focusId, drawer: initialDrawer } = opts;
   const initial = (focusId && getDemo(focusId)) || defaultExhibit();
   let index = Math.max(0, demos.indexOf(initial));
+  /**
+   * Whether the address bar is currently describing a chosen exhibit.
+   *
+   * False on the landing load: a visitor who typed the bare domain has not asked for any particular
+   * exhibit, and rewriting their URL to `#/x/<whatever-is-first>` reads as the site redirecting
+   * them. It flips the first time they actually pick one, and from then on the URL follows the rail
+   * so an exhibit stays shareable.
+   */
+  let urlOwnedByExhibit = false;
 
   const railThumbs = demos
     .map(
@@ -314,7 +329,13 @@ export function renderWorkbench(
     refImg.src = demo.referenceImage;
     openFull.href = `#/demo/${demo.id}`;
     openSource.href = demo.sourceUrl;
-    replaceHashSilently(`#/x/${demo.id}`);
+    // `default` is the landing load — nobody asked for this exhibit by name, so the bare domain is
+    // left exactly as the visitor typed it. Every other entry point is a deliberate choice and does
+    // claim the URL.
+    if (entry !== 'default') {
+      urlOwnedByExhibit = true;
+      replaceHashSilently(`#/x/${demo.id}`);
+    }
     // `replaceHashSilently` fires no `hashchange`, so the listener in `main.ts` never sees an
     // in-place exhibit swap. Without this, the standard Pages report would credit every exhibit on
     // the site to whichever one the visitor happened to land on first.
@@ -553,7 +574,10 @@ export function renderWorkbench(
     document.body.classList.remove('wb-overlay-open');
     // Hand the URL back to the exhibit, so closing the privacy page does not leave the address bar
     // claiming you are still on it.
-    if (wasDrawer) replaceHashSilently(`#/x/${demos[index].id}`);
+    // Hand the URL back to whatever it was before the drawer took it. For a visitor still on the
+    // landing page that is the bare domain — restoring an exhibit hash here would smuggle in the
+    // same unrequested redirect by another route.
+    if (wasDrawer) replaceHashSilently(urlOwnedByExhibit ? `#/x/${demos[index].id}` : '');
   };
 
   /**
@@ -873,10 +897,8 @@ export function renderWorkbench(
   // A deep link straight to a content page opens it over the workbench, which keeps loading behind
   // it — the reader gets the page immediately and the exhibit is already there when they close it.
   //
-  // Writes the URL (rather than trusting the one that got us here) because `loadExhibit` above
-  // already replaced the hash with its exhibit synchronously. Skipping the write left a visitor who
-  // opened /#/how-it-works looking at /#/x/awp-medusa-v2, so the link they were about to share no
-  // longer pointed at the page they were reading.
+  // The write is a no-op when the hash is already this drawer, which is the deep-link case; it
+  // matters for the mobile menu, which opens a drawer without the URL having named it.
   if (initialDrawer) showDrawer(initialDrawer, 'deeplink');
 
   // Everything above is the initial mount, which `main.ts` reports as one page view for whatever
