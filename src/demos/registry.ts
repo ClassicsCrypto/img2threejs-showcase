@@ -158,8 +158,9 @@ export const demos: DemoEntry[] = [
     title: 'Regret Warrior — Source-Preserving Code Reconstruction',
     subjectClass: 'character',
     blurb:
-      'A deterministic TypeScript reconstruction of the verified GLB 2 payload: 92 code-native '
-      + 'BufferGeometry primitives, 184 embedded code-owned textures and the exact 42-joint skin. '
+      'A deterministic TypeScript reconstruction of the inventoried glTF 2.0 payload: 92 code-native '
+      + 'BufferGeometry primitives, 184 embedded code-owned textures, the preserved 42-joint source rig '
+      + 'and two authored secondary cloth joints. '
       + 'The original character GLB contains no animation clips or morph targets; the separate animation '
       + 'GLB contains three archived transform-only clips. Runtime actions include Review Turn and a new '
       + 'one-shot Revive animation that raises the character back to its measured bind pose while keeping '

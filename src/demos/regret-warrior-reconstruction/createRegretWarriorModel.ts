@@ -31,16 +31,6 @@ const ATTRIBUTE_NAMES: Record<string, string> = {
 
 let decodedBinary: Uint8Array | undefined;
 
-function decodeFloat32Base64(encoded: string): Float32Array {
-  const raw = atob(encoded);
-  if (raw.length % Float32Array.BYTES_PER_ELEMENT !== 0) {
-    throw new Error(`Animation payload byte length ${raw.length} is not Float32-aligned`);
-  }
-  const bytes = new Uint8Array(raw.length);
-  for (let index = 0; index < raw.length; index += 1) bytes[index] = raw.charCodeAt(index);
-  return new Float32Array(bytes.buffer);
-}
-
 function binary(): Uint8Array {
   if (decodedBinary) return decodedBinary;
   const raw = atob(GLB_BINARY_BASE64);
@@ -900,57 +890,6 @@ const REQUIRED_LOGICAL_COMPONENTS = [
   'sabaton-l', 'sabaton-r', 'sword', 'sword-guard', 'sword-grip', 'sword-gem',
 ] as const;
 
-function createSourceAnimationClips(sourceNodes: THREE.Object3D[]): THREE.AnimationClip[] {
-  return SOURCE_ANIMATION_CLIPS.map((clip) => {
-    const tracks = clip.tracks.map((track) => {
-      const node = sourceNodes[track.nodeIndex];
-      if (!node) throw new Error(`Source animation targets missing node ${track.nodeIndex}`);
-      if (node.name !== track.nodeName) {
-        throw new Error(
-          `Source animation node ${track.nodeIndex} expected ${track.nodeName}, received ${node.name}`,
-        );
-      }
-      const sourceInterpolation: string = track.interpolation;
-      if (sourceInterpolation === 'CUBICSPLINE') {
-        throw new Error(`Source animation channel ${track.channelIndex} requires GLTF CUBICSPLINE support`);
-      }
-      const interpolation = sourceInterpolation === 'STEP'
-        ? THREE.InterpolateDiscrete
-        : THREE.InterpolateLinear;
-      const times = decodeFloat32Base64(track.timesBase64);
-      const values = decodeFloat32Base64(track.valuesBase64);
-      const property = track.path === 'rotation' ? 'quaternion' : track.path === 'translation' ? 'position' : track.path;
-      const binding = `${node.name}.${property}`;
-      const keyframeTrack = track.path === 'rotation'
-        ? new THREE.QuaternionKeyframeTrack(binding, times, values, interpolation)
-        : new THREE.VectorKeyframeTrack(binding, times, values, interpolation);
-      Object.assign(keyframeTrack, { userData: {
-        sourceAnimationIndex: clip.index,
-        sourceChannelIndex: track.channelIndex,
-        sourceSamplerIndex: track.samplerIndex,
-        sourceInputAccessor: track.inputAccessor,
-        sourceOutputAccessor: track.outputAccessor,
-        sourceInputDecodedSha256: track.inputDecodedSha256,
-        sourceOutputDecodedSha256: track.outputDecodedSha256,
-        sourcePackedTimesSha256: track.packedTimesSha256,
-        sourcePackedValuesSha256: track.packedValuesSha256,
-        sourceInterpolation: track.interpolation,
-      } });
-      return keyframeTrack;
-    });
-    const animation = new THREE.AnimationClip(clip.name, clip.duration, tracks);
-    Object.assign(animation, { userData: {
-      source: 'copied-1:1-from-animation.glb',
-      sourceGlbSha256: SOURCE_ANIMATION_GLB_SHA256,
-      sourceAnimationIndex: clip.index,
-      sourceAnimationName: clip.sourceName,
-      sourceDuration: clip.duration,
-      sourceTrackCount: clip.tracks.length,
-    } });
-    return animation;
-  });
-}
-
 interface AnimationControllerRuntime {
   readonly active: string;
   readonly currentTime: number;
@@ -1001,69 +940,9 @@ function installAnimationController(
     }
     skinMode = next;
   };
-  const correctionStressActions = new Set([
-    'extreme-joint-check-new',
-    'bilateral-arm-isolation-new',
-    'scarf-tail-secondary-new',
-  ]);
-  const skinModeForAction = (name: string): 'production' | 'corrected' => (
-    correctionStressActions.has(name) ? 'corrected' : 'production'
-  );
   // Idle is the initial controller state, so install the production attributes
   // immediately instead of waiting for the first explicit play/seek call.
   setSkinMode('production');
-  const poseTrack = (
-    nodeName: string,
-    duration: number,
-    delta: [number, number, number],
-  ): THREE.QuaternionKeyframeTrack | null => {
-    const joint = joints.find((candidate) => candidate.name === nodeName);
-    if (!joint) return null;
-    const bind = bindQuaternions.get(joint)!;
-    const target = bind.clone().multiply(
-      new THREE.Quaternion().setFromEuler(new THREE.Euler(delta[0], delta[1], delta[2], 'XYZ')),
-    );
-    return new THREE.QuaternionKeyframeTrack(
-      `${joint.name}.quaternion`,
-      [0, duration * 0.5, duration],
-      [...bind.toArray(), ...target.toArray(), ...bind.toArray()],
-    );
-  };
-  const makePoseClip = (
-    name: string,
-    duration: number,
-    pose: Record<string, [number, number, number]>,
-  ): THREE.AnimationClip => new THREE.AnimationClip(
-    name,
-    duration,
-    Object.entries(pose)
-      .map(([nodeName, delta]) => poseTrack(nodeName, duration, delta))
-      .filter((track): track is THREE.QuaternionKeyframeTrack => track !== null),
-  );
-  const makeMotionClip = (
-    name: string,
-    duration: number,
-    frames: Array<{ time: number; pose: Record<string, [number, number, number]> }>,
-  ): THREE.AnimationClip => {
-    const animatedJointNames = [...new Set(frames.flatMap((frame) => Object.keys(frame.pose)))].sort();
-    const tracks = animatedJointNames.flatMap((nodeName) => {
-      const joint = joints.find((candidate) => candidate.name === nodeName);
-      if (!joint) return [];
-      const bind = bindQuaternions.get(joint)!;
-      const values = frames.flatMap((frame) => {
-        const delta = frame.pose[nodeName] ?? [0, 0, 0];
-        return bind.clone().multiply(
-          new THREE.Quaternion().setFromEuler(new THREE.Euler(delta[0], delta[1], delta[2], 'XYZ')),
-        ).toArray();
-      });
-      return [new THREE.QuaternionKeyframeTrack(
-        `${joint.name}.quaternion`,
-        frames.map((frame) => frame.time),
-        values,
-      )];
-    });
-    return new THREE.AnimationClip(name, duration, tracks);
-  };
   const makeReviveClip = (): THREE.AnimationClip => {
     const duration = 2.8;
     const times = [0, 0.42, 1.25, 2.08, duration];
@@ -1083,120 +962,7 @@ function installAnimationController(
       new THREE.VectorKeyframeTrack('.position', times, positionValues),
     ]);
   };
-  const sourceAnimationClips = createSourceAnimationClips(sourceNodes);
   const authoredClips = [
-    makePoseClip('idle-breathe-new', 3, {
-      Spine01: [0.018, 0, 0],
-      Spine02: [-0.012, 0.008, 0],
-      Head: [0.01, -0.012, 0],
-    }),
-    makePoseClip('combat-ready-new', 2.4, {
-      L_Clavicle: [0.04, -0.03, -0.08],
-      L_Upperarm: [0.14, -0.08, -0.24],
-      L_Forearm: [0.28, 0.04, 0.08],
-      L_Hand: [0.08, -0.04, 0.04],
-      Head: [-0.03, -0.1, 0],
-      Authored_ScarfTail_Base: [0.04, 0.08, 0.03],
-    }),
-    makePoseClip('extreme-joint-check-new', 3, {
-      L_Clavicle: [0.06, -0.04, -0.1],
-      L_Upperarm: [0.32, -0.18, -0.4],
-      L_Forearm: [0.45, 0.12, 0.16],
-      L_Hand: [0.14, -0.08, 0.12],
-      NeckTwist01: [0.06, 0.12, 0],
-      Head: [0.08, 0.24, 0],
-    }),
-    makePoseClip('weapon-grip-check-new', 2, {
-      R_Clavicle: [-0.015, 0.01, 0.025],
-      R_Upperarm: [-0.04, 0.02, 0.06],
-      R_Forearm: [0.06, -0.02, -0.02],
-      R_Hand: [0.04, -0.02, -0.03],
-    }),
-    makePoseClip('bilateral-arm-isolation-new', 2.5, {
-      L_Clavicle: [0.03, -0.02, -0.06],
-      L_Upperarm: [0.12, -0.06, -0.18],
-      L_Forearm: [0.18, 0.04, 0.06],
-      L_Hand: [0.05, -0.02, 0.03],
-      R_Clavicle: [-0.03, 0.02, 0.06],
-      R_Upperarm: [-0.12, 0.06, 0.18],
-      R_Forearm: [-0.18, -0.04, -0.06],
-      R_Hand: [-0.05, 0.02, -0.03],
-    }),
-    makePoseClip('scarf-tail-secondary-new', 2.8, {
-      Authored_ScarfTail_Base: [0.08, 0.22, 0.05],
-    }),
-    makeMotionClip('warm-up-new', 4.8, [
-      { time: 0, pose: {} },
-      { time: 0.8, pose: {
-        Spine01: [-0.04, 0.07, 0.025], Spine02: [0.025, 0.04, 0.02], Head: [0.02, -0.08, -0.025],
-        L_Clavicle: [0.03, -0.02, -0.08], L_Upperarm: [0.2, -0.06, -0.3], L_Forearm: [0.26, 0.03, 0.08],
-        R_Clavicle: [-0.02, 0.015, 0.05], R_Upperarm: [-0.08, 0.03, 0.12],
-      } },
-      { time: 1.6, pose: {
-        Spine01: [-0.04, -0.07, -0.025], Spine02: [0.025, -0.04, -0.02], Head: [0.02, 0.08, 0.025],
-        R_Clavicle: [-0.03, 0.02, 0.08], R_Upperarm: [-0.2, 0.06, 0.3], R_Forearm: [-0.26, -0.03, -0.08],
-        L_Clavicle: [0.02, -0.015, -0.05], L_Upperarm: [0.08, -0.03, -0.12],
-      } },
-      { time: 2.4, pose: {
-        Spine01: [0.055, 0, 0], Spine02: [-0.035, 0, 0], Head: [-0.03, 0, 0],
-        L_Clavicle: [0.05, 0, -0.1], L_Upperarm: [0.18, -0.03, -0.22], L_Forearm: [0.32, 0, 0.06],
-        R_Clavicle: [-0.05, 0, 0.1], R_Upperarm: [-0.18, 0.03, 0.22], R_Forearm: [-0.32, 0, -0.06],
-      } },
-      { time: 3.6, pose: {
-        Spine01: [-0.03, 0, 0], Spine02: [0.02, 0, 0], Head: [0.025, 0, 0],
-        L_Upperarm: [-0.08, -0.02, 0.08], L_Forearm: [0.14, 0.02, 0.04],
-        R_Upperarm: [0.08, 0.02, -0.08], R_Forearm: [-0.14, -0.02, -0.04],
-        Authored_ScarfTail_Base: [0.03, 0.06, 0.02],
-      } },
-      { time: 4.8, pose: {} },
-    ]),
-    makeMotionClip('swagger-new', 3.2, [
-      { time: 0, pose: {
-        Hip: [0, 0.07, 0.055], Spine01: [0.01, -0.06, -0.04], Spine02: [-0.015, -0.04, -0.025],
-        Head: [0.015, 0.04, 0.025], L_Upperarm: [0.08, -0.02, -0.12], R_Upperarm: [-0.04, 0.015, 0.07],
-        L_Thigh: [0.1, 0, 0.025], R_Thigh: [-0.08, 0, -0.02],
-      } },
-      { time: 0.8, pose: {
-        Hip: [0, 0, 0], Spine01: [0.02, 0, 0], Spine02: [-0.01, 0, 0], Head: [-0.01, 0, 0],
-        L_Forearm: [0.08, 0, 0.025], R_Forearm: [-0.08, 0, -0.025],
-      } },
-      { time: 1.6, pose: {
-        Hip: [0, -0.07, -0.055], Spine01: [0.01, 0.06, 0.04], Spine02: [-0.015, 0.04, 0.025],
-        Head: [0.015, -0.04, -0.025], L_Upperarm: [0.04, -0.015, -0.07], R_Upperarm: [-0.08, 0.02, 0.12],
-        L_Thigh: [-0.08, 0, -0.02], R_Thigh: [0.1, 0, 0.025],
-      } },
-      { time: 2.4, pose: {
-        Hip: [0, 0, 0], Spine01: [-0.015, 0, 0], Spine02: [0.01, 0, 0], Head: [0.01, 0, 0],
-        L_Forearm: [0.04, 0, 0.015], R_Forearm: [-0.04, 0, -0.015],
-      } },
-      { time: 3.2, pose: {
-        Hip: [0, 0.07, 0.055], Spine01: [0.01, -0.06, -0.04], Spine02: [-0.015, -0.04, -0.025],
-        Head: [0.015, 0.04, 0.025], L_Upperarm: [0.08, -0.02, -0.12], R_Upperarm: [-0.04, 0.015, 0.07],
-        L_Thigh: [0.1, 0, 0.025], R_Thigh: [-0.08, 0, -0.02],
-      } },
-    ]),
-    makeMotionClip('slash-new', 2.2, [
-      { time: 0, pose: {} },
-      { time: 0.55, pose: {
-        Hip: [0, 0.09, 0], Spine01: [-0.06, 0.18, 0.02], Spine02: [-0.04, 0.16, 0.02], Head: [0.02, -0.12, 0],
-        R_Clavicle: [-0.04, 0.08, 0.12], R_Upperarm: [-0.3, 0.2, 0.38], R_Forearm: [-0.44, -0.08, -0.12],
-        R_Hand: [1.1437746326393297, 0.6880475270526927, -2.700989486392232],
-        L_Upperarm: [0.08, -0.04, -0.1],
-      } },
-      { time: 1.05, pose: {
-        Hip: [0, -0.12, 0], Spine01: [0.08, -0.25, -0.035], Spine02: [0.06, -0.22, -0.03], Head: [-0.03, 0.16, 0],
-        R_Clavicle: [0.04, -0.12, -0.16], R_Upperarm: [0.36, -0.28, -0.5], R_Forearm: [0.5, 0.1, 0.18],
-        R_Hand: [0.5628968922625681, -0.6886738366924946, -0.5115998631695304],
-        L_Upperarm: [-0.06, 0.03, 0.08],
-        Authored_ScarfTail_Base: [0.06, 0.16, 0.04],
-      } },
-      { time: 1.4, pose: {
-        Hip: [0, -0.06, -0.02], Spine01: [0.045, -0.14, -0.02], Spine02: [0.03, -0.12, -0.015],
-        R_Clavicle: [0.025, -0.07, -0.1], R_Upperarm: [0.2, -0.16, -0.3], R_Forearm: [0.32, 0.06, 0.1],
-        R_Hand: [0.1, -0.04, 0.08], Authored_ScarfTail_Base: [0.08, 0.22, 0.05],
-      } },
-      { time: 2.2, pose: {} },
-    ]),
     new THREE.AnimationClip('review-turn-new', 5, [
       new THREE.QuaternionKeyframeTrack('.quaternion', [0, 2.5, 5], [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, -1]),
     ]),
@@ -1220,16 +986,7 @@ function installAnimationController(
     'bind-pose-return-new',
     'a-pose-sword-hidden-new',
   ]);
-  const clips = [...sourceAnimationClips, ...authoredClips]
-    .filter((clip) => !removedAnimationIds.has(clip.name));
-  const uniqueSourceActionClips = SOURCE_ANIMATION_CLIPS.filter((clip, index, all) => {
-    const signature = `${clip.duration}:${clip.tracks.map((track) => (
-      `${track.nodeIndex}:${track.path}:${track.interpolation}:${track.packedTimesSha256}:${track.packedValuesSha256}`
-    )).join('|')}`;
-    return all.findIndex((candidate) => `${candidate.duration}:${candidate.tracks.map((track) => (
-      `${track.nodeIndex}:${track.path}:${track.interpolation}:${track.packedTimesSha256}:${track.packedValuesSha256}`
-    )).join('|')}` === signature) === index;
-  });
+  const clips = authoredClips;
   root.animations = clips;
   const mixer = new THREE.AnimationMixer(root);
   let active = 'idle';
@@ -1256,13 +1013,6 @@ function installAnimationController(
   };
   const controller = {
     actions: [
-      ...uniqueSourceActionClips
-        .filter((clip) => !removedAnimationIds.has(clip.name))
-        .map((clip) => ({
-        id: clip.name,
-        label: `${clip.name} (source motion 1:1 + rigid sword)`,
-        loop: true,
-      })),
       { id: 'review-turn-new', label: 'Review Turn (new)', loop: true },
       { id: 'revive-new', label: 'Revive (new)', loop: false },
     ],
@@ -1275,7 +1025,7 @@ function installAnimationController(
       if (!clip) return;
       mixer.stopAllAction();
       restoreBindPose();
-      setSkinMode(skinModeForAction(name));
+      setSkinMode('production');
       current = mixer.clipAction(clip).reset();
       configureLoop(current, name);
       current.play();
@@ -1288,7 +1038,7 @@ function installAnimationController(
       if (!clip || !Number.isFinite(time)) return false;
       mixer.stopAllAction();
       restoreBindPose();
-      setSkinMode(skinModeForAction(name));
+      setSkinMode('production');
       current = mixer.clipAction(clip).reset();
       current.setLoop(THREE.LoopOnce, 1);
       current.clampWhenFinished = true;
@@ -1377,8 +1127,8 @@ function installAnimationController(
     })),
     animationSkinPolicy: {
       production: 'preserved source Tripo skin weights',
-      correctionStressActions: [...correctionStressActions],
-      reason: 'avoid whole-body deformation from aggressive correction heuristics while retaining explicit stress tests',
+      correctionStressActions: [],
+      reason: 'the retained Review Turn and Revive actions use root transforms only; removed joint-stress clips are not constructed at runtime',
       removedRuntimeAnimations: [...removedAnimationIds],
       hiddenDuplicateSourceClip: 'NlaTrack.002 is byte-identical to removed NlaTrack and is also removed from root.animations',
     },
@@ -1792,7 +1542,7 @@ function installArmorGlint(root: THREE.Group): void {
   };
 }
 
-/** Exact code-native transfer of the verified GLB 2 scene, with no runtime GLB/GLTF/BIN fetch. */
+/** Code-native reconstruction of the inventoried glTF 2.0 scene, with no runtime GLB/GLTF/BIN fetch. */
 export function createRegretWarriorModel(options: RegretWarriorOptions = {}): THREE.Group {
   const source = GLTF_SOURCE as Source;
   const jointNodes = new Set<number>(source.skins.flatMap((skin: Source) => skin.joints));
@@ -1878,11 +1628,11 @@ export function createRegretWarriorModel(options: RegretWarriorOptions = {}): TH
     animationGlbSha256: SOURCE_ANIMATION_GLB_SHA256,
     realLongestDimension: 1.7,
     sourceAnimations: {
-      source: '/Users/nhonh/Desktop/regret/animation.glb',
+      source: 'offline animation measurement payload',
       runtimeDependency: false,
       archivedSpecificationClipCount: SOURCE_ANIMATION_CLIPS.length,
       runtimeClipCount: 0,
-      runtimeStatus: 'source-clips-disabled-by-user-request; new A-pose is separately authored',
+      runtimeStatus: 'source-clips-disabled-by-user-request; Review Turn and Revive are separately authored',
       transfer: 'exact Float32 payload retained as offline specification evidence; no source clip is installed in root.animations',
     },
     sourceMorphTargets: 'source-absent',
@@ -1892,7 +1642,7 @@ export function createRegretWarriorModel(options: RegretWarriorOptions = {}): TH
     sourcePrimitiveCount: 92,
     sourceSkinAttributesPreserved: ['sourceSkinIndex', 'sourceSkinWeight'],
     productionSkinAttributes: ['productionSkinIndex', 'productionSkinWeight', 'productionSwordMask'],
-    runtimeSkinWeights: 'Review Turn and new A-pose preserve source body arrays; measured sword components are rigid-bound to R_Hand and physically partitioned for visibility; Stop restores bind pose and sword visibility',
+    runtimeSkinWeights: 'Review Turn and Revive use root transforms without joint deformation; measured sword components are rigid-bound to R_Hand and physically partitioned for visibility; Stop restores bind pose and sword visibility',
   };
   installAnimationController(
     root,
