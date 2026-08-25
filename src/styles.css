@@ -1943,6 +1943,126 @@ body.intro-active { overflow: hidden; }
   text-align: center;
 }
 
+/* ---- badges -----------------------------------------------------------------------------------
+   ONE COLOUR PER CATEGORY, ALL DESATURATED, and the second half of that is not a compromise -- it is
+   this theme's own rule, written into `:root`: amber "is the only saturated colour on the page", chosen
+   so nothing competes with a rendered model. Six vivid badges would break exactly what that rule
+   protects, and on a page whose subject is a 1.6 M-triangle figure the badges are labels, not features.
+   So each category gets a hue of its own, held at roughly a third of full saturation: distinguishable
+   side by side, quiet next to the render, and none of them reaching for the accent.
+
+   The hues are also placed far apart rather than as neighbours, so they separate for a viewer who cannot
+   tell two adjacent tints from one another -- and where a category has two states that matter, the shape
+   carries it too: the provenance badge is a FILLED diamond for a measured model and a HOLLOW one for an
+   inferred image.
+
+   The base `.badge` rules live here because the redesign dropped them while `demo.ts` still emits
+   `class="badge"`, so every badge in the gallery was rendering as bare inline text. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  line-height: 1.45;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--ink-2);
+  /* The generator string is a sentence, not a word, and the panel is narrow. */
+  overflow-wrap: anywhere;
+  color: var(--paper-dim);
+}
+
+/* Provenance. Violet, because nothing else on the page uses it, so "where did this come from" never
+   reads as a status or a subject. */
+.badge-ref {
+  color: #b3a3c7;
+  border-color: #3b3348;
+  background: rgba(179, 163, 199, 0.06);
+}
+
+.badge-ref::before {
+  content: '\25C6';
+  margin-right: 0.34rem;
+  font-size: 0.68em;
+  vertical-align: 0.06em;
+}
+
+/* Inferred rather than measured: the same family, hollow, and stepped back. */
+.badge-ref-image {
+  color: #8b929d;
+  border-color: var(--rule);
+  background: var(--ink-2);
+}
+
+.badge-ref-image::before {
+  content: '\25C7';
+}
+
+/* Subject class. Sage for a thing you could hold, periwinkle for someone. */
+.badge-object {
+  color: #8fae94;
+  border-color: #2e3f31;
+  background: rgba(143, 174, 148, 0.06);
+}
+
+.badge-character {
+  color: #9aa6d4;
+  border-color: #333a52;
+  background: rgba(154, 166, 212, 0.06);
+}
+
+/* Status. Teal reads as settled; clay reads as unfinished without shouting "error", which a
+   placeholder is not. */
+.badge-status.status-final {
+  color: #84b3ab;
+  border-color: #2b423e;
+  background: rgba(132, 179, 171, 0.06);
+}
+
+.badge-status.status-placeholder {
+  color: #c0938e;
+  border-color: #46332f;
+  background: rgba(192, 147, 142, 0.06);
+}
+
+/* Version. The one badge that names the TOOL rather than the subject, so it takes the tool's own colour
+   family -- amber, but dimmed well below the accent, which stays reserved for things you can click. */
+.badge-version {
+  color: #b99a63;
+  border-color: #40361f;
+  background: rgba(185, 154, 99, 0.06);
+}
+
+/* The link to the reference itself, beside the link to the generated source: one is what was measured,
+   the other is what was written from it. */
+.btn-ref-link .ref-glyph {
+  color: #b3a3c7;
+}
+
+/* Turntable toggle. Its glyph turns while the orbit runs, so the button reports the state of the CAMERA
+   rather than only its own -- and it stops when the orbit does. */
+.btn-spin.is-active {
+  border-color: var(--accent, var(--amber));
+  background: color-mix(in srgb, var(--accent, var(--amber)) 18%, transparent);
+}
+
+.btn-spin.is-active .explode-glyph {
+  display: inline-block;
+  animation: spin-glyph 2.6s linear infinite;
+}
+
+@keyframes spin-glyph {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The glyph is decoration; the orbit it reports is the content. Only the decoration stops. */
+  .btn-spin.is-active .explode-glyph { animation: none; }
+}
+
 .demo-meta {
   display: flex;
   flex-direction: column;

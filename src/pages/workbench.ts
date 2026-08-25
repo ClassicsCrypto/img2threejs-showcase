@@ -3,7 +3,9 @@ import { Viewer, type PartInfo } from '../scene';
 import { parseRoute, replaceHashSilently } from '../router';
 import { createLoader, whenViewerReady, type Loader } from '../loader';
 import { DRAWERS } from '../content';
-import { brand, CURRENT_VERSION, GITHUB_CORE, SPONSORS } from '../site-data';
+import {
+  brand, CURRENT_VERSION, GITHUB_CORE, SPONSORS, extractVersion, escapeAttr,
+} from '../site-data';
 import {
   trackAnimationPlay,
   trackAnimationStop,
@@ -26,21 +28,6 @@ import {
   setAnalyticsOptOut,
   type ExhibitEntry,
 } from '../analytics';
-
-const VERSION_TAG = /v\d+(?:\.\d+){0,2}(?:-[a-z0-9.]+)?/i;
-
-function extractVersion(generatedWith: string): string | null {
-  return generatedWith.match(VERSION_TAG)?.[0] ?? null;
-}
-
-function escapeAttr(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;

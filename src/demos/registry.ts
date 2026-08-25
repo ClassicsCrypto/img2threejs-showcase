@@ -74,6 +74,12 @@ import {
   prewarmWarrior,
 } from './warrior/createWarriorModel';
 
+import {
+  createGirlCharacter3Model,
+  createGirlCharacter3LookDevLights,
+  prewarmGirlCharacter3,
+} from './girl-character-3/createGirlCharacter3Model';
+
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
   id: string;
@@ -82,6 +88,22 @@ export interface DemoEntry {
   /** 1-2 sentences */
   blurb: string;
   referenceImage: string;
+  /**
+   * WHAT THE RECONSTRUCTION WAS MEASURED FROM, which is the single most important thing to know when
+   * reading any number on this page. Default `image`.
+   *
+   * `image` — photographs or renders. Only two dimensions are given, so every depth, every cross-section
+   * profile and every hidden face is INFERRED, and a silhouette match is the strongest claim available.
+   * `model` — an existing 3D asset. Geometry is MEASURED: cross-sections, triangle counts and per-part
+   * volumes are read off the reference, so a claim like "the reference's exact triangle count" means
+   * something here and could not be stated at all from an image.
+   *
+   * The two deserve different credit and different scepticism, and a visitor cannot tell them apart from
+   * a thumbnail -- a render of a GLB and a photograph look alike.
+   */
+  referenceKind?: 'image' | 'model';
+  /** Where the reference itself can be inspected, when it is something a visitor can open. */
+  referenceUrl?: string;
   /** repo-relative path shown in UI */
   sourcePath: string;
   sourceUrl: string;
@@ -104,6 +126,14 @@ export interface DemoEntry {
   /** Optional link to the ArtStation artwork the reference image comes from. */
   artstationUrl?: string;
   status: 'placeholder' | 'final';
+  /**
+   * When this exhibit was last worked on, `YYYY-MM-DD`, taken from the last commit that touched its
+   * folder. The gallery is ordered by it, newest first.
+   *
+   * Recorded here rather than derived: the browser cannot read git history, and a build-time stamp would
+   * make every exhibit look updated on every deploy.
+   */
+  updatedAt: string;
   cameraPosition: [number, number, number];
   cameraTarget: [number, number, number];
   cameraFov: number;
@@ -125,6 +155,11 @@ export interface DemoEntry {
    * bespoke look-dev rig MUST use this instead of adding lights inside build().
    */
   installLights?: (scene: THREE.Scene) => void;
+  /**
+   * Orbit the camera slowly on load, so a subject whose sides differ shows them without a drag
+   * (default false). The visitor can stop it from the toolbar, and a drag pauses it either way.
+   */
+  turntable?: boolean;
   /** Adds the model (and any demo-specific lights) to the scene, returns the group. */
   build: (scene: THREE.Scene) => THREE.Group;
   /**
@@ -156,9 +191,10 @@ export interface DemoEntry {
 const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/img2threejs/img2threejs-showcase/blob/main';
 
-export const demos: DemoEntry[] = [
+const authored: DemoEntry[] = [
   {
     id: 'warrior',
+    updatedAt: '2026-08-25',
     title: 'Mouse Warrior — Rigged Surface Character',
     subjectClass: 'character',
     blurb:
@@ -198,6 +234,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'girl-character',
+    updatedAt: '2026-08-18',
     title: 'Dual-Sword Warrior — TypeScript procedural surfaces',
     subjectClass: 'character',
     blurb:
@@ -236,6 +273,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'low-poly-humanoid',
+    updatedAt: '2026-08-14',
     title: 'Low-Poly Humanoid — Rigged Character',
     subjectClass: 'character',
     blurb:
@@ -276,6 +314,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'awp-medusa-v2',
+    updatedAt: '2026-08-09',
     title: 'AWP | Medusa (Minimal Wear) · V2 rebuild',
     subjectClass: 'object',
     blurb:
@@ -335,6 +374,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'electric-mouse-mascot',
+    updatedAt: '2026-08-09',
     title: 'Pikachu 10K Star Celebration',
     subjectClass: 'character',
     blurb:
@@ -396,6 +436,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'glock-ghost-protocol',
+    updatedAt: '2026-07-26',
     title: 'Glock-18 | Ghost Protocol (Well-Worn)',
     subjectClass: 'object',
     blurb:
@@ -468,6 +509,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'classic-fade',
+    updatedAt: '2026-07-25',
     title: 'Classic Knife | Fade (Minimal Wear)',
     subjectClass: 'object',
     blurb:
@@ -525,6 +567,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'bmx-endurance',
+    updatedAt: '2026-07-23',
     title: 'BMX Endurance Bike',
     subjectClass: 'object',
     blurb:
@@ -613,6 +656,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'm9-doppler',
+    updatedAt: '2026-07-23',
     title: 'M9 Bayonet | Doppler Phase 2',
     subjectClass: 'object',
     blurb:
@@ -647,6 +691,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'sony-wf1000xm3',
+    updatedAt: '2026-07-16',
     title: 'Sony WF-1000XM3 Earbuds + Case',
     subjectClass: 'object',
     blurb:
@@ -678,6 +723,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'issaca-shotgun',
+    updatedAt: '2026-07-16',
     title: 'ISSACA 12 Gauge Shotgun',
     subjectClass: 'object',
     blurb:
@@ -710,6 +756,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'gerber-knife',
+    updatedAt: '2026-07-16',
     title: 'Gerber Paracord Knife',
     subjectClass: 'object',
     blurb:
@@ -741,6 +788,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'doraemon-house',
+    updatedAt: '2026-07-16',
     title: 'Doraemon House (isometric diorama)',
     subjectClass: 'object',
     blurb:
@@ -773,6 +821,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'warhauler',
+    updatedAt: '2026-07-16',
     title: 'War-Hauler "SECTOR 07"',
     subjectClass: 'object',
     blurb:
@@ -804,6 +853,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'crown-chest',
+    updatedAt: '2026-07-16',
     title: 'Crowned Loot Chest',
     subjectClass: 'object',
     blurb:
@@ -827,6 +877,7 @@ export const demos: DemoEntry[] = [
   },
   {
     id: 'talon-doppler-ruby',
+    updatedAt: '2026-08-08',
     title: '★ Talon Knife | Doppler Ruby (Factory New)',
     subjectClass: 'object',
     blurb:
@@ -906,7 +957,84 @@ export const demos: DemoEntry[] = [
       return group;
     },
   },
+  {
+    id: 'girl-character-3',
+    updatedAt: '2026-08-24',
+    title: 'Dual-Sword Warrior — Procedural Character',
+    subjectClass: 'character',
+    // A figure has a front, a back and two profiles that read differently, and the rebuild is being
+    // judged on all four. Turning is the default here for that reason; the toolbar can stop it.
+    turntable: true,
+    blurb:
+      'No GLB, no image, no mesh file is fetched at runtime: each of the reference\u2019s 31 parts is '
+      + 'rebuilt offline as a signed distance field splatted from that part\u2019s own point cloud, '
+      + 'contoured with Surface Nets, and reduced by quadric-error edge collapse to the reference\u2019s '
+      + 'EXACT triangle count \u2014 1,599,896 in total and part for part, none off by one. A uniform '
+      + 'grid cannot land on that count and cannot hold a face either: at the head\u2019s 75,294 '
+      + 'triangles it is 3.5 mm, and an eyelid\u2019s relief is 1.6 mm. So the field is contoured '
+      + 'finer than the budget and the error metric decides where the triangles go, which is what puts '
+      + 'them on the nose and the lids instead of the cheek. The reference\u2019s own texture '
+      + 'coordinates are transferred onto the rebuilt triangles \u2014 per TRIANGLE, because its atlas '
+      + 'is cut into islands and 17.7% of its head vertices are seam duplicates \u2014 so its colour, '
+      + 'normal and metallic-roughness maps are read at their own resolution instead of averaged onto '
+      + 'vertices. That is what an iris needs: at a fixed triangle count, per-vertex colour is strictly '
+      + 'less resolution than a texture. Measured against the reference: area-weighted silhouette IoU '
+      + '0.963, surface noise 1.25x, and every one of the twelve regions within 5% on luminance, ten of '
+      + 'them within 3%. Rigged on 22 authored bones \u2014 the reference has no '
+      + 'skeleton at all \u2014 with a procedural idle: a 4-second breath, a lagged ponytail spring, a '
+      + 'travelling hem wave and an irregular blink \u2014 and nothing else: there is no action clip to '
+      + 'strike a pose that would hide the surface being shown. The camera turntable carries every side '
+      + 'past instead; drag to take it over, and the toolbar stops it. Add ?sdf=0 to rebuild every part '
+      + 'from measured cross-sections instead, at the identical triangle count.',
+    referenceImage: `${BASE}references/girl-character-3/ed-pantera-11.jpg`,
+    // Measured from a GLB, not from photographs -- which is what lets this demo state a per-part triangle
+    // count and be held to it. The thumbnail is a render OF that model, so it needs saying explicitly.
+    referenceKind: 'model',
+    // The heaviest stream in the gallery: 24.5 MB of encoded mesh plus 4.1 MB of texture. Without a
+    // prewarm the page shows the cross-section loft first and then visibly swaps to the real surfaces.
+    prewarm: prewarmGirlCharacter3,
+    referenceUrl: 'https://hyper3d.ai/workspace/rodin/b0d3a7bb-86d4-45dd-b93b-2d45316cdade',
+    sourcePath: 'src/demos/girl-character-3/createGirlCharacter3Model.ts',
+    sourceUrl: `${REPO}/src/demos/girl-character-3/createGirlCharacter3Model.ts`,
+    generatedWith: 'img2threejs v1.5.1 - implicit surfaces decimated to the reference count',
+    author: 'Hoai Nho',
+    authorUrl: 'https://github.com/hoainho',
+    status: 'final',
+    cameraPosition: [0, 1.05, 3.15],
+    cameraTarget: [0, 0.92, 0],
+    cameraFov: 32,
+    accent: '#d8d3c7',
+    backgroundGradient: { inner: '#3a3a3d', outer: '#232326' },
+    exposure: 1.06,
+    environmentIntensity: 1.15,
+    toneMapping: 'aces',
+    installLights: (scene) => {
+      scene.add(createGirlCharacter3LookDevLights());
+    },
+    build: (scene) => {
+      const group = createGirlCharacter3Model({
+        castShadow: true,
+        receiveShadow: true,
+        // Closed over the scene the viewer actually draws, so it keeps working across the model's own
+        // code-split rebuild. `Viewer.start` publishes the rate; 15 deg/s is its default, so a nominal
+        // turntable reads as 1.
+        ambient: () => Math.min(1.5, ((scene.userData as { turntableRate?: number }).turntableRate ?? 0) / 15),
+      });
+      scene.add(group);
+      return group;
+    },
+  },
 ];
+
+/**
+ * The gallery, newest first.
+ *
+ * Sorted here so every consumer -- the workbench filmstrip, the drawers, the router -- agrees on one
+ * order. `sort` is stable in every engine this ships to, so exhibits sharing a date keep the order they
+ * were authored in rather than shuffling between builds.
+ */
+export const demos: DemoEntry[] = [...authored]
+  .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0));
 
 export function getDemo(id: string): DemoEntry | undefined {
   return demos.find((demo) => demo.id === id);
