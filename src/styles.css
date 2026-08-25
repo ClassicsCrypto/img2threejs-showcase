@@ -1010,6 +1010,27 @@ body.intro-active { overflow: hidden; }
   color: var(--amber);
 }
 
+/**
+ * A drawer-to-drawer link inside a sentence. It has to be a <button>, not an <a>: the drawers are
+ * one overlay that swaps its own content, and an anchor would put a second history entry between
+ * the sponsor page and the privacy page it points at. Styled to read as the inline links beside it
+ * so the sentence does not visibly change register mid-clause.
+ */
+.dr-inline-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--amber);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.dr-inline-link:hover {
+  text-decoration-thickness: 2px;
+}
+
 .dr-actions {
   display: flex;
   flex-wrap: wrap;

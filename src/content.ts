@@ -9,6 +9,7 @@
  */
 
 import { demos } from './demos/registry';
+import { isOptedOut } from './analytics';
 import {
   ARROW_OUT,
   brand,
@@ -86,7 +87,7 @@ function roadmapDrawer(): string {
 function sponsorDrawer(): string {
   const logos = SPONSORS.map(
     (s) => `
-      <article class="sp-logo">
+      <article class="sp-logo" data-sponsor="${escapeAttr(s.id)}">
         <img src="${s.logo}" alt="${escapeAttr(s.name)}" loading="lazy" />
         <h3 class="sp-name">${escapeAttr(s.name)}</h3>
         <p class="sp-blurb">${escapeAttr(s.blurb)}</p>
@@ -104,14 +105,18 @@ function sponsorDrawer(): string {
       compute the reconstruction loop burns.
     </p>
     <div class="sp-grid">${logos}</div>
-    <div class="dr-actions">
+    <div class="dr-actions" data-placement="sponsor_support">
       <a class="btn btn-accent" href="${COFFEE_URL}" target="_blank" rel="noopener noreferrer">${HEART} Buy me a coffee</a>
       <a class="btn" href="${DONATE_URL}" target="_blank" rel="noopener noreferrer">VietQR &middot; MoMo &middot; PayPal</a>
       <a class="btn" href="${DISCORD_URL}" target="_blank" rel="noopener noreferrer">Join the Discord</a>
     </div>
     <p class="dr-note">
       Want your logo in this list? Write to
-      <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.
+      <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>. Sponsors are sent an anonymous,
+      aggregate monthly count of how many times their card was seen and how many times it was
+      clicked &mdash; never anything about who did either. The
+      <button type="button" class="dr-inline-link" data-drawer="privacy">privacy page</button>
+      states exactly what is measured.
     </p>`;
 }
 
@@ -291,49 +296,127 @@ function attributionDrawer(): string {
 /* ------------------------------------------------------------------ privacy */
 
 function privacyDrawer(): string {
+  const optedOut = isOptedOut();
+
   return `
     <h2>Privacy</h2>
     <p class="dr-lede">
-      Short version: this site has no analytics, no cookies, no tracking, no advertising, and no
-      account of any kind. It never asks you for a single piece of personal information, because
-      there is nothing here that would use one.
+      Short version: this site measures how it is used, with Google Analytics. There is no
+      advertising, no account, no personal information asked for and nothing sold or shared with
+      anyone but the analytics provider that processes it. This page lists what is actually
+      collected, names the cookies, and gives you a switch to turn it off.
     </p>
 
-    <h3 class="dr-h3">What the page loads</h3>
     <p class="dr-copy">
-      Everything is bundled and served from this domain. The models are code that runs in your
-      browser, the fonts are the ones already on your system, and the page makes no request to any
-      third party &mdash; the safety check that runs on every contribution rejects
-      <span class="mono">fetch</span>, <span class="mono">XMLHttpRequest</span> and
-      <span class="mono">WebSocket</span> in exhibit code, so this holds for demos too. Outbound
-      links (GitHub, Discord, the sponsor and donation pages) reach those services only if you
-      click them.
+      This page used to say the site had no analytics at all, and for a while that was true. It
+      changed when the project took on logo sponsors: a sponsor paying for compute is owed evidence
+      of what their placement did, and &ldquo;trust us, people click it&rdquo; is not evidence. So the
+      claim changed rather than the page quietly staying as it was.
     </p>
 
-    <h3 class="dr-h3">The one thing stored on your device</h3>
+    <h3 class="dr-h3">What is measured</h3>
+    <p class="dr-copy">
+      Interactions with the site, sent to Google Analytics 4 as named events. The complete list is
+      in <a href="${GITHUB_SHOWCASE}/blob/main/src/analytics.ts" target="_blank" rel="noopener noreferrer">
+      one source file</a> &mdash; every event this site can send is a named function in it, so the
+      list below can be checked against the code rather than taken on faith:
+    </p>
+    <dl class="dr-defs">
+      <div><dt class="label">Navigation</dt><dd>Which route you open &mdash; an exhibit, the roadmap, this page &mdash; and how you got there (rail, arrow keys, search, a shared link)</dd></div>
+      <div><dt class="label">Exhibits</dt><dd>Which model, how long it took to build on your machine, whether it finished, and whether you orbited it at all</dd></div>
+      <div><dt class="label">Controls</dt><dd>Animations played, the explode slider, and which named part you selected</dd></div>
+      <div><dt class="label">Reading</dt><dd>Which content pages and which FAQ questions get opened</dd></div>
+      <div><dt class="label">Search</dt><dd>What you type into the exhibit palette (&#8984;K). It matches against a fixed list of exhibit titles; nothing else on the site accepts text</dd></div>
+      <div><dt class="label">Outbound clicks</dt><dd>Links to GitHub, Discord, ArtStation, the donation channels &mdash; and sponsor cards, which is the reason any of this exists</dd></div>
+      <div><dt class="label">From Google, not from us</dt><dd>Approximate location derived from your IP (country, region, city), device, browser, screen size, language, and the site that referred you</dd></div>
+    </dl>
+
+    <h3 class="dr-h3">What sponsors are told</h3>
+    <p class="dr-copy">
+      Two numbers per sponsor per month: how many times their card was on screen, and how many times
+      it was clicked. A card counts as seen when at least a quarter of it scrolls into view, once per
+      visit to the sponsor page &mdash; a deliberately conservative denominator, so the click-through
+      rate a sponsor is shown is not inflated by counting cards nobody scrolled to. Sponsors receive
+      totals and nothing else: no visitor, no session, no location, no list of who clicked.
+    </p>
+
+    <h3 class="dr-h3">What is not collected</h3>
+    <p class="dr-copy">
+      No name, email, or account &mdash; the site has no login and no form. No identifier of this
+      project's own making. Nothing you type anywhere except the exhibit search above. No
+      advertising features: Google Signals, ad personalisation and data sharing for ads are all off
+      on the property, so nothing here feeds cross-site ad profiling. Nothing is sold, and no data
+      is shared with any third party other than Google as the processor.
+    </p>
+
+    <h3 class="dr-h3">Cookies, named</h3>
+    <p class="dr-copy">
+      Google Analytics sets two first-party cookies on this domain: <span class="mono">_ga</span> and
+      <span class="mono">_ga_&lt;stream&nbsp;id&gt;</span>. They hold a randomly generated number that
+      lets a second page view be recognised as the same browser rather than a new one, they expire
+      two years after your last visit, and they are readable only by this domain. That is the whole
+      set &mdash; there is no advertising cookie, and Google Analytics 4 does not log or store IP
+      addresses. Event data is retained for 14 months on the property and then deleted by Google.
+    </p>
+
+    <h3 class="dr-h3">The one thing stored by the site itself</h3>
     <p class="dr-copy">
       A single <span class="mono">sessionStorage</span> entry,
       <span class="mono">img2threejs:intro-seen</span>, so the opening animation plays once per
       browser session instead of on every navigation. It holds the value
-      <span class="mono">"1"</span> and nothing else, it never leaves your device, and your browser
-      discards it when you close the tab. There are no cookies and no
-      <span class="mono">localStorage</span>.
+      <span class="mono">"1"</span>, it never leaves your device, and your browser discards it when
+      you close the tab. Turning analytics off with the switch below adds a second one,
+      <span class="mono">img2threejs:analytics-opt-out</span>, in
+      <span class="mono">localStorage</span> &mdash; the choice has to outlive the tab to be worth
+      anything.
     </p>
 
-    <h3 class="dr-h3">What the host can still see</h3>
+    <h3 class="dr-h3">The exhibits themselves still make no requests</h3>
     <p class="dr-copy">
-      Being straight about the limit of the claim: this site is served by GitHub Pages, and like any
-      web host GitHub receives your IP address and user agent in the ordinary course of delivering
-      the page. That is outside this project's control and is governed by GitHub's own privacy
-      statement. No such data is collected, requested or received by ${brand('img2threejs')}.
+      Worth separating from the above, because it is the claim this project actually stakes something
+      on: the models are code, and that code reaches the network never. The safety check that runs on
+      every contribution rejects <span class="mono">fetch</span>,
+      <span class="mono">XMLHttpRequest</span> and <span class="mono">WebSocket</span> in exhibit
+      code, and there are no imported meshes, no CDN and no remote fonts. The only third-party
+      request this site makes is the analytics script, and it is not involved in rendering anything.
     </p>
+
+    <h3 class="dr-h3">Who processes it</h3>
+    <p class="dr-copy">
+      Google, as the analytics provider &mdash; see
+      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Google's privacy policy</a>
+      and
+      <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer">how Google uses data from sites that use its services</a>.
+      Separately, and as with any web host, GitHub Pages receives your IP address and user agent in
+      the ordinary course of delivering this page; that is governed by GitHub's own privacy
+      statement and is outside this project's control.
+    </p>
+
+    <h3 class="dr-h3">Turning it off</h3>
+    <p class="dr-copy">
+      ${optedOut
+        ? 'Analytics is <strong>off</strong> in this browser. Nothing is being sent, and the analytics script is not loaded.'
+        : 'Analytics is <strong>on</strong> in this browser. One click stops it, permanently, on this device.'}
+      The setting is stored on your device, not against any identity, so it applies to this browser
+      only. An ad blocker, tracker blocker or a browser that blocks
+      <span class="mono">googletagmanager.com</span> achieves the same thing and is not worked around
+      here.
+    </p>
+    <div class="dr-actions">
+      <button type="button" class="btn ${optedOut ? '' : 'btn-accent'}" data-analytics-toggle="${optedOut ? 'on' : 'off'}">
+        ${optedOut ? 'Turn analytics back on' : 'Turn analytics off in this browser'}
+      </button>
+    </div>
 
     <h3 class="dr-h3">Verify it yourself</h3>
     <p class="dr-copy">
-      Do not take the claim on trust &mdash; it is checkable in about thirty seconds. Open your
-      browser's developer tools, go to the Network panel, and reload this page: every request should
-      be to this domain. The Application panel will show the single session entry described above and
-      no cookies. The site's full source is public.
+      Do not take any of this on trust. Open your browser's developer tools, go to the Network panel
+      and reload: apart from <span class="mono">googletagmanager.com</span> and the
+      <span class="mono">/g/collect</span> requests it makes, every request should be to this domain.
+      Add <span class="mono">?analytics_debug=1</span> to the URL and the console prints every event
+      as it is sent, with its parameters &mdash; which is the fastest way to check that this page
+      describes what the code does. The Application panel will show the cookies and storage entries
+      named above and nothing else.
     </p>
 
     <p class="dr-note">
@@ -376,7 +459,7 @@ const FAQ: Array<[string, string]> = [
   ],
   [
     'Is the site tracking me?',
-    'No — no analytics, no cookies, no third-party requests. The privacy page explains exactly what is stored (one session flag) and, honestly, what the host can still see. It also tells you how to verify all of it in your own developer tools rather than believing the claim.',
+    'It measures you, and it should say so plainly: Google Analytics is installed, it sets two first-party cookies, and it records which exhibits you open, whether you orbit them, which pages you read and which outbound links you click. It exists for one reason — logo sponsors are owed evidence that their placement does something, and the whole sponsor report is two numbers per sponsor: card seen, card clicked. There is no advertising, no account, nothing you type except the exhibit search, and no data sold or shared with anyone but Google as the processor. The privacy page names the cookies, lists every event, gives you a switch to turn it off, and tells you how to verify all of it in your own developer tools. This answer used to be a flat "no", and changing it was the honest thing to do when the site changed.',
   ],
 ];
 
@@ -410,8 +493,11 @@ function aboutDrawer(): string {
     <h2>About &amp; contact</h2>
     <p class="dr-lede">
       Every model in this workbench is a TypeScript factory function. There are no imported meshes,
-      no downloaded art packs and no runtime network calls &mdash; the geometry is executed in your
-      browser from code that ${brand('img2threejs')} generated from a single reference photo.
+      no downloaded art packs and no network call anywhere in the rendering path &mdash; the geometry
+      is executed in your browser from code that ${brand('img2threejs')} generated from a single
+      reference photo. The site's one third-party request is its analytics script, which renders
+      nothing; the <button type="button" class="dr-inline-link" data-drawer="privacy">privacy
+      page</button> covers it.
     </p>
 
     <h3 class="dr-h3">This is the official site</h3>
@@ -456,7 +542,7 @@ function menuDrawer(): string {
     ['faq', 'FAQ', 'Straight answers, including the ones that are “ask a lawyer”'],
     ['sponsor', 'Sponsors', 'Who pays for the compute, and how to help'],
     ['attribution', 'Attribution', 'Whose designs these reconstructions belong to'],
-    ['privacy', 'Privacy', 'No analytics, no cookies — and how to verify that'],
+    ['privacy', 'Privacy', 'What analytics collects, the cookies it sets, and the switch to stop it'],
     ['about', 'About & contact', 'Official links, the maintainer, the licence'],
   ];
   return `
