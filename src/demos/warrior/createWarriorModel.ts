@@ -22,12 +22,17 @@ export type WarriorQuality = 'high' | 'medium' | 'low';
  * decimated with meshoptimizer, boundary edges locked so node seams and open silhouettes stay where
  * the measurement put them.
  *
- * Measured on the shipped stream, worst case across all 47 nodes:
+ * Measured on a built model, and the deviation measured against the full-density surfaces:
  *
- *     level     triangles     of baseline     max simplification error
- *     High      8,534,984          100%       0 (untouched)
- *     Medium    2,133,558           25%       0.0003
- *     Low         852,854           10%       0.0007
+ *     level     triangles     of baseline     worst deviation     mean deviation
+ *     High      8,535,064          100%       0 (untouched)       0
+ *     Medium    4,000,260           47%       0.117 mm            0.029 mm
+ *     Low       1,499,476           18%       0.250 mm            0.072 mm
+ *
+ * Those are small against the grid the surfaces were contoured on — cells run 0.77 to 1.21 mm, so
+ * even the worst node moves by a quarter of one cell, under the resolution of the measurement
+ * itself. Rendered and diffed against High at the same frozen capture camera, Low changes 172 of
+ * 150,913 subject pixels along the silhouette (0.11%) and 1.55% of them by more than 32/255.
  *
  * `?quality=high` and `?quality=medium` remain reachable, and High is byte-identical to what this
  * file produced before the levels existed.
@@ -43,7 +48,7 @@ function readWarriorQuality(): WarriorQuality {
 const WARRIOR_QUALITY = readWarriorQuality();
 
 /** Kept beside the table above so the note and the ratio cannot drift apart. */
-const WARRIOR_QUALITY_RATIO: Record<WarriorQuality, number> = { high: 1, medium: 0.25, low: 0.1 };
+const WARRIOR_QUALITY_RATIO: Record<WarriorQuality, number> = { high: 1, medium: 0.4687, low: 0.1757 };
 
 /**
  * Generous enough that meshoptimizer reaches the requested ratio on every node rather than stopping
@@ -454,9 +459,9 @@ export function createWarriorModel(options: WarriorOptions = {}): THREE.Group {
         { id: 'high', label: 'High',
           note: '8.53M triangles · every measured Surface Nets triangle, untouched' },
         { id: 'medium', label: 'Medium',
-          note: '2.13M triangles · quarter density, 0.0003 max simplification error' },
+          note: '4.00M triangles · 0.117 mm worst deviation from the measured surface' },
         { id: 'low', label: 'Low',
-          note: '853K triangles · tenth density with node seams locked, 0.0007 max error' },
+          note: '1.50M triangles · 0.250 mm worst deviation, node seams locked' },
       ],
     },
     pass: 'stage-1-cross-section-floor',
