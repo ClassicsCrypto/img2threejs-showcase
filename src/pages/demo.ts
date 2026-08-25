@@ -4,6 +4,21 @@ import { Viewer, type PartInfo } from '../scene';
 import { navigate } from '../router';
 import { brand, GITHUB_CORE as GITHUB_URL } from '../site-data';
 import { createLoader, whenViewerReady } from '../loader';
+import {
+  resetExhibitOnceKeys,
+  trackAnimationPlay,
+  trackAnimationStop,
+  trackExhibitPrewarmFailed,
+  trackExhibitReady,
+  trackExhibitView,
+  trackExplode,
+  trackLinkClick,
+  trackPartIsolate,
+  trackPartSelect,
+  trackQualitySwitch,
+  trackSourceClick,
+  trackViewerInteract,
+} from '../analytics';
 
 /** Viewports where the info panel becomes a collapsible bottom sheet over the model. */
 const COMPACT_QUERY = '(max-width: 860px), (max-height: 520px)';
@@ -30,6 +45,17 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
 
   const compact = window.matchMedia(COMPACT_QUERY);
   const expanded = panelExpanded ?? !compact.matches;
+  const startedAt = performance.now();
+  /**
+   * Always 'deeplink': `#/demo/<id>` is only ever reached from outside the workbench — a shared
+   * link, a README link, or the workbench's own "Open full viewer" button, which reports its own
+   * event before navigating. Nothing inside this page can change the exhibit without a reload.
+   *
+   * Unguarded by `capture`, because it does not need to be: a capture run is a headless browser on
+   * localhost, and `analytics.ts` refuses to send for either of those reasons on its own.
+   */
+  resetExhibitOnceKeys(demo.id);
+  trackExhibitView(demo, 'deeplink', 'viewer');
 
   mount.innerHTML = `
     <div class="demo-page">
@@ -95,7 +121,8 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
               <button class="btn btn-explode" id="demo-explode" type="button" aria-pressed="false" hidden>
                 <span class="explode-glyph">&#10021;</span> <span class="explode-label">Explode parts</span>
               </button>
-              <a class="btn" href="${demo.sourceUrl}" target="_blank" rel="noopener noreferrer">
+              <a class="btn" href="${demo.sourceUrl}" target="_blank" rel="noopener noreferrer"
+                 data-track-skip>
                 &lt;/&gt; View generated source
               </a>
               ${demo.tripoUrl ? `
@@ -196,7 +223,10 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
       button.textContent = action.label;
       button.setAttribute('aria-pressed', 'false');
       button.title = action.loop ? `${action.label} (loops until stopped)` : `${action.label} (plays once)`;
-      const onClick = (): void => animationController.play(action.id);
+      const onClick = (): void => {
+        animationController.play(action.id);
+        trackAnimationPlay(demo.id, action, 'viewer');
+      };
       button.addEventListener('click', onClick);
       animationButtonCleanups.push(() => button.removeEventListener('click', onClick));
       animationButtons.appendChild(button);
@@ -207,7 +237,10 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     stopButton.className = 'btn demo-animation-btn demo-animation-stop';
     stopButton.dataset.animation = 'stop';
     stopButton.textContent = 'Stop / Reset';
-    const onStop = (): void => animationController.stop();
+    const onStop = (): void => {
+      animationController.stop();
+      trackAnimationStop(demo.id, 'viewer');
+    };
     stopButton.addEventListener('click', onStop);
     animationButtonCleanups.push(() => stopButton.removeEventListener('click', onStop));
     animationButtons.appendChild(stopButton);
@@ -253,6 +286,9 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
       button.setAttribute('aria-pressed', String(selected));
       if (selected && status) status.value = option.note;
       button.addEventListener('click', () => {
+        // Sent before the navigation: switching detail level reloads the page, so an event queued
+        // after `location.href` is assigned may never leave the browser.
+        trackQualitySwitch(demo.id, option.id);
         const url = new URL(window.location.href);
         url.searchParams.delete('lod');
         url.searchParams.delete('sdf');
@@ -331,6 +367,7 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     let exploded = false;
     explodeBtn.addEventListener('click', () => {
       exploded = !exploded;
+      trackExplode(demo.id, exploded ? 1 : 0, 'viewer');
       viewer.setExplode(exploded ? 1 : 0);
       explodeBtn.setAttribute('aria-pressed', String(exploded));
       explodeBtn.classList.toggle('is-active', exploded);
@@ -383,7 +420,10 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     isolateBtn.type = 'button';
     isolateBtn.setAttribute('aria-pressed', String(viewer.isolated));
     // No manual re-render: setIsolate reports back through onSelect.
-    isolateBtn.addEventListener('click', () => viewer.setIsolate(!viewer.isolated));
+    isolateBtn.addEventListener('click', () => {
+      trackPartIsolate(demo.id, !viewer.isolated, 'viewer');
+      viewer.setIsolate(!viewer.isolated);
+    });
     const clearBtn = el('button', 'btn part-btn', 'Clear');
     clearBtn.type = 'button';
     clearBtn.addEventListener('click', () => {
@@ -465,7 +505,10 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     // replaces the buttons but would stack a second identical handler on the list itself.
     partsList.addEventListener('click', (e) => {
       const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.part-item');
-      if (btn?.dataset.part) viewer.selectByName(btn.dataset.part);
+      if (!btn?.dataset.part) return;
+      viewer.selectByName(btn.dataset.part);
+      const part = viewer.parts.find((candidate) => candidate.name === btn.dataset.part);
+      if (part) trackPartSelect(demo.id, part, 'viewer');
     });
 
     populateParts();
@@ -478,7 +521,12 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
       // `finally`, not `then`. A prewarm that REJECTS still changes the scene -- girl-character falls
       // back to its cross-section loft -- and running the UI sync only on success left that fallback
       // with no parts panel and no explode button at all.
-      void demo.prewarm().catch(() => { /* the demo logs its own reason */ }).finally(() => {
+      void demo.prewarm().catch(() => {
+        /* the demo logs its own reason */
+        // Reported from this catch and not the loader's below: `prewarm` caches and resolves the
+        // same promise for both, so tracking it in both places would double-count one failure.
+        trackExhibitPrewarmFailed(demo.id, 'viewer');
+      }).finally(() => {
         viewer.rebuildParts();
         populateParts();
         syncExplodeButton();
@@ -550,7 +598,22 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
         loader.phase('Framing');
         return whenViewerReady();
       })
-      .then(() => loader.done());
+      .then(() => {
+        loader.done();
+        const manifest = viewer.partManifest();
+        trackExhibitReady(
+          demo,
+          {
+            loadMs: performance.now() - startedAt,
+            triangles: manifest
+              ? manifest.parts.reduce((sum, part) => sum + part.triangles, 0)
+              : 0,
+            partCount: manifest ? manifest.parts.length : 0,
+            prewarm: !!demo.prewarm,
+          },
+          'viewer',
+        );
+      });
   }
 
   // --- collapsible details sheet ---------------------------------------------------------
@@ -583,11 +646,54 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
   const hintTimer = window.setTimeout(hideHint, 6000);
   canvasMount.addEventListener('pointerdown', hideHint, { once: true });
 
+  /* --- measurement ------------------------------------------------------------------------
+   *
+   * Two handlers, both delegated, both removed in the cleanup below.
+   *
+   * The link handler is the reason the Tripo provenance link on an exhibit counts for Tripo without
+   * this file knowing that Tripo is a sponsor: `trackLinkClick` resolves the destination's hostname
+   * against the sponsor list, so a sponsor's own asset page lands in the same report row as their
+   * card in the sponsor drawer. Add another provenance link tomorrow and it is attributed with no
+   * change here. `data-track-skip` marks the source link, which sends a richer event of its own.
+   */
+  const reportFirstInput = (input: 'pointer' | 'wheel' | 'touch') => (): void => {
+    trackViewerInteract(demo.id, input, 'viewer');
+  };
+  const onFirstPointer = reportFirstInput('pointer');
+  const onFirstWheel = reportFirstInput('wheel');
+  const onFirstTouch = reportFirstInput('touch');
+  canvasMount.addEventListener('pointerdown', onFirstPointer);
+  canvasMount.addEventListener('wheel', onFirstWheel, { passive: true });
+  canvasMount.addEventListener('touchstart', onFirstTouch, { passive: true });
+
+  const onPanelLinkClick = (event: MouseEvent): void => {
+    const anchor = (event.target as HTMLElement).closest<HTMLAnchorElement>('a[href]');
+    if (!anchor) return;
+    const href = anchor.getAttribute('href') ?? '';
+    if (anchor.hasAttribute('data-track-skip')) {
+      trackSourceClick(demo.id, 'viewer');
+      return;
+    }
+    // `#/` is the back link. The route it leads to reports its own page view.
+    if (!href || href.startsWith('#')) return;
+    trackLinkClick({
+      url: anchor.href,
+      label: anchor.textContent?.trim().replace(/\s+/g, ' '),
+      placement: 'demo_panel',
+      exhibitId: demo.id,
+    });
+  };
+  mount.addEventListener('click', onPanelLinkClick);
+
   return () => {
     window.clearTimeout(hintTimer);
     bar.removeEventListener('click', onBarClick);
     compact.removeEventListener('change', onCompactChange);
     canvasMount.removeEventListener('pointerdown', hideHint);
+    canvasMount.removeEventListener('pointerdown', onFirstPointer);
+    canvasMount.removeEventListener('wheel', onFirstWheel);
+    canvasMount.removeEventListener('touchstart', onFirstTouch);
+    mount.removeEventListener('click', onPanelLinkClick);
     animationController?.stop();
     unsubscribeAnimation?.();
     for (const cleanup of animationButtonCleanups) cleanup();

@@ -35,6 +35,28 @@ export const CONTACT_EMAIL = 'hoainho.work@gmail.com';
 export const CONTACT_NAME = 'Nick';
 export const CURRENT_VERSION = 'v1.5.1';
 
+/* --------------------------------------------------------------------------- analytics */
+
+/**
+ * The GA4 measurement ID, committed in the clear on purpose: it is not a secret. Every visitor
+ * receives it in the page anyway, Google's own install instructions put it in the HTML, and the
+ * alternative — a build secret — would mean the ID is absent from local builds and PR previews,
+ * which is exactly where an analytics change needs to be testable.
+ *
+ * Replace the placeholder with the property's real ID (Admin → Data streams → your stream → the
+ * `G-` prefixed Measurement ID). While it is still the placeholder, `analytics.ts` sends nothing at
+ * all and says why in the console under `?analytics_debug=1`.
+ */
+export const GA_MEASUREMENT_ID_PLACEHOLDER = 'G-XXXXXXXXXX';
+export const GA_MEASUREMENT_ID: string = 'G-7GXMDHK2DE';
+
+/**
+ * Hostnames allowed to send measurements, so `localhost`, a `vite preview`, a fork's Pages build
+ * and a Cloudflare preview deploy cannot pollute the property that sponsor reports are drawn from.
+ * `?analytics_debug=1` overrides this for deliberate local verification.
+ */
+export const ANALYTICS_HOSTS: readonly string[] = ['img2threejs.io', 'www.img2threejs.io'];
+
 /**
  * Wraps every occurrence of the product name in the animated gradient span, so the brand reads the
  * same everywhere it appears — including inside strings that come from the registry (blurbs and
@@ -61,8 +83,21 @@ export const HEART = `&#9829;${TEXT_GLYPH}`;
 export const ARROW_OUT = `&#8599;${TEXT_GLYPH}`;
 
 export interface SponsorEntry {
+  /**
+   * Stable reporting key, and the reason it exists separately from `name`: sponsor reports are
+   * compared month over month, and a sponsor that rebrands must not become a second row that
+   * splits its own history in half. Never rename an id once a report has been sent to the sponsor.
+   */
+  id: string;
   name: string;
   url: string;
+  /**
+   * Extra hostnames belonging to this sponsor, beyond the one in `url`. Analytics attributes a
+   * click by hostname, so a link anywhere on the site — including a demo entry's `tripoUrl`
+   * provenance link, which points at an asset page rather than the marketing site — lands in the
+   * right sponsor's row without every page having to know who the sponsors are.
+   */
+  domains?: string[];
   /** The site renders dark-only (`color-scheme: dark`), so one light-on-dark mark is all it needs. */
   logo: string;
   /** What the sponsor sells, in their own terms. Sourced from their site, not written to flatter. */
@@ -83,6 +118,7 @@ export interface SponsorEntry {
  */
 export const SPONSORS: SponsorEntry[] = [
   {
+    id: 'atlas-cloud',
     name: 'Atlas Cloud',
     url: 'https://www.atlascloud.ai/console/coding-plan',
     logo: `${BASE}sponsors/atlas-cloud-logomark-white.svg`,
@@ -95,8 +131,13 @@ export const SPONSORS: SponsorEntry[] = [
     cta: 'Open the coding plan',
   },
   {
+    id: 'tripo',
     name: 'Tripo',
     url: 'https://www.tripo3d.ai/',
+    // `studio.tripo3d.ai` is where a demo's `tripoUrl` provenance link points; the resolver matches
+    // subdomains, so the marketing host alone would already cover it. Named anyway, because it is
+    // the one sponsor whose links appear outside the sponsor drawer.
+    domains: ['tripo3d.ai'],
     logo: `${BASE}sponsors/tripo-logomark-white.svg`,
     blurb:
       'Image- and text-to-3D at production quality: High Detail meshes up to 2M polygons, artist-' +
@@ -110,6 +151,7 @@ export const SPONSORS: SponsorEntry[] = [
     cta: 'Open Tripo Studio',
   },
   {
+    id: 'hyper3d',
     name: 'Hyper3D',
     url: 'https://hyper3d.ai/',
     logo: `${BASE}sponsors/hyper3d-logomark-white.png`,

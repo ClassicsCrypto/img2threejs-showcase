@@ -123,7 +123,12 @@ issue form first to get early feedback on scope before doing the work.
 - three ^0.169.0, TypeScript ^5.6.0, Vite ^5.4.0
 - Hash router only (`#/`, `#/demo/:id`) so GitHub Pages project-site refreshes
   never 404
-- No runtime network calls or external CDN/fonts — everything is bundled
+- No network call anywhere in the rendering path, and no external CDN or remote fonts — everything
+  an exhibit needs is bundled. The site's one third-party request is its Google Analytics script; it
+  renders nothing, and demo code is still barred from `fetch`/`XMLHttpRequest`/`WebSocket` by the
+  safety check. Every event the site sends is a named function in `src/analytics.ts`; setup, the
+  event reference and the sponsor report live in [`docs/ANALYTICS.md`](docs/ANALYTICS.md), and the
+  in-site privacy page states the same thing to visitors
 
 ## Develop
 
