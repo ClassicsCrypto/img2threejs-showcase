@@ -95,6 +95,14 @@ export interface DemoEntry {
   author: string;
   /** link to the author's profile (GitHub, etc.) */
   authorUrl: string;
+  /**
+   * Optional link to the Tripo asset this demo was generated from. The reconstruction is still
+   * code, but where a Tripo generation was the measurement instrument, the asset is part of the
+   * provenance and belongs next to the result.
+   */
+  tripoUrl?: string;
+  /** Optional link to the ArtStation artwork the reference image comes from. */
+  artstationUrl?: string;
   status: 'placeholder' | 'final';
   cameraPosition: [number, number, number];
   cameraTarget: [number, number, number];
@@ -169,6 +177,8 @@ export const demos: DemoEntry[] = [
       + 'then retain the hand-driven wooden-staff attack and secondary motion.',
     author: 'Hoài Nhớ',
     authorUrl: 'https://github.com/hoainho',
+    tripoUrl: 'https://studio.tripo3d.ai/3d-model/b156287a-5a0c-434a-bc2e-9a7b8e108b5d?invite_code=PW9ZEA',
+    artstationUrl: 'https://www.artstation.com/artwork/WB5nJX',
     status: 'placeholder',
     cameraPosition: [0, 0.4826, 5.8338],
     cameraTarget: [0, 0.4826, 0],
