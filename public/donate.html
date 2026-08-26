@@ -175,14 +175,19 @@
       }
       .paypal:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -10px var(--qr-shadow); }
 
+      /* Now a text button (the hosted badge image was a third-party request). Colours are set
+         explicitly: it used to be a white plate holding an image, so with only inherited colour
+         the label went invisible against #fff in dark mode. */
       .bmc {
-        flex: 1 1 0; display: flex; align-items: center; justify-content: center;
-        border-radius: 12px; background: #fff; padding: .35rem;
+        flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+        padding: .75rem 1rem; border-radius: 12px;
+        font-weight: 700; font-size: .95rem; text-decoration: none;
+        color: var(--text); background: var(--card);
+        border: 1px solid var(--line);
         box-shadow: 0 10px 26px -10px var(--qr-shadow);
         transition: transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s ease;
       }
       .bmc:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -10px var(--qr-shadow); }
-      .bmc img { height: 44px; width: auto; max-width: 100%; display: block; }
 
       footer { margin-top: 2rem; font-family: var(--mono); font-size: .85rem; color: var(--muted); }
       footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
@@ -230,8 +235,12 @@
           <a class="paypal" href="https://www.paypal.com/paypalme/NguyenHoai545" target="_blank" rel="noopener noreferrer">
             Donate via PayPal
           </a>
+          <!-- Text button, not the hosted badge image. The official <img> is served from
+               cdn.buymeacoffee.com, which made this the one page on the site that issued a
+               third-party request and handed a visitor's IP to a CDN before they had clicked
+               anything. The link still goes to the same place; only the tracking pixel is gone. -->
           <a class="bmc" href="https://www.buymeacoffee.com/hoainhowors" target="_blank" rel="noopener noreferrer">
-            <img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me a Coffee" />
+            Buy me a coffee
           </a>
         </div>
       </section>
@@ -240,5 +249,65 @@
         <span class="heart">&lt;3</span> &nbsp;·&nbsp; <a href="./">&larr; back to the img2threejs demo gallery</a>
       </footer>
     </main>
+
+    <!--
+      Analytics, standalone.
+
+      This page lives in `public/`, which Vite copies verbatim, so it cannot import from
+      `src/site-data.ts` the way the app does. The measurement ID below is therefore a SECOND copy
+      of `GA_MEASUREMENT_ID` — change both together. (`index.html` already duplicates `SITE_URL` in
+      its Open Graph tags for the same reason, and for the same reason it says so out loud.)
+
+      The three gates that stop the app from reporting junk are repeated here rather than assumed:
+      a non-production host, an automated browser, and the visitor's own opt-out — the same
+      `img2threejs:analytics-opt-out` key the privacy page writes, so opting out on the gallery
+      opts out here too.
+    -->
+    <script>
+      (function () {
+        var GA_MEASUREMENT_ID = 'G-4MSYRF7901';
+        var HOSTS = ['img2threejs.io', 'www.img2threejs.io'];
+        var debug = /[?&]analytics_debug=1\b/.test(location.search);
+
+        var optedOut = false;
+        try {
+          optedOut = localStorage.getItem('img2threejs:analytics-opt-out') === '1';
+        } catch (e) { /* storage blocked is not an opt-out */ }
+
+        if (GA_MEASUREMENT_ID === 'G-XXXXXXXXXX') return;
+        if (optedOut || navigator.webdriver) return;
+        if (!debug && HOSTS.indexOf(location.hostname) === -1) return;
+
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { window.dataLayer.push(arguments); };
+        gtag('js', new Date());
+        // This page has a real path, so GA4's own automatic page view is correct here — unlike the
+        // gallery, which is one document behind a hash router and has to send its own.
+        gtag('config', GA_MEASUREMENT_ID, { debug_mode: debug });
+
+        var script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_MEASUREMENT_ID;
+        document.head.appendChild(script);
+
+        /**
+         * `support_click`, with the same `channel` vocabulary `src/analytics.ts` uses, so the
+         * donation funnel reads as one report across both pages instead of two that have to be
+         * added up by hand. The QR code is deliberately not measured: it is an image, and a scan
+         * happens on a phone this page never hears from — inventing an event for it would put a
+         * number in the report that means nothing.
+         */
+        document.addEventListener('click', function (event) {
+          var anchor = event.target.closest && event.target.closest('a[href]');
+          if (!anchor) return;
+          var href = anchor.getAttribute('href') || '';
+          var channel = null;
+          if (href.indexOf('paypal.') !== -1) channel = 'paypal';
+          else if (href.indexOf('buymeacoffee.com') !== -1) channel = 'buymeacoffee';
+          if (!channel) return;
+          gtag('event', 'support_click', { channel: channel, placement: 'donate_page' });
+        });
+      })();
+    </script>
   </body>
 </html>

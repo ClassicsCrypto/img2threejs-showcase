@@ -1,6 +1,0 @@
-import { fail, pass } from "./gate.js";
-export function runtimeGates(compiled) {
-    const api = compiled.runtime && typeof compiled.runtime.update === "function" && typeof compiled.runtime.dispose === "function";
-    return [api ? pass("RUNTIME-API", { childNodes: compiled.root.children.length }, [{ kind: "runtime", ref: "CharacterRuntime" }]) : fail("RUNTIME-API", ["CharacterRuntime API is incomplete"], ["RuntimeCompiler: expose pose, morph, IK, appearance and update methods"]), compiled.root.userData.sculptRuntime ? pass("RUNTIME-ACTION-READY", { namedMeshes: compiled.meshes.size }, [{ kind: "runtime", ref: "root.userData.sculptRuntime" }]) : fail("RUNTIME-ACTION-READY", ["sculptRuntime marker missing"], ["RuntimeCompiler: attach CharacterRuntime"]), compiled.runtime.animation?.mixer ? pass("RUNTIME-ANIMATION", { stableJoints: compiled.ir.runtimeGraph.stableJointNames.length, stableMorphs: compiled.ir.runtimeGraph.stableMorphNames.length }, [{ kind: "runtime", ref: "AnimationMixer" }]) : fail("RUNTIME-ANIMATION", ["AnimationMixer backend is missing"], ["RuntimeCompiler: attach AnimationMixer to CharacterRuntime"])];
-}
-//# sourceMappingURL=runtime-gates.js.map

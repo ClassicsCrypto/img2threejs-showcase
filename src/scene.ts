@@ -28,6 +28,14 @@ export interface ViewerOptions {
   capture?: boolean;
   /** Side-on capture margin. Demos with photo plates that touch the frame can tighten this. */
   captureMargin?: number;
+  /**
+   * Orbit the camera slowly so every side of the subject is seen without the visitor having to drag
+   * (default false). Forced off in capture mode: an evaluation render has to be the same camera every
+   * run, and a moving one is the single surest way to guarantee it is not.
+   */
+  turntable?: boolean;
+  /** Turntable rate in degrees per second (default 15, so a full revolution in 24 s). */
+  turntableSpeed?: number;
 }
 
 /** An explicit review camera: geometry-independent, so a pass is measured rather than reframed. */
@@ -38,6 +46,29 @@ export interface PinnedCaptureCamera {
   near: number;
   far: number;
 }
+
+/**
+ * How long the turntable stays still after a drag ends.
+ *
+ * Long enough that letting go to look at something is not immediately overruled, short enough that it
+ * does not read as broken. Under about a second the orbit snatches the view back off the visitor.
+ */
+const TURNTABLE_RESUME_S = 2.5;
+
+/**
+ * Turntable rate, in degrees per second — a full revolution in 24 s.
+ *
+ * Slow enough to read a surface rather than smear it, quick enough that the far side arrives before the
+ * visitor gives up and drags there by hand. In degrees per SECOND and not per frame on purpose: see
+ * `spinTurntable`.
+ */
+const TURNTABLE_DEG_PER_S = 15;
+
+/** Cap on the step the turntable will take, so a backgrounded tab does not resume with a lurch. */
+const TURNTABLE_MAX_STEP_S = 1 / 15;
+
+/** The turntable swings about world up: a subject is displayed by turning it, not by tumbling it. */
+const TURNTABLE_AXIS = new THREE.Vector3(0, 1, 0);
 
 /** A component a click can resolve to: the unit the inspector selects, names and isolates. */
 export interface PartInfo {
@@ -140,6 +171,19 @@ export class Viewer {
   private readonly onResize: () => void;
   private readonly capture: boolean;
 
+  /**
+   * Whether the turntable is WANTED, which is not the same as whether it is currently spinning: a drag
+   * clears `turntableSpinning` and this is what the pause knows to restore. Reading the spinning flag
+   * alone would make a toggle pressed mid-drag latch to the wrong state.
+   */
+  private turntableWanted = false;
+  /** Seconds left before a drag-interrupted turntable picks itself back up. 0 = not waiting. */
+  private turntableResume = 0;
+  /** Whether the orbit advances THIS frame. False while a drag holds it, and through the resume wait. */
+  private turntableSpinning = false;
+  /** Rate in degrees per second. */
+  private turntableRate = TURNTABLE_DEG_PER_S;
+
   private explodeRoot: THREE.Object3D | null = null;
   private explodeParts: Array<{ object: THREE.Object3D; rest: THREE.Vector3; offset: THREE.Vector3 }> | null = null;
   private explodeT = 0;
@@ -148,6 +192,13 @@ export class Viewer {
   private explodeBaseDist = 0;
   /** How much the layout grows when fully separated — drives the camera dolly. */
   private explodeZoom = 1;
+
+  private rigOn = false;
+  private rigHelper: THREE.SkeletonHelper | null = null;
+  private rigSaved: Array<{
+    mesh: THREE.Mesh; material: THREE.Material | THREE.Material[];
+    colour: THREE.BufferAttribute | THREE.InterleavedBufferAttribute | undefined;
+  }> = [];
 
   // ---- part inspector ----
   private inspectRoot: THREE.Object3D | null = null;
@@ -260,6 +311,41 @@ export class Viewer {
     this.authoredDistance = this.camera.position.distanceTo(this.controls.target);
     this.authoredFar = this.camera.far;
 
+    // ---- turntable -----------------------------------------------------------------------------
+    //
+    // IT MOVES THE CAMERA, NEVER THE MODEL, and that is the whole reason it is here rather than in a
+    // demo's ticker. Spinning the model would have to compose with two things that do not compose for
+    // free: the explode offsets, which are written in each part's own parent frame (see `applyExplode`),
+    // and the tickers that write vertex positions directly -- a breathing chest among them. Orbiting the
+    // camera touches neither, so every angle is shown with the parts, the picking and the deformation all
+    // behaving exactly as they do standing still.
+    //
+    // IT IS DRIVEN BY ELAPSED TIME, NOT BY FRAMES, which is why `controls.autoRotate` is not used.
+    // OrbitControls advances its orbit by a FIXED ANGLE PER `update()` CALL, a figure that only means what
+    // it says at 60 fps. The heaviest subject here draws 1.6 M triangles and deforms vertices on the CPU
+    // every frame, so it runs nearer 13 -- and the same nominal speed then gives a revolution several times
+    // slower there than on a machine holding 60. A showcase whose turn rate is a function of the visitor's
+    // GPU is not a showcase, so the angle is integrated from dt in `spinTurntable` instead.
+    //
+    // A slow full-viewport orbit is exactly the kind of motion `prefers-reduced-motion` is about, so the
+    // OS setting decides the DEFAULT. It does not disable the feature: the toolbar toggle still turns it
+    // on for anyone who wants it, which is why this gates the initial value and not `setTurntable`.
+    const reduceMotion = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.turntableWanted = !this.capture && !reduceMotion && (options.turntable ?? false);
+    this.turntableSpinning = this.turntableWanted;
+    this.turntableRate = options.turntableSpeed ?? TURNTABLE_DEG_PER_S;
+    // The hand wins while it is on, and the orbit picks itself back up a beat after it comes off.
+    // Without the pause the spin fights the drag; without the resume a visitor loses the feature
+    // permanently by using it once.
+    this.controls.addEventListener('start', () => {
+      this.turntableSpinning = false;
+      this.turntableResume = 0;
+    });
+    this.controls.addEventListener('end', () => {
+      if (this.turntableWanted) this.turntableResume = TURNTABLE_RESUME_S;
+    });
+
     if (options.installLights) {
       options.installLights(this.scene);
     } else {
@@ -302,15 +388,150 @@ export class Viewer {
     return n > 1;
   }
 
+  /** True once the registered root contains a skinned mesh, i.e. there is a rig worth showing. */
+  get canShowRig(): boolean {
+    if (!this.explodeRoot) return false;
+    let found = false;
+    this.explodeRoot.traverse((o) => { if ((o as THREE.SkinnedMesh).isSkinnedMesh) found = true; });
+    return found;
+  }
+
+  /**
+   * Paint every surface by the BONES THAT MOVE IT, and draw the skeleton over the top.
+   *
+   * A rig is reviewed by seeing which bone owns which piece of surface, and where one bone's territory
+   * gives way to the next. So each vertex takes its bones' colours mixed by their own weights -- not the
+   * dominant bone alone, because a hard-edged map hides exactly the thing worth looking at, which is
+   * whether the handover between two bones is a gradient or a cliff. A crease at a joint shows here as a
+   * sharp colour boundary; a part bound to the wrong side shows as the wrong colour outright.
+   *
+   * Hues walk the colour wheel by the golden angle in skeleton order, so a bone and its parent never come
+   * out the same shade.
+   */
+  setRigView(on: boolean): void {
+    if (on === this.rigOn) return;
+    this.rigOn = on;
+    if (!on) {
+      for (const saved of this.rigSaved) {
+        saved.mesh.material = saved.material;
+        if (saved.colour) saved.mesh.geometry.setAttribute('color', saved.colour);
+        else saved.mesh.geometry.deleteAttribute('color');
+      }
+      this.rigSaved = [];
+      if (this.rigHelper) {
+        this.rigHelper.removeFromParent();
+        this.rigHelper.dispose();
+        this.rigHelper = null;
+      }
+      return;
+    }
+    if (!this.explodeRoot) return;
+
+    const hue = new Map<string, THREE.Color>();
+    const colourFor = (name: string, i: number): THREE.Color => {
+      let c = hue.get(name);
+      if (!c) {
+        c = new THREE.Color().setHSL((i * 0.61803398875) % 1, 0.72, 0.55);
+        hue.set(name, c);
+      }
+      return c;
+    };
+
+    let first: THREE.SkinnedMesh | null = null;
+    this.explodeRoot.traverse((o) => {
+      const mesh = o as THREE.SkinnedMesh;
+      if (!mesh.isSkinnedMesh || !mesh.skeleton) return;
+      if (!first) first = mesh;
+      const geo = mesh.geometry;
+      const idx = geo.getAttribute('skinIndex');
+      const wgt = geo.getAttribute('skinWeight');
+      if (!idx || !wgt) return;
+      this.rigSaved.push({
+        mesh, material: mesh.material, colour: geo.getAttribute('color') as never,
+      });
+      const colours = new Float32Array(idx.count * 3);
+      const mixed = new THREE.Color();
+      for (let v = 0; v < idx.count; v += 1) {
+        mixed.setRGB(0, 0, 0);
+        for (let k = 0; k < 4; k += 1) {
+          const w = wgt.getComponent(v, k);
+          if (w <= 0.001) continue;
+          const bi = idx.getComponent(v, k);
+          const bone = mesh.skeleton.bones[bi];
+          if (!bone) continue;
+          const c = colourFor(bone.name, bi);
+          mixed.r += c.r * w;
+          mixed.g += c.g * w;
+          mixed.b += c.b * w;
+        }
+        colours[v * 3] = mixed.r;
+        colours[v * 3 + 1] = mixed.g;
+        colours[v * 3 + 2] = mixed.b;
+      }
+      geo.setAttribute('color', new THREE.BufferAttribute(colours, 3));
+      mesh.material = new THREE.MeshLambertMaterial({
+        vertexColors: true, side: THREE.DoubleSide,
+      });
+    });
+
+    if (first) {
+      // Drawn without depth testing, because the interesting bones are the ones inside the body.
+      const helper = new THREE.SkeletonHelper((first as THREE.SkinnedMesh).skeleton.bones[0]);
+      const mat = helper.material as THREE.LineBasicMaterial;
+      mat.depthTest = false;
+      mat.transparent = true;
+      mat.opacity = 0.9;
+      helper.renderOrder = 999;
+      this.scene.add(helper);
+      this.rigHelper = helper;
+    }
+  }
+
   /** 0 = assembled, 1 = fully separated. The render loop eases toward this. */
   setExplode(t: number): void {
     const next = Math.max(0, Math.min(1, t));
+    // AN EXPLODE OF ONE PART IS AN EXPLODE OF NOTHING, so isolate cannot be left standing through it.
+    // Isolate hides every component but the selected one; separating them then moved 31 hidden meshes
+    // and the visitor watched a figure that did not budge -- while the button latched to "Assemble" and
+    // reported the success it had not had. Coming apart is a statement about the whole assembly, so it
+    // wins over looking at one piece of it, and `setIsolate` is what tells the inspector UI, whose
+    // toggle would otherwise go on claiming the model is isolated.
+    if (next > 0) {
+      if (this.isolateOn) this.setIsolate(false);
+      this.snapToRestFraming();
+    }
     // Capture the framing distance the moment we leave the assembled pose, so the dolly
     // below has a stable base even if the viewer zoomed since the last explode.
     if (this.explodeT === 0 && next > 0) {
       this.explodeBaseDist = this.camera.position.distanceTo(this.controls.target);
     }
     this.explodeTarget = next;
+  }
+
+  /**
+   * Cut the camera straight back to the framing an inspector focus interrupted, discarding the ease.
+   *
+   * WHY A SNAP AND NOT AN EASE. Focusing on a part (and `clearIsolate` returning from one) leaves a
+   * `camGoal` for `easeCamera`, which runs AFTER `applyExplode` in the loop and therefore wins every
+   * frame it is alive. The dolly that keeps a separating assembly inside a tight framing was overridden
+   * for the whole of the ease, and by the time the goal retired `explodeT` had already reached its target
+   * -- so the dolly, which only runs while the two differ, never got to move: the head and the swords
+   * simply left the viewport. Two easings cannot share the camera, and the explode is the one the visitor
+   * just asked for, so the pending one is resolved at once and dropped.
+   *
+   * A no-op when nothing is focused, which is the common case.
+   */
+  private snapToRestFraming(): void {
+    const goal = this.camRest ?? this.camGoal;
+    this.camRest = null;
+    this.camGoal = null;
+    if (!goal) return;
+    this.controls.target.copy(goal.target);
+    const dir = this.camera.position.clone().sub(goal.target);
+    if (dir.lengthSq() > 1e-8) {
+      this.camera.position.copy(goal.target).addScaledVector(dir.normalize(), goal.dist);
+    }
+    this.controls.update();
   }
 
   /**
@@ -344,6 +565,7 @@ export class Viewer {
   private prepareExplode(): void {
     const root = this.explodeRoot!;
     root.updateWorldMatrix(true, true);
+    this.detachSkinnedUnits();
     const rootInv = new THREE.Matrix4().copy(root.matrixWorld).invert();
 
     const meshes = this.explodeUnits();
@@ -409,6 +631,38 @@ export class Viewer {
     // spread still lands inside the demo's framing (which has little vertical headroom).
     const grown = explodedBounds.getBoundingSphere(new THREE.Sphere()).radius;
     this.explodeZoom = Math.min(3.4, Math.max(1, grown / radius));
+  }
+
+  /**
+   * Make a skinned unit's own transform count, so that moving it moves what is drawn.
+   *
+   * A SkinnedMesh IGNORES ITS OWN MATRIX BY DEFAULT, and this is the reason the explode was a no-op on
+   * the rigged character while every number said it had worked: the parts really were 0.4-0.7 m from
+   * their rest positions, and the render never changed.
+   *
+   * In the default `attached` bind mode three.js re-derives `bindMatrixInverse` from `matrixWorld` on
+   * every `updateMatrixWorld`, so the vertex ends up at
+   *
+   *     view * matrixWorld * matrixWorld⁻¹ * bone * bindMatrix
+   *
+   * and the mesh's own matrix cancels itself out exactly. Skinned vertices follow the BONES and nothing
+   * else. `detached` freezes `bindMatrixInverse` at the pose the mesh was bound in, so the cancellation
+   * stops and the matrix -- the explode offset included -- applies again.
+   *
+   * Safe because it changes nothing at rest: at `explodeT === 0` each unit sits back at its bind pose, so
+   * `matrixWorld` equals the frozen bind matrix and the two cancel exactly as before. What it does assume
+   * is that a skinned unit's world matrix is otherwise the one it was bound in -- true here, where every
+   * skinned mesh is a direct child of a static model group with identity rotation and unit scale. A demo
+   * that moved its model root, or nested skinned meshes under an animated pivot, would need the offset
+   * applied after skinning in the shader instead.
+   */
+  private detachSkinnedUnits(): void {
+    for (const unit of this.explodeUnits()) {
+      unit.traverse((o) => {
+        const skinned = o as THREE.SkinnedMesh;
+        if (skinned.isSkinnedMesh) skinned.bindMode = THREE.DetachedBindMode;
+      });
+    }
   }
 
   private applyExplode(): void {
@@ -866,6 +1120,33 @@ export class Viewer {
     this.controls.update();
   }
 
+  /**
+   * Advance the orbit by `dt` worth of rotation.
+   *
+   * The camera swings about the vertical through the controls' target, and OrbitControls is left to pick
+   * the new position up on its own `update()` -- it derives its spherical coordinates from the camera on
+   * every call, so moving the camera first is the whole of it, and its damping still smooths a drag.
+   */
+  private spinTurntable(dt: number): void {
+    const step = Math.min(dt, TURNTABLE_MAX_STEP_S);
+    const offset = this.camera.position.clone().sub(this.controls.target);
+    offset.applyAxisAngle(TURNTABLE_AXIS, (this.turntableRate * Math.PI) / 180 * step);
+    this.camera.position.copy(this.controls.target).add(offset);
+    this.camera.lookAt(this.controls.target);
+  }
+
+  /** Whether the turntable is switched on. Stays true across the pause a drag causes. */
+  get turntable(): boolean {
+    return this.turntableWanted;
+  }
+
+  /** Turn the camera turntable on or off. A no-op in capture mode, which must stay deterministic. */
+  setTurntable(on: boolean): void {
+    this.turntableWanted = on && !this.capture;
+    this.turntableResume = 0;
+    this.turntableSpinning = this.turntableWanted;
+  }
+
   start(): void {
     const clock = new THREE.Clock();
     // Collect per-frame updaters exposed by demos via `object.userData.tick`.
@@ -897,6 +1178,24 @@ export class Viewer {
       }
       if (this.explodeT > 0 || this.explodeApplied) this.applyExplode();
       this.easeCamera(dt);
+      if (this.turntableResume > 0) {
+        this.turntableResume -= dt;
+        if (this.turntableResume <= 0) {
+          this.turntableResume = 0;
+          this.turntableSpinning = this.turntableWanted;
+        }
+      }
+      // Ahead of `controls.update()`, which is what reads the moved camera back.
+      if (this.turntableSpinning) this.spinTurntable(dt);
+      /**
+       * PUBLISHED FOR THE DEMOS, in degrees per second and 0 when the orbit is not running.
+       *
+       * A demo cannot see the turntable otherwise -- it is a property of the camera, and the camera is the
+       * viewer's. Cloth and hair on this character are asked to react to the turn, so the one number they
+       * need is put somewhere they can read it. A plain number and not an object: this runs every frame.
+       */
+      (this.scene.userData as { turntableRate?: number }).turntableRate =
+        this.turntableSpinning ? this.turntableRate : 0;
       this.controls.update();
       this.renderer.render(this.scene, this.camera);
     };
