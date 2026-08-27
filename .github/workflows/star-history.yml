@@ -1,0 +1,47 @@
+name: Refresh star history chart
+
+# GitHub restricted the anonymous stargazer API, so the star-history.com embed
+# renders "GitHub restricted access to star data" instead of a chart. This job
+# draws the chart from GitHub's own API using the workflow's built-in
+# GITHUB_TOKEN and commits the SVGs, so the README never depends on a third
+# party — and no token is ever exposed in a public file.
+
+on:
+  schedule:
+    # 04:15 UTC daily — off the hour, since GitHub throttles on-the-hour cron.
+    - cron: '15 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: star-history
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Render chart
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/generate-star-history.mjs
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- .github/readme-assets; then
+            echo "No new stars since the last run — nothing to commit."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/readme-assets/star-history-light.svg .github/readme-assets/star-history-dark.svg
+          git commit -m 'chore: refresh star history chart'
+          git push
