@@ -83,6 +83,10 @@ import {
   createGirlCharacter3LookDevLights,
   prewarmGirlCharacter3,
 } from './girl-character-3/createGirlCharacter3Model';
+import {
+  createLeesinModel,
+  prewarmLeesin,
+} from './leesin/leesinDemo';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -175,6 +179,8 @@ export interface DemoEntry {
    * result is cached for the lifetime of the module, so any later `build` is fast too.
    */
   prewarm?: () => Promise<void>;
+  /** Action id to start automatically once the runtime lands. Skipped in capture mode. */
+  defaultAnimation?: string;
   /** Optional deterministic capture framing margin for source plates with tight bounds. */
   captureMargin?: number;
   /** Optional vertical framing correction as a fraction of the measured subject bbox height. */
@@ -196,6 +202,45 @@ const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/img2threejs/img2threejs-showcase/blob/main';
 
 const authored: DemoEntry[] = [
+  {
+    id: 'leesin',
+    title: 'Lee Sin \u2014 Game Character',
+    subjectClass: 'character',
+    blurb:
+      'A game character rebuilt as pure Three.js: BufferGeometry, SkinnedMesh, Skeleton and '
+      + 'AnimationClip written in code, with no loader and nothing fetched while it runs. 69 meshes on '
+      + 'a 42-bone rig, 10 measured animation clips, and strike effects in four elements \u2014 wind, '
+      + 'fire, water and thunder \u2014 fired at the instant each hand finishes its travel. The '
+      + 'reference model is a build-time measurement instrument and never reaches the viewer.',
+    referenceImage: `${BASE}references/leesin/reference.jpg`,
+    referenceKind: 'model',
+    sourcePath: 'src/demos/leesin/createLeesinModel.ts',
+    sourceUrl: `${REPO}/src/demos/leesin/createLeesinModel.ts`,
+    generatedWith: 'img2threejs v1.5.1 \u00b7 pure Three.js, no loader, no runtime fetch',
+    prompt:
+      'Build the character in pure Three.js with no loader and no runtime fetch, using the reference '
+      + 'only as a build-time measurement, and prove the result against its accessors.',
+    author: 'Hoài Nhớ',
+    authorUrl: 'https://github.com/hoainho',
+    tripoUrl: 'https://studio.tripo3d.ai/3d-model/13f4f289-575c-403b-8dc0-fb6ee42b6e61?invite_code=PW9ZEA',
+    status: 'final',
+    updatedAt: '2026-08-28',
+    cameraPosition: [0, 0.624311570879072, 4.597228490604114],
+    cameraTarget: [0, 0.624311570879072, 0.007000002097338448],
+    cameraFov: 25,
+    accent: '#c5a56e',
+    backgroundGradient: { inner: '#24221f', outer: '#0d0e10' },
+    exposure: 0.9,
+    environmentIntensity: 0.45,
+    toneMapping: 'aces',
+    prewarm: prewarmLeesin,
+    defaultAnimation: 'step-and-swing-arms',
+    build: (scene) => {
+      const group = createLeesinModel({ castShadow: true, receiveShadow: true });
+      scene.add(group);
+      return group;
+    },
+  },
   {
     id: 'regret-warrior-reconstruction',
     updatedAt: '2026-08-25',
