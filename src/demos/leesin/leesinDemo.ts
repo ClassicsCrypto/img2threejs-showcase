@@ -21,9 +21,22 @@ import type { LeesinModelOptions } from './createLeesinModel';
  * immediately and the copied meshes land on it when the payload has been decoded.
  */
 
-let pending: { root: THREE.Group; options: LeesinModelOptions } | null = null;
-let installed: Promise<void> | null = null;
+type MeasuredModule = typeof import('./createLeesinModel');
 
+let pending: { root: THREE.Group; options: LeesinModelOptions } | null = null;
+let prepared: MeasuredModule | null = null;
+let preparing: Promise<void> | null = null;
+
+/**
+ * Build and prewarm may arrive in EITHER order, and both have to work.
+ *
+ * The demo page builds first and prewarms after, so the payload lands on a root that is already in
+ * the scene. The workbench does the opposite: it awaits `prewarm` and only then calls `build`. The
+ * first version assumed the demo page's order and installed into `pending ?? a throwaway root` -- so
+ * on the workbench the geometry went into a root nobody kept, `build` handed back an empty group, and
+ * the exhibit read "PARTS 0" with no error anywhere. Ordering is now explicit in both directions:
+ * whichever runs second performs the install.
+ */
 export function createLeesinModel(options: LeesinModelOptions = {}): THREE.Group {
   const root = new THREE.Group();
   root.name = 'leesin-procedural';
@@ -31,15 +44,19 @@ export function createLeesinModel(options: LeesinModelOptions = {}): THREE.Group
   // than by a character compiler so the demo owns its own runtime contract.
   root.userData.sculptRuntime = {};
   pending = { root, options };
+  // Prewarm already finished: the payload is decoded and this root is the one that needs it.
+  if (prepared) prepared.installMeasuredGeometry(root, options);
   return root;
 }
 
 export function prewarmLeesin(): Promise<void> {
-  installed ??= (async () => {
+  preparing ??= (async () => {
     const measured = await import('./createLeesinModel');
     await measured.prepareLeesinMeasured();
-    const target = pending ?? { root: createLeesinModel(), options: {} };
-    measured.installMeasuredGeometry(target.root, target.options);
+    prepared = measured;
+    // Built already, or built while this was in flight: install into the live root. If nothing has
+    // been built yet, `createLeesinModel` installs as soon as it is.
+    if (pending) measured.installMeasuredGeometry(pending.root, pending.options);
   })();
-  return installed;
+  return preparing;
 }
