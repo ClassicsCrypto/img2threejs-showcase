@@ -211,8 +211,11 @@ const authored: DemoEntry[] = [
       + 'where the claws actually stop at extension, where weight actually meets the ground, and where '
       + 'the head is driven by a blow the figure takes. An attack tears the air along the arc the limb '
       + 'ACTUALLY swung through \u2014 the swing axis comes from the shoulder-to-claw radius crossed with '
-      + 'the measured travel \u2014 behind a shear cone, void rings that open down the strike axis, violet '
-      + 'shards and 50-95 ms of hitstop. Around the body, 260 wisps orbit eleven bones on per-mote lag '
+      + 'the measured travel \u2014 and the contact FRACTURES the air like a pane of glass: a fresh '
+      + 'spoke-and-ring lattice per impact whose cracks run outward over ~100 ms, white-hot at the '
+      + 'travelling tip, throwing instanced glass that glints as it tumbles. A stomp cracks the floor '
+      + 'the same way. Behind it all, a shear cone, void rings down the strike axis and 50-95 ms of '
+      + 'hitstop. Around the body, 260 wisps orbit eleven bones on per-mote lag '
       + 'so the cloud strings out behind a lunge, non-additive ash sheds off the shoulders, and the '
       + 'floor swirls under it. Nothing is fetched: geometry, per-vertex colour and every keyframe are '
       + 'TypeScript.',

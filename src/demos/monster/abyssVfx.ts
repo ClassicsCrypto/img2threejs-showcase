@@ -23,6 +23,12 @@ import type { StrikeKind } from './strikeEvents';
  *                  swing axis is taken from the pivot-to-contact radius crossed with the measured
  *                  travel, so the arc is the limb's own arc and not a decal thrown at the camera —
  *                  plus a shear cone behind the contact for the air being dragged along.
+ *   fracture       the air treated as a pane of glass. A spoke-and-ring lattice is generated per
+ *                  impact and the crack RUNS outward from the contact over ~100 ms, white-hot at
+ *                  the travelling tip, then hangs as a cooling scar. Concentric cracks bow between
+ *                  neighbouring spokes: they are what make the eye say glass instead of lightning.
+ *   glass          72 instanced fragments off that fracture, tumbling on their own axes. What
+ *                  sells a shard is the glint as its face turns through the view, not its shape.
  *   void rings     the stop itself, expanding ALONG the strike axis. A ring that expands in the
  *                  screen plane reads as a magic circle; one that expands down the axis reads as
  *                  displaced air. Each ring carries a dark disc behind it, so the tear reads as a
@@ -41,9 +47,10 @@ import type { StrikeKind } from './strikeEvents';
  * dying edge of an impact, and nothing else.
  *
  * COST. Three pooled Points systems (320 shards, 200 ash, 260 aura) integrated on the CPU, 2 trail
- * ribbons, and 29 pooled meshes/sprites plus 3 pooled lights. Nothing is allocated after
- * construction, and every object starts invisible so the viewer's one-shot framing pass never
- * measures an effect instead of the monster.
+ * ribbons, 4 fracture webs whose buffers are REWRITTEN rather than reallocated per impact, one
+ * instanced glass mesh (72 fragments, one draw call), and 37 pooled meshes/sprites plus 3 pooled
+ * lights. Nothing is allocated after construction, and every object starts invisible so the
+ * viewer's one-shot framing pass never measures an effect instead of the monster.
  */
 
 const SHARD_CAPACITY = 320;
@@ -51,6 +58,13 @@ const ASH_CAPACITY = 200;
 const AURA_CAPACITY = 260;
 const TRAIL_SAMPLES = 16;
 const TRAIL_LANES = 3;
+/** Fracture webs live in a pool of four; a fifth overlapping hit recycles the oldest. */
+const CRACK_WEBS = 4;
+/** Segment budget per web. A web draws 60-90; the rest are collapsed to zero area. */
+const CRACK_MAX_QUADS = 128;
+const CRACK_RADIALS = 13;
+const CRACK_RINGS = 5;
+const GLASS_CAPACITY = 72;
 
 /** One hue and one accent. The crimson is an accent, not a second theme. */
 const COLOURS = {
@@ -78,6 +92,10 @@ const STRIKE_SHAPE: Record<StrikeKind, {
   flash: number; light: number;
   /** Ground pulse radius in world units; 0 for strikes that put nothing through the floor. */
   ground: number;
+  /** Radius of the fracture web the impact opens in the air, in world units. */
+  crack: number;
+  /** Glass fragments thrown off the fracture. */
+  glass: number;
   /** Seconds of hitstop. The single largest contributor to how hard a strike reads. */
   hitstop: number;
 }> = {
@@ -86,30 +104,35 @@ const STRIKE_SHAPE: Record<StrikeKind, {
     tearLength: 0.34, tearRadius: 0.075,
     ringCount: 1, ringSpan: 0.20,
     shards: 16, ash: 6, flash: 0.22, light: 6.0, ground: 0, hitstop: 0.050,
+    crack: 0.30, glass: 5,
   },
   rip: {
     arcSpan: 1.45, arcBand: 0.070, crossed: false,
     tearLength: 0.52, tearRadius: 0.100,
-    ringCount: 2, ringSpan: 0.28,
+    ringCount: 1, ringSpan: 0.28,
     shards: 26, ash: 9, flash: 0.30, light: 10.0, ground: 0.42, hitstop: 0.075,
+    crack: 0.46, glass: 9,
   },
   rend: {
     arcSpan: 1.75, arcBand: 0.085, crossed: true,
     tearLength: 0.64, tearRadius: 0.135,
-    ringCount: 2, ringSpan: 0.36,
+    ringCount: 2, ringSpan: 0.34,
     shards: 36, ash: 13, flash: 0.40, light: 16.0, ground: 0.72, hitstop: 0.095,
+    crack: 0.66, glass: 14,
   },
   slam: {
     arcSpan: 1.30, arcBand: 0.080, crossed: false,
     tearLength: 0.40, tearRadius: 0.120,
     ringCount: 1, ringSpan: 0.26,
     shards: 22, ash: 15, flash: 0.30, light: 11.0, ground: 1.00, hitstop: 0.085,
+    crack: 0.52, glass: 11,
   },
   kick: {
     arcSpan: 1.05, arcBand: 0.100, crossed: false,
     tearLength: 0.46, tearRadius: 0.150,
     ringCount: 1, ringSpan: 0.24,
     shards: 10, ash: 11, flash: 0.24, light: 8.0, ground: 0.62, hitstop: 0.070,
+    crack: 0.48, glass: 8,
   },
 };
 
@@ -224,6 +247,58 @@ function arcBandGeometry(segments: number): THREE.BufferGeometry {
   return geometry;
 }
 
+/**
+ * Buffers for one fracture web, sized for the worst case and rewritten per impact.
+ *
+ * Every crack is a quad: two vertices at each end, offset either side of the segment. `aDist` is
+ * the distance from the impact point in web radii, which is what lets the shader DRAW THE CRACK
+ * OUTWARD instead of popping the whole web on in one frame; `aAcross` is -1..1 across the quad, so
+ * the fragment can taper a hairline out of a two-triangle strip; `aTag` marks a concentric crack so
+ * it can sit under the radial ones.
+ */
+function crackGeometry(maxQuads: number): THREE.BufferGeometry {
+  const geometry = new THREE.BufferGeometry();
+  const verts = maxQuads * 4;
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(verts * 3), 3).setUsage(THREE.DynamicDrawUsage));
+  geometry.setAttribute('aDist', new THREE.BufferAttribute(new Float32Array(verts), 1).setUsage(THREE.DynamicDrawUsage));
+  geometry.setAttribute('aAcross', new THREE.BufferAttribute(new Float32Array(verts), 1).setUsage(THREE.DynamicDrawUsage));
+  geometry.setAttribute('aTag', new THREE.BufferAttribute(new Float32Array(verts), 1).setUsage(THREE.DynamicDrawUsage));
+  const index = new Uint16Array(maxQuads * 6);
+  for (let q = 0; q < maxQuads; q += 1) {
+    const v = q * 4;
+    index.set([v, v + 1, v + 2, v + 1, v + 3, v + 2], q * 6);
+  }
+  geometry.setIndex(new THREE.BufferAttribute(index, 1));
+  // The buffer is rewritten every impact, so a derived bound would be wrong by the next one.
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 4);
+  return geometry;
+}
+
+/** One triangular fragment of glass. Barycentric, so the fragment shader can find its own edges. */
+function glassGeometry(): THREE.BufferGeometry {
+  const geometry = new THREE.BufferGeometry();
+  // Deliberately irregular: a symmetrical shard reads as a UI icon.
+  geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array([
+    0.0, 0.62, 0,
+    -0.52, -0.38, 0,
+    0.44, -0.30, 0,
+  ]), 3));
+  geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1]), 3));
+  geometry.setAttribute('aBary', new THREE.BufferAttribute(new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]), 3));
+  return geometry;
+}
+
+interface CrackSlot {
+  mesh: THREE.Mesh;
+  material: THREE.ShaderMaterial;
+  position: THREE.BufferAttribute;
+  dist: THREE.BufferAttribute;
+  across: THREE.BufferAttribute;
+  tag: THREE.BufferAttribute;
+  age: number;
+  span: number;
+}
+
 interface CrescentSlot {
   mesh: THREE.Mesh;
   material: THREE.ShaderMaterial;
@@ -333,7 +408,8 @@ export interface AbyssVfx {
   /**
    * A strike landing. `dir` is the measured travel, `pivot` the shoulder or hip the limb swung
    * about — the crescent is built from the pivot-to-contact radius, so it traces the arc the limb
-   * actually travelled. Returns the hitstop in seconds.
+   * actually travelled, and the fracture opens on the plane perpendicular to `dir`, as though the
+   * monster had hit a sheet of glass held up in front of it. Returns the hitstop in seconds.
    */
   strike(kind: StrikeKind, at: THREE.Vector3, dir: THREE.Vector3, pivot: THREE.Vector3, power: number): number;
   /** Weight arriving on the ground. `drop` is the measured descent in figure heights per second. */
@@ -352,7 +428,10 @@ export interface AbyssVfx {
    * Live pool occupancy. Published because "is the effect actually on screen" is otherwise
    * unanswerable from outside: an unfired impact and a sub-pixel one look identical in a capture.
    */
-  counts(): { shards: number; ash: number; aura: number; crescents: number; tears: number; rings: number };
+  counts(): {
+    shards: number; ash: number; aura: number; crescents: number;
+    cracks: number; glass: number; tears: number; rings: number;
+  };
   update(dt: number): void;
   dispose(): void;
 }
@@ -905,7 +984,7 @@ export function createAbyssVfx(): AbyssVfx {
         void main() {
           float r = length(vUv - 0.5) * 2.0;
           float band = smoothstep(0.90, 0.985, r) * (1.0 - smoothstep(0.994, 1.0, r));
-          float alpha = band * uFade * 0.8;
+          float alpha = band * uFade * 0.45;
           if (alpha <= 0.002) discard;
           gl_FragColor = vec4(mix(uAmethyst, uBone, band * 0.6), alpha);
         }`,
@@ -1009,6 +1088,273 @@ export function createAbyssVfx(): AbyssVfx {
       origin: new THREE.Vector3(), dir: new THREE.Vector3(0, 0, 1),
     });
   }
+
+  /**
+   * THE FRACTURE. What a strike does to the air, treated as what it looks like: a pane of glass
+   * taking a hit.
+   *
+   * A bullet hole in glass is not a starburst — it is a lattice. Radial cracks run out from the
+   * point of contact and CONCENTRIC cracks link them at a few radii, and it is the concentric ones
+   * that make the eye read "glass" rather than "lightning". So the generator lays down a jittered
+   * spoke-and-ring lattice, cuts the radials along it — each stopping at its own ring, because a
+   * web where every crack reaches the rim reads as a drawn asterisk — and then bows a chord between
+   * neighbouring spokes wherever both have got that far.
+   *
+   * It PROPAGATES rather than appearing: `aDist` carries each vertex's distance from the impact in
+   * web radii and the shader only draws what the advancing front has passed, white-hot at the tip
+   * that is still travelling. The whole web opens in about 50 ms, which is roughly what a phone
+   * camera sees of real glass, and then hangs as a cooling scar for another half second.
+   *
+   * The plane is the plane of the pane: perpendicular to the travel, so the monster is always
+   * hitting a sheet held up in front of whatever it swung at.
+   */
+  const cracks: Pool<CrackSlot> = { items: [], cursor: 0 };
+  for (let i = 0; i < CRACK_WEBS; i += 1) {
+    const geometry = crackGeometry(CRACK_MAX_QUADS);
+    const material = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      uniforms: {
+        uFront: { value: 0 },
+        uFade: { value: 0 },
+        uBone: { value: COLOURS.bone },
+        uAmethyst: { value: COLOURS.amethyst },
+        uEmber: { value: COLOURS.ember },
+      },
+      vertexShader: `
+        attribute float aDist;
+        attribute float aAcross;
+        attribute float aTag;
+        varying float vDist;
+        varying float vAcross;
+        varying float vTag;
+        void main() {
+          vDist = aDist;
+          vAcross = aAcross;
+          vTag = aTag;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+      fragmentShader: `
+        uniform float uFront;
+        uniform float uFade;
+        uniform vec3 uBone;
+        uniform vec3 uAmethyst;
+        uniform vec3 uEmber;
+        varying float vDist;
+        varying float vAcross;
+        varying float vTag;
+        void main() {
+          // A hairline down the middle of a quad that is several pixels wide, so the crack keeps
+          // its shape at any distance instead of aliasing into dashes.
+          float core = pow(1.0 - abs(vAcross), 2.5);
+          // Nothing exists ahead of the front: this is the crack running.
+          float open = 1.0 - smoothstep(uFront, uFront + 0.07, vDist);
+          // ...and the tip of the run is where the energy is.
+          float heat = exp(-abs(vDist - uFront) * 11.0);
+          vec3 tone = mix(uAmethyst, uBone, clamp(heat * 1.3 + core * 0.28, 0.0, 1.0));
+          tone = mix(tone, uEmber, smoothstep(0.55, 1.0, vDist) * 0.5);
+          // Concentric cracks sit under the radials; in real glass they are the shallower ones.
+          float alpha = core * open * uFade * (0.42 + heat * 2.1) * mix(1.0, 0.8, vTag);
+          if (alpha <= 0.003) discard;
+          gl_FragColor = vec4(tone, alpha);
+        }`,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.frustumCulled = false;
+    mesh.renderOrder = 7;
+    mesh.visible = false;
+    mesh.userData.isHighlight = true;
+    group.add(mesh);
+    cracks.items.push({
+      mesh, material,
+      position: geometry.getAttribute('position') as THREE.BufferAttribute,
+      dist: geometry.getAttribute('aDist') as THREE.BufferAttribute,
+      across: geometry.getAttribute('aAcross') as THREE.BufferAttribute,
+      tag: geometry.getAttribute('aTag') as THREE.BufferAttribute,
+      age: 1, span: 1,
+    });
+  }
+
+  // The spoke-and-ring lattice every web is cut from. Written per impact, allocated once.
+  const webX = new Float32Array(CRACK_RADIALS * (CRACK_RINGS + 1));
+  const webY = new Float32Array(CRACK_RADIALS * (CRACK_RINGS + 1));
+  const webStop = new Int32Array(CRACK_RADIALS);
+
+  function writeWeb(slot: CrackSlot, radius: number): void {
+    const pos = slot.position.array as Float32Array;
+    const dist = slot.dist.array as Float32Array;
+    const across = slot.across.array as Float32Array;
+    const tag = slot.tag.array as Float32Array;
+    let quad = 0;
+
+    const vertex = (n: number, x: number, y: number, d: number, a: number, t: number): void => {
+      pos[n * 3] = x;
+      pos[n * 3 + 1] = y;
+      pos[n * 3 + 2] = 0;
+      dist[n] = d;
+      across[n] = a;
+      tag[n] = t;
+    };
+    const crack = (
+      ax: number, ay: number, bx: number, by: number,
+      wa: number, wb: number, da: number, db: number, kind: number,
+    ): void => {
+      if (quad >= CRACK_MAX_QUADS) return;
+      const dx = bx - ax;
+      const dy = by - ay;
+      const length = Math.hypot(dx, dy);
+      if (length < 1e-5) return;
+      const nx = -dy / length;
+      const ny = dx / length;
+      const v = quad * 4;
+      vertex(v, ax + nx * wa, ay + ny * wa, da, 1, kind);
+      vertex(v + 1, ax - nx * wa, ay - ny * wa, da, -1, kind);
+      vertex(v + 2, bx + nx * wb, by + ny * wb, db, 1, kind);
+      vertex(v + 3, bx - nx * wb, by - ny * wb, db, -1, kind);
+      quad += 1;
+    };
+
+    // 1. the lattice. The spokes are jittered in angle at every ring, so each one arrives at the
+    //    rim by a different crooked path; a straight spoke reads as a spider drawing.
+    const spin = Math.random() * Math.PI * 2;
+    for (let i = 0; i < CRACK_RADIALS; i += 1) {
+      let angle = spin + (i / CRACK_RADIALS) * Math.PI * 2 + (Math.random() - 0.5) * 0.36;
+      webStop[i] = 2 + Math.floor(Math.random() * (CRACK_RINGS - 1));
+      const base = i * (CRACK_RINGS + 1);
+      webX[base] = 0;
+      webY[base] = 0;
+      for (let r = 1; r <= CRACK_RINGS; r += 1) {
+        const t = r / CRACK_RINGS;
+        // Rings crowd towards the rim, which is what makes the middle of a fracture look dense.
+        const reach = radius * (t * t * 0.58 + t * 0.42) * (0.82 + Math.random() * 0.36);
+        angle += (Math.random() - 0.5) * 0.32;
+        webX[base + r] = Math.cos(angle) * reach;
+        webY[base + r] = Math.sin(angle) * reach;
+      }
+    }
+
+    // 2. the radial cracks, thinning as they run out of energy.
+    const width = radius * 0.026;
+    for (let i = 0; i < CRACK_RADIALS; i += 1) {
+      const base = i * (CRACK_RINGS + 1);
+      for (let r = 0; r < webStop[i]; r += 1) {
+        const da = r / CRACK_RINGS;
+        const db = (r + 1) / CRACK_RINGS;
+        crack(
+          webX[base + r], webY[base + r], webX[base + r + 1], webY[base + r + 1],
+          width * (1 - da * 0.7), width * (1 - db * 0.78), da, db, 0,
+        );
+      }
+    }
+
+    // 3. the concentric fractures, bowed inward in two segments. A straight chord between two
+    //    spokes reads as a drawn polygon; a bowed one reads as glass.
+    for (let i = 0; i < CRACK_RADIALS; i += 1) {
+      const j = (i + 1) % CRACK_RADIALS;
+      const shared = Math.min(webStop[i], webStop[j]);
+      if (shared < 1 || Math.random() < 0.34) continue;
+      const ring = 1 + Math.floor(Math.random() * shared);
+      const a = i * (CRACK_RINGS + 1) + ring;
+      const b = j * (CRACK_RINGS + 1) + ring;
+      const bow = 0.48 + Math.random() * 0.22;
+      const mx = (webX[a] + webX[b]) * 0.5 * bow;
+      const my = (webY[a] + webY[b]) * 0.5 * bow;
+      const d = ring / CRACK_RINGS;
+      crack(webX[a], webY[a], mx, my, width * 0.5, width * 0.4, d, d * 0.94, 1);
+      crack(mx, my, webX[b], webY[b], width * 0.4, width * 0.5, d * 0.94, d, 1);
+    }
+
+    // 4. collapse the unused budget so it rasterises nothing.
+    for (let q = quad; q < CRACK_MAX_QUADS; q += 1) {
+      const v = q * 4;
+      for (let n = v; n < v + 4; n += 1) vertex(n, 0, 0, 0, 0, 0);
+    }
+    slot.position.needsUpdate = true;
+    slot.dist.needsUpdate = true;
+    slot.across.needsUpdate = true;
+    slot.tag.needsUpdate = true;
+  }
+
+  /**
+   * The glass that comes off the fracture: 72 instanced fragments, one draw call.
+   *
+   * The thing that sells a shard is not its shape, it is the GLINT — a flat fragment tumbling
+   * through the light flashes each time its face swings past the camera. That is a `pow` on the
+   * face's view-space normal in the fragment shader, and it costs nothing.
+   */
+  const glassShape = glassGeometry();
+  const glass = {
+    px: new Float32Array(GLASS_CAPACITY), py: new Float32Array(GLASS_CAPACITY), pz: new Float32Array(GLASS_CAPACITY),
+    vx: new Float32Array(GLASS_CAPACITY), vy: new Float32Array(GLASS_CAPACITY), vz: new Float32Array(GLASS_CAPACITY),
+    ax: new Float32Array(GLASS_CAPACITY), ay: new Float32Array(GLASS_CAPACITY), az: new Float32Array(GLASS_CAPACITY),
+    spin: new Float32Array(GLASS_CAPACITY),
+    size: new Float32Array(GLASS_CAPACITY),
+    aspect: new Float32Array(GLASS_CAPACITY),
+    age: new Float32Array(GLASS_CAPACITY),
+    span: new Float32Array(GLASS_CAPACITY),
+    quat: new Float32Array(GLASS_CAPACITY * 4),
+    cursor: 0,
+  };
+  glass.age.fill(1);
+  glass.span.fill(1);
+  const glassLife = new THREE.InstancedBufferAttribute(new Float32Array(GLASS_CAPACITY).fill(1), 1);
+  glassLife.setUsage(THREE.DynamicDrawUsage);
+  glassShape.setAttribute('aLife', glassLife);
+
+  const glassMaterial = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    uniforms: { uBone: { value: COLOURS.bone }, uAmethyst: { value: COLOURS.amethyst } },
+    vertexShader: `
+      attribute vec3 aBary;
+      attribute float aLife;
+      varying vec3 vBary;
+      varying float vLife;
+      varying vec3 vNormalView;
+      void main() {
+        vBary = aBary;
+        vLife = aLife;
+        vec4 mv = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+        vNormalView = normalize((modelViewMatrix * instanceMatrix * vec4(normal, 0.0)).xyz);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform vec3 uBone;
+      uniform vec3 uAmethyst;
+      varying vec3 vBary;
+      varying float vLife;
+      varying vec3 vNormalView;
+      void main() {
+        if (vLife >= 1.0) discard;
+        // Barycentric distance to the nearest edge: bright rim, near-empty middle. Glass is edges.
+        float edge = 1.0 - smoothstep(0.0, 0.13, min(min(vBary.x, vBary.y), vBary.z));
+        // The glint. A flat fragment flashes as its face turns through the view direction.
+        float facing = abs(dot(vNormalView, vec3(0.0, 0.0, 1.0)));
+        float glint = pow(facing, 9.0);
+        vec3 tone = mix(uAmethyst, uBone, clamp(edge * 0.7 + glint, 0.0, 1.0));
+        float alpha = (mix(0.02, 0.9, edge) + glint * 0.75) * (1.0 - vLife) * (1.0 - vLife * 0.4);
+        if (alpha <= 0.003) discard;
+        gl_FragColor = vec4(tone, alpha);
+      }`,
+  });
+  const glassMesh = new THREE.InstancedMesh(glassShape, glassMaterial, GLASS_CAPACITY);
+  glassMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  glassMesh.frustumCulled = false;
+  glassMesh.renderOrder = 7;
+  glassMesh.visible = false;
+  glassMesh.userData.isHighlight = true;
+  group.add(glassMesh);
+  const glassMatrix = new THREE.Matrix4();
+  const glassQuat = new THREE.Quaternion();
+  const glassStep = new THREE.Quaternion();
+  const glassAxis = new THREE.Vector3();
+  const glassPos = new THREE.Vector3();
+  const glassScale = new THREE.Vector3();
+  const planeQuat = new THREE.Quaternion();
 
   // --------------------------------------------------------------------------------- flashes
   const flashes: Pool<FlashSlot> = { items: [], cursor: 0 };
@@ -1185,6 +1531,42 @@ export function createAbyssVfx(): AbyssVfx {
     slot.scale = scale;
   }
 
+  /**
+   * Open a fracture. `normal` is the pane's normal — the strike axis for a hit in the air, straight
+   * up for a stomp — and the web is generated fresh, so no two impacts crack the same way.
+   */
+  function spawnFracture(at: THREE.Vector3, normal: THREE.Vector3, radius: number, span: number): void {
+    const slot = nextFrom(cracks);
+    writeWeb(slot, radius);
+    slot.mesh.position.copy(at);
+    slot.mesh.quaternion.setFromUnitVectors(FORWARD, normal);
+    slot.mesh.visible = true;
+    slot.age = 0;
+    slot.span = span;
+  }
+
+  /** One fragment of glass, thrown out of the fracture plane. */
+  function spawnGlass(at: THREE.Vector3, velocity: THREE.Vector3, size: number): void {
+    const i = glass.cursor;
+    glass.cursor = (glass.cursor + 1) % GLASS_CAPACITY;
+    glass.px[i] = at.x; glass.py[i] = at.y; glass.pz[i] = at.z;
+    glass.vx[i] = velocity.x; glass.vy[i] = velocity.y; glass.vz[i] = velocity.z;
+    // A tumble axis of its own, or every fragment spins about the same one and reads as a flock.
+    glassAxis.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+    glass.ax[i] = glassAxis.x; glass.ay[i] = glassAxis.y; glass.az[i] = glassAxis.z;
+    glass.spin[i] = (5 + Math.random() * 16) * (Math.random() < 0.5 ? -1 : 1);
+    glass.size[i] = size;
+    // Glass breaks into slivers, not into equilateral triangles.
+    glass.aspect[i] = 0.18 + Math.random() * 0.5;
+    glass.age[i] = 0;
+    glass.span[i] = 0.45 + Math.random() * 0.55;
+    glassQuat.setFromAxisAngle(glassAxis, Math.random() * Math.PI * 2);
+    glass.quat[i * 4] = glassQuat.x;
+    glass.quat[i * 4 + 1] = glassQuat.y;
+    glass.quat[i * 4 + 2] = glassQuat.z;
+    glass.quat[i * 4 + 3] = glassQuat.w;
+  }
+
   function spawnPulse(at: THREE.Vector3, radius: number, span: number): void {
     const slot = nextFrom(pulses);
     slot.mesh.position.set(at.x, 0.02, at.z);
@@ -1341,13 +1723,32 @@ export function createAbyssVfx(): AbyssVfx {
       slot.mesh.visible = true;
     }
 
+    // ---- the fracture, and the glass off it
+    scratchD.copy(at).addScaledVector(dir, 0.04);
+    spawnFracture(scratchD, dir, shape.crack * (0.75 + power * 0.5), 0.55 + power * 0.22);
+    const fragments = Math.round(shape.glass * (0.6 + power * 0.6));
+    // The pane's own frame, resolved once: every fragment is born on this disc.
+    planeQuat.setFromUnitVectors(FORWARD, dir);
+    for (let n = 0; n < fragments; n += 1) {
+      // Born on the fracture disc and thrown along the strike, with the outer ones flying wider —
+      // which is what a pane does: the middle goes through, the edge sprays sideways.
+      const roll = Math.random() * Math.PI * 2;
+      const out = shape.crack * (0.1 + Math.random() * 0.85);
+      scratchC.set(Math.cos(roll), Math.sin(roll), 0).applyQuaternion(planeQuat);
+      scratchB.copy(scratchD).addScaledVector(scratchC, out);
+      scratchA.copy(dir).multiplyScalar((0.7 + Math.random() * 2.2) * gain)
+        .addScaledVector(scratchC, (0.6 + Math.random() * 1.9) * (0.35 + out / shape.crack));
+      scratchA.y += 0.6;
+      spawnGlass(scratchB, scratchA, (0.020 + Math.random() * 0.048) * (0.7 + power * 0.6));
+    }
+
     // ---- shear slivers along the travel
     const sliverCount = 4 + Math.round(power * 4);
     for (let n = 0; n < sliverCount; n += 1) {
       const slot = nextFrom(slivers);
       slot.origin.copy(at);
       slot.dir.copy(dir);
-      slot.length = shape.tearLength * gain * (0.9 + Math.random() * 0.8);
+      slot.length = shape.tearLength * gain * (0.5 + Math.random() * 0.6);
       slot.width = 0.006 + Math.random() * 0.012 * gain;
       slot.roll = Math.random() * Math.PI * 2;
       slot.radius = shape.tearRadius * (0.4 + Math.random() * 1.1);
@@ -1427,6 +1828,17 @@ export function createAbyssVfx(): AbyssVfx {
       scratchA.copy(at);
       scratchA.y += 0.12;
       spawnLight(scratchA, 7 * heavy, 0.18, COLOURS.amethyst);
+      // A stomp cracks the floor, which is the same fracture laid flat: pane normal straight up.
+      scratchB.set(at.x, 0.015, at.z);
+      spawnFracture(scratchB, up, 0.45 + heavy * 0.75, 0.75);
+      for (let n = 0; n < 10; n += 1) {
+        const roll = Math.random() * Math.PI * 2;
+        scratchC.set(Math.cos(roll) * (0.06 + Math.random() * 0.5), 0.02, Math.sin(roll) * (0.06 + Math.random() * 0.5));
+        scratchA.copy(scratchB).add(scratchC);
+        scratchC.y = 1.4 + Math.random() * 2.2;
+        scratchC.multiplyScalar(1 + heavy);
+        spawnGlass(scratchA, scratchC, 0.018 + Math.random() * 0.036);
+      }
     }
   }
 
@@ -1487,7 +1899,7 @@ export function createAbyssVfx(): AbyssVfx {
   }
 
   // ---------------------------------------------------------------------------------- per frame
-  const counts = { shards: 0, ash: 0, aura: 0, crescents: 0, tears: 0, rings: 0 };
+  const counts = { shards: 0, ash: 0, aura: 0, crescents: 0, cracks: 0, glass: 0, tears: 0, rings: 0 };
 
   function update(dt: number): void {
     clock += dt;
@@ -1549,6 +1961,63 @@ export function createAbyssVfx(): AbyssVfx {
     ashAttr.alpha.needsUpdate = true;
     ashAttr.tint.needsUpdate = true;
     ashPoints.visible = ashAlive > 0;
+
+    // --- fractures: the crack runs first, then the web hangs and cools
+    let cracksAlive = 0;
+    for (const slot of cracks.items) {
+      if (slot.age >= 1) continue;
+      slot.age = Math.min(1, slot.age + dt / slot.span);
+      if (slot.age >= 1) { slot.mesh.visible = false; continue; }
+      const t = slot.age;
+      // The run: the whole web is open by 18% of its life, which at a 0.55 s span is about 100 ms.
+      slot.material.uniforms.uFront.value = Math.min(1.12, (t / 0.18) * 1.12);
+      // Full brightness while it is running, then a long cooling scar rather than a cut to black.
+      slot.material.uniforms.uFade.value = t < 0.26
+        ? 0.55 + (t / 0.26) * 0.45
+        : Math.pow(1 - (t - 0.26) / 0.74, 1.7);
+      cracksAlive += 1;
+    }
+
+    // --- glass: ballistic, tumbling, and glinting as it turns
+    let glassAlive = 0;
+    for (let i = 0; i < GLASS_CAPACITY; i += 1) {
+      if (glass.age[i] >= 1) {
+        if (glassLife.array[i] !== 1) {
+          (glassLife.array as Float32Array)[i] = 1;
+          glassScale.setScalar(0);
+          glassPos.set(0, 0, 0);
+          glassQuat.identity();
+          glassMatrix.compose(glassPos, glassQuat, glassScale);
+          glassMesh.setMatrixAt(i, glassMatrix);
+        }
+        continue;
+      }
+      glass.age[i] = Math.min(1, glass.age[i] + dt / glass.span[i]);
+      const damp = Math.max(0, 1 - 1.7 * dt);
+      glass.vx[i] *= damp;
+      glass.vy[i] = glass.vy[i] * damp - 7.6 * dt;
+      glass.vz[i] *= damp;
+      glass.px[i] += glass.vx[i] * dt;
+      glass.py[i] += glass.vy[i] * dt;
+      glass.pz[i] += glass.vz[i] * dt;
+      glassAxis.set(glass.ax[i], glass.ay[i], glass.az[i]);
+      glassStep.setFromAxisAngle(glassAxis, glass.spin[i] * dt);
+      glassQuat.set(glass.quat[i * 4], glass.quat[i * 4 + 1], glass.quat[i * 4 + 2], glass.quat[i * 4 + 3]);
+      glassQuat.premultiply(glassStep).normalize();
+      glass.quat[i * 4] = glassQuat.x;
+      glass.quat[i * 4 + 1] = glassQuat.y;
+      glass.quat[i * 4 + 2] = glassQuat.z;
+      glass.quat[i * 4 + 3] = glassQuat.w;
+      glassPos.set(glass.px[i], glass.py[i], glass.pz[i]);
+      glassScale.set(glass.size[i] * glass.aspect[i], glass.size[i], glass.size[i]);
+      glassMatrix.compose(glassPos, glassQuat, glassScale);
+      glassMesh.setMatrixAt(i, glassMatrix);
+      (glassLife.array as Float32Array)[i] = glass.age[i];
+      glassAlive += 1;
+    }
+    glassMesh.instanceMatrix.needsUpdate = true;
+    glassLife.needsUpdate = true;
+    glassMesh.visible = glassAlive > 0;
 
     // --- crescents: they widen, sweep a little further than the claw did, and go
     let crescentsAlive = 0;
@@ -1678,6 +2147,8 @@ export function createAbyssVfx(): AbyssVfx {
     counts.ash = ashAlive;
     counts.aura = auraPoints.visible ? AURA_CAPACITY : 0;
     counts.crescents = crescentsAlive;
+    counts.cracks = cracksAlive;
+    counts.glass = glassAlive;
     counts.tears = tearsAlive;
     counts.rings = ringsAlive;
   }
@@ -1699,6 +2170,13 @@ export function createAbyssVfx(): AbyssVfx {
     miasmaMaterial.dispose();
     for (const slot of crescents.items) slot.material.dispose();
     for (const slot of tears.items) slot.material.dispose();
+    for (const slot of cracks.items) {
+      slot.mesh.geometry.dispose();
+      slot.material.dispose();
+    }
+    glassShape.dispose();
+    glassMaterial.dispose();
+    glassMesh.dispose();
     for (const slot of slivers.items) slot.material.dispose();
     for (const slot of rings.items) slot.material.dispose();
     for (const slot of voids.items) slot.material.dispose();
