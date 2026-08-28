@@ -114,6 +114,13 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
               </div>
               <div class="demo-animation-buttons" id="demo-animation-buttons"></div>
             </section>
+            <section class="demo-animations" id="demo-vfx" hidden aria-labelledby="demo-vfx-title">
+              <div class="demo-animations-head">
+                <span class="parts-title" id="demo-vfx-title">Strike element</span>
+                <output class="demo-animation-status" id="demo-vfx-status"></output>
+              </div>
+              <div class="demo-animation-buttons" id="demo-vfx-buttons"></div>
+            </section>
             <section class="demo-animations" id="demo-detail" hidden aria-labelledby="demo-detail-title">
               <div class="demo-animations-head">
                 <span class="parts-title" id="demo-detail-title">Quality</span>
@@ -233,10 +240,20 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
   const animationStatus = mount.querySelector<HTMLOutputElement>('#demo-animation-status');
   const animationButtonCleanups: Array<() => void> = [];
   let unsubscribeAnimation: (() => void) | undefined;
-  if (animationController && animationSection && animationButtons && !capture) {
+  let mountedAnimationController: AnimationController | undefined;
+  /**
+   * Mounted as a function, not inline, because a demo whose geometry arrives through `prewarm` has no
+   * animation runtime yet when `build()` returns -- its rig ships inside the lazily imported payload,
+   * so the inline form left those demos with no panel at all. Demos that expose a controller
+   * synchronously take exactly the same path as before.
+   */
+  const mountAnimationPanel = (controller: AnimationController | undefined): void => {
+    if (!controller || controller === mountedAnimationController) return;
+    if (!animationSection || !animationButtons || capture) return;
+    mountedAnimationController = controller;
     animationSection.hidden = false;
     const buttons = new Map<string, HTMLButtonElement>();
-    for (const action of animationController.actions) {
+    for (const action of controller.actions) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'btn demo-animation-btn';
@@ -245,7 +262,7 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
       button.setAttribute('aria-pressed', 'false');
       button.title = action.loop ? `${action.label} (loops until stopped)` : `${action.label} (plays once)`;
       const onClick = (): void => {
-        animationController.play(action.id);
+        controller.play(action.id);
         trackAnimationPlay(demo.id, action, 'viewer');
       };
       button.addEventListener('click', onClick);
@@ -259,13 +276,19 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     stopButton.dataset.animation = 'stop';
     stopButton.textContent = 'Stop / Reset';
     const onStop = (): void => {
-      animationController.stop();
+      controller.stop();
       trackAnimationStop(demo.id, 'viewer');
     };
     stopButton.addEventListener('click', onStop);
     animationButtonCleanups.push(() => stopButton.removeEventListener('click', onStop));
     animationButtons.appendChild(stopButton);
-    unsubscribeAnimation = animationController.subscribe((active) => {
+    // Autoplay before subscribing is safe either way: `subscribe` replays the active id immediately,
+    // so the highlighted button and the status text agree with whatever is already running.
+    if (demo.defaultAnimation && !capture) {
+      const wanted = controller.actions.find((action) => action.id === demo.defaultAnimation);
+      if (wanted) controller.play(wanted.id);
+    }
+    unsubscribeAnimation = controller.subscribe((active) => {
       if (animationStatus) animationStatus.value = active === 'idle'
         ? 'Idle'
         : buttons.get(active)?.textContent ?? active.charAt(0).toUpperCase() + active.slice(1);
@@ -275,7 +298,54 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
         button.setAttribute('aria-pressed', String(selected));
       }
     });
-  }
+  };
+  mountAnimationPanel(animationController);
+
+  /**
+   * Strike-element selector, for a runtime that offers one. Mounted the same way and for the same
+   * reason as the animation panel: the runtime arrives with the lazily imported payload.
+   */
+  type VfxRuntime = {
+    elements: ReadonlyArray<{ id: string; label: string }>;
+    current: string;
+    setElement(id: string): void;
+  };
+  let vfxMounted = false;
+  const mountVfxPanel = (): void => {
+    if (vfxMounted || capture) return;
+    const runtime = (model.userData.sculptRuntime as { strikeVfx?: VfxRuntime } | undefined)?.strikeVfx;
+    const section = mount.querySelector<HTMLElement>('#demo-vfx');
+    const host = mount.querySelector<HTMLElement>('#demo-vfx-buttons');
+    const status = mount.querySelector<HTMLOutputElement>('#demo-vfx-status');
+    if (!runtime?.elements?.length || !section || !host) return;
+    vfxMounted = true;
+    section.hidden = false;
+    const buttons = new Map<string, HTMLButtonElement>();
+    const select = (id: string): void => {
+      runtime.setElement(id);
+      for (const [key, button] of buttons) {
+        const on = key === id;
+        button.classList.toggle('is-active', on);
+        button.setAttribute('aria-pressed', String(on));
+      }
+      if (status) status.value = buttons.get(id)?.textContent ?? id;
+    };
+    for (const entry of runtime.elements) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'btn demo-animation-btn';
+      button.dataset.vfxElement = entry.id;
+      button.textContent = entry.label;
+      const onClick = (): void => select(entry.id);
+      button.addEventListener('click', onClick);
+      animationButtonCleanups.push(() => button.removeEventListener('click', onClick));
+      host.appendChild(button);
+      buttons.set(entry.id, button);
+    }
+    select(runtime.current);
+  };
+  mountVfxPanel();
+
   /**
    * Detail levels, for demos that ship more than one build of the same surfaces.
    *
@@ -354,7 +424,6 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
 
   // Part tree published for the assembly gate (forge/stage4_review/check_part_coverage.py).
   // Set in capture mode too — that is the headless run the gate reads it from.
-  const partManifest = viewer.partManifest();
   const logicalParts = Object.entries(modelRuntime?.logicalComponents ?? {}).map(([name, value]) => ({
     name,
     module: null,
@@ -364,11 +433,17 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
   }));
   // Logical entries describe a coverage binding only; they do not add
   // geometry, selectable meshes, or a camera-facing surface to the model.
-  (window as unknown as Record<string, unknown>).__IMG2THREEJS_PARTS__ = {
-    model: id,
-    ...(partManifest ?? { parts: [], unnamedMeshes: 0, integralMeshes: 0 }),
-    parts: [...(partManifest?.parts ?? []), ...logicalParts],
+  // Re-published after prewarm as well: a demo whose meshes arrive lazily had none to report on the
+  // first pass, which left the assembly gate reading zero parts for a model that ships 69 of them.
+  const publishPartManifest = (): void => {
+    const live = viewer.partManifest();
+    (window as unknown as Record<string, unknown>).__IMG2THREEJS_PARTS__ = {
+      model: id,
+      ...(live ?? { parts: [], unnamedMeshes: 0, integralMeshes: 0 }),
+      parts: [...(live?.parts ?? []), ...logicalParts],
+    };
   };
+  publishPartManifest();
 
   // Explode control. Hidden for single-mesh demos and in capture mode, where the panel is
   // hidden anyway and the evaluation frame must stay deterministic.
@@ -568,7 +643,16 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
       }).finally(() => {
         viewer.rebuildParts();
         populateParts();
+        publishPartManifest();
         syncExplodeButton();
+        // The runtime and its per-frame ticker both arrive with the late geometry, so the viewer has
+        // to be told to look again -- otherwise the mixer never advances and every clip plays silently.
+        viewer.refreshTickers();
+        mountAnimationPanel(
+          (model.userData.sculptRuntime as { animationController?: AnimationController } | undefined)
+            ?.animationController,
+        );
+        mountVfxPanel();
       });
     }
   }
@@ -733,7 +817,7 @@ export function renderDemo(mount: HTMLElement, id: string): () => void {
     canvasMount.removeEventListener('wheel', onFirstWheel);
     canvasMount.removeEventListener('touchstart', onFirstTouch);
     mount.removeEventListener('click', onPanelLinkClick);
-    animationController?.stop();
+    mountedAnimationController?.stop();
     unsubscribeAnimation?.();
     for (const cleanup of animationButtonCleanups) cleanup();
     viewer.dispose();
