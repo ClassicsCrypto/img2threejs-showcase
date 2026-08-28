@@ -291,12 +291,32 @@ function glassGeometry(): THREE.BufferGeometry {
 interface CrackSlot {
   mesh: THREE.Mesh;
   material: THREE.ShaderMaterial;
+  /**
+   * The same geometry drawn a second time underneath, dark and non-additive: the OPEN part of the
+   * crack. A glowing line alone reads as something painted on the surface; a dark fissure with a
+   * hot line inside it reads as a gap with depth, which is the whole difference between a decal
+   * and a hole.
+   */
+  shadow: THREE.Mesh;
+  shadowMaterial: THREE.ShaderMaterial;
   position: THREE.BufferAttribute;
   dist: THREE.BufferAttribute;
   across: THREE.BufferAttribute;
   tag: THREE.BufferAttribute;
   age: number;
   span: number;
+}
+
+interface CraterSlot {
+  /** The pit itself: near-black, non-additive, with a crumbled edge. */
+  pit: THREE.Mesh;
+  pitMaterial: THREE.ShaderMaterial;
+  /** What is still burning in it. Cools faster than the pit fills in. */
+  glow: THREE.Mesh;
+  glowMaterial: THREE.ShaderMaterial;
+  age: number;
+  span: number;
+  radius: number;
 }
 
 interface CrescentSlot {
@@ -1161,6 +1181,53 @@ export function createAbyssVfx(): AbyssVfx {
           gl_FragColor = vec4(tone, alpha);
         }`,
     });
+    const shadowMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
+      uniforms: {
+        uFront: { value: 0 },
+        uFade: { value: 0 },
+        uDepth: { value: 0 },
+        uVoid: { value: COLOURS.ash },
+      },
+      vertexShader: `
+        attribute float aDist;
+        attribute float aAcross;
+        varying float vDist;
+        varying float vAcross;
+        void main() {
+          vDist = aDist;
+          vAcross = aAcross;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+      fragmentShader: `
+        uniform float uFront;
+        uniform float uFade;
+        uniform float uDepth;
+        uniform vec3 uVoid;
+        varying float vDist;
+        varying float vAcross;
+        void main() {
+          // Fills the quad rather than hugging its centre line, so the dark gap is visibly WIDER
+          // than the light burning inside it.
+          float body = pow(1.0 - abs(vAcross), 0.5);
+          float open = 1.0 - smoothstep(uFront, uFront + 0.07, vDist);
+          // Wide and black where the ground was crushed, a hairline out at the tips.
+          float depth = 1.0 - smoothstep(0.25, 1.0, vDist);
+          float alpha = body * open * uFade * uDepth * (0.25 + depth * 0.75);
+          if (alpha <= 0.003) discard;
+          gl_FragColor = vec4(uVoid, alpha);
+        }`,
+    });
+    const shadow = new THREE.Mesh(geometry, shadowMaterial);
+    shadow.frustumCulled = false;
+    shadow.renderOrder = 6;
+    shadow.visible = false;
+    shadow.userData.isHighlight = true;
+    group.add(shadow);
+
     const mesh = new THREE.Mesh(geometry, material);
     mesh.frustumCulled = false;
     mesh.renderOrder = 7;
@@ -1168,7 +1235,7 @@ export function createAbyssVfx(): AbyssVfx {
     mesh.userData.isHighlight = true;
     group.add(mesh);
     cracks.items.push({
-      mesh, material,
+      mesh, material, shadow, shadowMaterial,
       position: geometry.getAttribute('position') as THREE.BufferAttribute,
       dist: geometry.getAttribute('aDist') as THREE.BufferAttribute,
       across: geometry.getAttribute('aAcross') as THREE.BufferAttribute,
@@ -1275,6 +1342,107 @@ export function createAbyssVfx(): AbyssVfx {
     slot.dist.needsUpdate = true;
     slot.across.needsUpdate = true;
     slot.tag.needsUpdate = true;
+  }
+
+  /**
+   * THE CRATER. What a landing leaves where the foot actually hit.
+   *
+   * Two discs, because one blend mode cannot do both halves of a hole: a NON-additive near-black
+   * pit with a crumbled edge (an angular ripple on the radius — a perfect circle reads as a decal),
+   * and an additive glow over it that cools from a white centre to a ring smouldering at the rim.
+   * The glow dies well before the pit fills back in, so the last thing on screen is the dark.
+   */
+  const craters: Pool<CraterSlot> = { items: [], cursor: 0 };
+  for (let i = 0; i < 3; i += 1) {
+    const pitMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
+      uniforms: { uFade: { value: 0 }, uSeed: { value: 0 }, uVoid: { value: COLOURS.ash } },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+      fragmentShader: `
+        uniform float uFade;
+        uniform float uSeed;
+        uniform vec3 uVoid;
+        varying vec2 vUv;
+        void main() {
+          vec2 p = (vUv - 0.5) * 2.0;
+          float r = length(p);
+          if (r > 1.0) discard;
+          float a = atan(p.y, p.x);
+          // Broken edge. Ground does not fail along a circle.
+          float ragged = 0.80 + 0.16 * sin(a * 6.0 + uSeed) + 0.07 * sin(a * 13.0 - uSeed * 1.7);
+          float mass = 1.0 - smoothstep(ragged * 0.45, ragged, r);
+          float alpha = mass * uFade * 0.92;
+          if (alpha <= 0.003) discard;
+          gl_FragColor = vec4(uVoid, alpha);
+        }`,
+    });
+    const pit = new THREE.Mesh(discGeometry, pitMaterial);
+    pit.rotation.x = -Math.PI / 2;
+    pit.frustumCulled = false;
+    pit.renderOrder = 1;
+    pit.visible = false;
+    pit.userData.isHighlight = true;
+    group.add(pit);
+
+    const glowMaterial = new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      uniforms: {
+        uFade: { value: 0 },
+        uHeat: { value: 0 },
+        uSeed: { value: 0 },
+        uEmber: { value: COLOURS.ember },
+        uAmethyst: { value: COLOURS.amethyst },
+        uBone: { value: COLOURS.bone },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+      fragmentShader: `
+        uniform float uFade;
+        uniform float uHeat;
+        uniform float uSeed;
+        uniform vec3 uEmber;
+        uniform vec3 uAmethyst;
+        uniform vec3 uBone;
+        varying vec2 vUv;
+        void main() {
+          vec2 p = (vUv - 0.5) * 2.0;
+          float r = length(p);
+          if (r > 1.0) discard;
+          float a = atan(p.y, p.x);
+          float ragged = 0.80 + 0.16 * sin(a * 6.0 + uSeed) + 0.07 * sin(a * 13.0 - uSeed * 1.7);
+          // A rim that is still smouldering, and a centre that was white a moment ago.
+          float rim = smoothstep(ragged * 0.55, ragged * 0.95, r) * (1.0 - smoothstep(ragged, ragged * 1.1, r));
+          float core = pow(1.0 - smoothstep(0.0, ragged * 0.7, r), 2.0) * uHeat;
+          vec3 tone = mix(mix(uEmber, uAmethyst, 0.78), uBone, core);
+          float alpha = (rim * 0.26 + core * 0.7) * uFade;
+          if (alpha <= 0.003) discard;
+          gl_FragColor = vec4(tone, alpha);
+        }`,
+    });
+    const glow = new THREE.Mesh(discGeometry, glowMaterial);
+    glow.rotation.x = -Math.PI / 2;
+    glow.frustumCulled = false;
+    glow.renderOrder = 2;
+    glow.visible = false;
+    glow.userData.isHighlight = true;
+    group.add(glow);
+
+    craters.items.push({ pit, pitMaterial, glow, glowMaterial, age: 1, span: 1, radius: 0.5 });
   }
 
   /**
@@ -1535,14 +1703,43 @@ export function createAbyssVfx(): AbyssVfx {
    * Open a fracture. `normal` is the pane's normal — the strike axis for a hit in the air, straight
    * up for a stomp — and the web is generated fresh, so no two impacts crack the same way.
    */
-  function spawnFracture(at: THREE.Vector3, normal: THREE.Vector3, radius: number, span: number): void {
+  function spawnFracture(
+    at: THREE.Vector3, normal: THREE.Vector3, radius: number, span: number, depth = 0.35,
+  ): void {
     const slot = nextFrom(cracks);
     writeWeb(slot, radius);
     slot.mesh.position.copy(at);
     slot.mesh.quaternion.setFromUnitVectors(FORWARD, normal);
     slot.mesh.visible = true;
+    // The dark pass rides the same geometry and the same transform; only its weight differs, and
+    // ground takes far more of it than air does — a crack in stone is a hole, a crack in air is a
+    // seam.
+    slot.shadow.position.copy(at);
+    slot.shadow.quaternion.copy(slot.mesh.quaternion);
+    slot.shadow.visible = true;
+    slot.shadowMaterial.uniforms.uDepth.value = depth;
     slot.age = 0;
     slot.span = span;
+  }
+
+  /** The pit a landing leaves, centred exactly where the foot met the ground. */
+  function spawnCrater(at: THREE.Vector3, radius: number, span: number): void {
+    const slot = nextFrom(craters);
+    const seed = Math.random() * 10;
+    slot.pit.position.set(at.x, 0.009, at.z);
+    slot.glow.position.set(at.x, 0.011, at.z);
+    slot.pit.scale.setScalar(radius);
+    slot.glow.scale.setScalar(radius);
+    slot.pitMaterial.uniforms.uSeed.value = seed;
+    slot.glowMaterial.uniforms.uSeed.value = seed;
+    // A new pit is turned at random: three of them side by side must not be the same hole.
+    slot.pit.rotation.z = Math.random() * Math.PI * 2;
+    slot.glow.rotation.z = slot.pit.rotation.z;
+    slot.pit.visible = true;
+    slot.glow.visible = true;
+    slot.age = 0;
+    slot.span = span;
+    slot.radius = radius;
   }
 
   /** One fragment of glass, thrown out of the fracture plane. */
@@ -1725,7 +1922,7 @@ export function createAbyssVfx(): AbyssVfx {
 
     // ---- the fracture, and the glass off it
     scratchD.copy(at).addScaledVector(dir, 0.04);
-    spawnFracture(scratchD, dir, shape.crack * (0.75 + power * 0.5), 0.55 + power * 0.22);
+    spawnFracture(scratchD, dir, shape.crack * (0.75 + power * 0.5), 0.55 + power * 0.22, 0.30);
     const fragments = Math.round(shape.glass * (0.6 + power * 0.6));
     // The pane's own frame, resolved once: every fragment is born on this disc.
     planeQuat.setFromUnitVectors(FORWARD, dir);
@@ -1804,41 +2001,69 @@ export function createAbyssVfx(): AbyssVfx {
     return shape.hitstop * (0.7 + power * 0.45);
   }
 
+  /**
+   * Weight arriving on the ground, at the toe the sweep measured — so the whole event is centred on
+   * the point of contact rather than under the body.
+   *
+   * A step and a stomp are not the same event with different numbers. Under drop 1.0 H/s this is a
+   * foot being placed: some ash, a small ring, nothing structural. Above it the ground FAILS, and
+   * failure is built here in the order it happens: the floor blows open at the contact, the pit is
+   * left behind it, cracks run out of the pit, and only then does the debris arrive — thrown up the
+   * way a crater throws it, fastest and steepest at the centre and flatter towards the rim.
+   */
   function footfall(at: THREE.Vector3, drop: number): void {
     const heavy = Math.min(1, drop / 2.4);
-    const count = 4 + Math.round(heavy * 14);
-    for (let n = 0; n < count; n += 1) {
+    // Everything is centred here: the exact spot the toe met the floor.
+    const impact = scratchD.set(at.x, 0.012, at.z);
+
+    const dust = 4 + Math.round(heavy * 14);
+    for (let n = 0; n < dust; n += 1) {
       scatter(up, 2.4, scratchA);
       scratchA.y = Math.abs(scratchA.y) * 0.5;
-      scratchB.copy(at).addScaledVector(scratchA, 0.05);
+      scratchB.copy(impact).addScaledVector(scratchA, 0.05);
       scratchB.y = Math.max(0.01, scratchB.y);
       scratchC.copy(scratchA).multiplyScalar(0.35 + Math.random() * (0.5 + heavy * 1.4));
       spawnAsh('ash', scratchB, scratchC, 0.8 + heavy * 0.9);
     }
-    spawnPulse(at, 0.28 + heavy * 0.95, 0.34 + heavy * 0.2);
-    if (drop > 1.0) {
-      // A stomp, not a step: shards off the floor and a light under the figure.
-      for (let n = 0; n < 14; n += 1) {
-        scatter(up, 1.9, scratchA);
-        scratchA.y = Math.abs(scratchA.y);
-        scratchB.copy(at).addScaledVector(scratchA, 0.04);
-        scratchC.copy(scratchA).multiplyScalar(1.2 + Math.random() * 2.6);
-        spawnShard('shard', scratchB, scratchC, 1);
-      }
-      scratchA.copy(at);
-      scratchA.y += 0.12;
-      spawnLight(scratchA, 7 * heavy, 0.18, COLOURS.amethyst);
-      // A stomp cracks the floor, which is the same fracture laid flat: pane normal straight up.
-      scratchB.set(at.x, 0.015, at.z);
-      spawnFracture(scratchB, up, 0.45 + heavy * 0.75, 0.75);
-      for (let n = 0; n < 10; n += 1) {
-        const roll = Math.random() * Math.PI * 2;
-        scratchC.set(Math.cos(roll) * (0.06 + Math.random() * 0.5), 0.02, Math.sin(roll) * (0.06 + Math.random() * 0.5));
-        scratchA.copy(scratchB).add(scratchC);
-        scratchC.y = 1.4 + Math.random() * 2.2;
-        scratchC.multiplyScalar(1 + heavy);
-        spawnGlass(scratchA, scratchC, 0.018 + Math.random() * 0.036);
-      }
+    spawnPulse(impact, 0.28 + heavy * 0.95, 0.34 + heavy * 0.2);
+    if (drop <= 1.0) return;
+
+    // ---- the blast. A white core at the contact and a light under the figure, both gone in 200 ms.
+    const radius = 0.20 + heavy * 0.30;
+    scratchA.copy(impact);
+    scratchA.y += 0.05;
+    spawnFlash(scratchA, 0.34 + heavy * 0.4, 0.14);
+    scratchA.y += 0.1;
+    spawnLight(scratchA, 9 * heavy, 0.2, COLOURS.amethyst);
+    // A second ring, faster and wider than the dust ring: the pressure leaving the contact.
+    spawnPulse(impact, radius * 3.2, 0.26);
+
+    // ---- the pit, and the fissures running out of it. Ground takes the full dark pass, so the
+    // cracks read as gaps opened in the floor rather than as light drawn on it.
+    spawnCrater(impact, radius, 1.5 + heavy * 0.6);
+    spawnFracture(impact, up, radius * 2.0, 1.1 + heavy * 0.4, 0.9);
+
+    // ---- ejecta. Steep and fast out of the middle, flatter and slower from the rim, which is the
+    // shape a real crater throws and the reason it does not read as a firework.
+    const chunks = 12 + Math.round(heavy * 14);
+    for (let n = 0; n < chunks; n += 1) {
+      const roll = Math.random() * Math.PI * 2;
+      const out = Math.pow(Math.random(), 0.6);
+      const reach = radius * 1.8 * out;
+      scratchA.set(Math.cos(roll) * reach, 0.02, Math.sin(roll) * reach).add(impact);
+      // Centre goes up, rim goes out: one lerp, and it is most of the read.
+      scratchB.set(Math.cos(roll) * (0.6 + out * 2.6), 3.4 - out * 2.0, Math.sin(roll) * (0.6 + out * 2.6));
+      scratchB.multiplyScalar((0.55 + heavy * 0.75) * (0.7 + Math.random() * 0.6));
+      if (n % 2 === 0) spawnShard('shard', scratchA, scratchB, 0.9 + heavy * 0.5);
+      else spawnGlass(scratchA, scratchB, 0.020 + Math.random() * 0.042);
+    }
+    // ---- and the dust the ejecta drags up with it, in a column rather than a dome.
+    for (let n = 0; n < 8 + Math.round(heavy * 8); n += 1) {
+      const roll = Math.random() * Math.PI * 2;
+      const reach = radius * Math.random() * 0.7;
+      scratchA.set(Math.cos(roll) * reach, 0.03, Math.sin(roll) * reach).add(impact);
+      scratchB.set(Math.cos(roll) * 0.35, 1.5 + Math.random() * 1.9, Math.sin(roll) * 0.35);
+      spawnAsh('ash', scratchA, scratchB, 1.1 + heavy * 0.6);
     }
   }
 
@@ -1967,15 +2192,44 @@ export function createAbyssVfx(): AbyssVfx {
     for (const slot of cracks.items) {
       if (slot.age >= 1) continue;
       slot.age = Math.min(1, slot.age + dt / slot.span);
-      if (slot.age >= 1) { slot.mesh.visible = false; continue; }
+      if (slot.age >= 1) {
+        slot.mesh.visible = false;
+        slot.shadow.visible = false;
+        continue;
+      }
       const t = slot.age;
       // The run: the whole web is open by 18% of its life, which at a 0.55 s span is about 100 ms.
-      slot.material.uniforms.uFront.value = Math.min(1.12, (t / 0.18) * 1.12);
+      const front = Math.min(1.12, (t / 0.18) * 1.12);
+      slot.material.uniforms.uFront.value = front;
       // Full brightness while it is running, then a long cooling scar rather than a cut to black.
       slot.material.uniforms.uFade.value = t < 0.26
         ? 0.55 + (t / 0.26) * 0.45
         : Math.pow(1 - (t - 0.26) / 0.74, 1.7);
+      // The gap outlives the light in it: the dark pass holds full weight for the first half and
+      // only then closes, so what is left at the end is a fissure and not a glow.
+      slot.shadowMaterial.uniforms.uFront.value = front;
+      slot.shadowMaterial.uniforms.uFade.value = t < 0.5 ? 1 : Math.pow(1 - (t - 0.5) / 0.5, 1.3);
       cracksAlive += 1;
+    }
+
+    // --- craters: the fire goes out long before the hole does
+    for (const slot of craters.items) {
+      if (slot.age >= 1) continue;
+      slot.age = Math.min(1, slot.age + dt / slot.span);
+      if (slot.age >= 1) {
+        slot.pit.visible = false;
+        slot.glow.visible = false;
+        continue;
+      }
+      const t = slot.age;
+      // The pit is dug in the first 60 ms and then just sits there, fading only at the very end.
+      const open = Math.min(1, t / 0.04);
+      slot.pit.scale.setScalar(slot.radius * (0.55 + open * 0.45));
+      slot.glow.scale.setScalar(slot.radius * (0.55 + open * 0.45));
+      slot.pitMaterial.uniforms.uFade.value = open * (t < 0.55 ? 1 : Math.pow(1 - (t - 0.55) / 0.45, 1.4));
+      slot.glowMaterial.uniforms.uFade.value = open * Math.pow(1 - t, 1.6);
+      // Heat leaves in the first fifth of the crater's life; after that only the rim smoulders.
+      slot.glowMaterial.uniforms.uHeat.value = Math.max(0, 1 - t / 0.2);
     }
 
     // --- glass: ballistic, tumbling, and glinting as it turns
@@ -2173,6 +2427,11 @@ export function createAbyssVfx(): AbyssVfx {
     for (const slot of cracks.items) {
       slot.mesh.geometry.dispose();
       slot.material.dispose();
+      slot.shadowMaterial.dispose();
+    }
+    for (const slot of craters.items) {
+      slot.pitMaterial.dispose();
+      slot.glowMaterial.dispose();
     }
     glassShape.dispose();
     glassMaterial.dispose();
