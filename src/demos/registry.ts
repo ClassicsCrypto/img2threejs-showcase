@@ -212,7 +212,7 @@ const authored: DemoEntry[] = [
       + 'shock rings that expand down the punch axis, sweat spray under real gravity, rosin dust off the '
       + 'canvas, a spiking impact light and 45-85 ms of hitstop. Nothing is fetched: geometry, per-vertex '
       + 'colour and every keyframe are TypeScript.',
-    referenceImage: `${BASE}references/boxing-man/reference.png`,
+    referenceImage: `${BASE}references/boxing-man/reference.jpg`,
     sourcePath: 'src/demos/boxing-man/boxingVfx.ts',
     sourceUrl: `${REPO}/src/demos/boxing-man/boxingVfx.ts`,
     generatedWith: 'img2threejs playground · Tripo v3.1-20260211 measurement · GLB fast lane · measured-event VFX',
