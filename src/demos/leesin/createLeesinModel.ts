@@ -255,7 +255,21 @@ export function installMeasuredGeometry(root: THREE.Group, options: LeesinModelO
    * for looping clips, which is also what re-arms the one-shot bursts.
    */
   const vfx = createStrikeVfx(rig.nodes);
-  (root.parent ?? root).add(vfx.group);
+  /**
+   * Attached to the model's PARENT, and deferred if it does not have one yet.
+   *
+   * The parts inspector, the explode layout and the rig gate all walk `leesin-procedural` and assert
+   * 69 visible meshes; an effect mesh inside it is counted as a body part. On the demo page the root
+   * is already in the scene when this runs, but the workbench prewarms BEFORE it builds, so the root
+   * is still parentless here -- the effects landed inside the model and the exhibit reported 70 parts.
+   * Three dispatches `added` on the child, so waiting for it covers that order too.
+   */
+  const attachVfx = (): void => { (root.parent ?? root).add(vfx.group); };
+  if (root.parent) attachVfx();
+  else root.addEventListener('added', function onAdded() {
+    root.removeEventListener('added', onAdded);
+    attachVfx();
+  });
   let vfxClip: string | null = null;
   let vfxTime = 0;
   /**
