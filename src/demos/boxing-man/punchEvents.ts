@@ -240,21 +240,36 @@ export interface BoxingAction {
 }
 
 /**
- * THE DEFAULT IS THE JAB, not the warm-up.
+ * THE DEFAULT IS THE ONE-TWO.
  *
- * `warm_up` is the obvious idle — it is fourteen seconds long and it is literally called warm-up —
- * and it is the wrong one. Measured, it spends 1.9 s to 4.9 s with the hip at 0.31 H, which is a
- * floor stretch, and its shoulder line swings through 270 degrees, so the visitor's first three
- * seconds are the boxer's back while he touches his toes. `box_01` is stance -> lead jab -> stance
- * in 1.80 s, holds its facing inside 62-81 degrees for the whole loop, and lands one measured punch
- * every loop. That is what a boxer looks like when nothing is being asked of him, and it is what
- * this demo is for. The warm-up is still there — it is a button.
+ * `warm_up` is the obvious idle — fourteen seconds long, literally called warm-up — and it is the
+ * wrong one: measured, it spends 1.9 s to 4.9 s with the hip at 0.31 H, which is a floor stretch,
+ * and its shoulder line swings through 270 degrees, so a visitor's first three seconds would be the
+ * boxer's back while he touches his toes.
+ *
+ * `box_02` is the combination this demo exists to show. Over its 2.27 s loop it lands the jab at
+ * 1.524 s and the cross 0.204 s behind it — the fastest hand event measured anywhere in the set,
+ * and the only punch that couples through the floor — so the full effect stack (windup charge, air
+ * tear, twin rings, spray, canvas ripple, hitstop) plays once per loop without anyone pressing
+ * anything. Its root drifts 0.066 H per loop, so it needs no lock, and it faces 99-105 degrees at
+ * both contacts, which is where the camera is authored.
+ *
+ * The single jab keeps its own button, and so does the warm-up.
  */
-export const BOXING_IDLE_CLIP = 'preset:biped:box_01';
+export const BOXING_IDLE_CLIP = 'preset:biped:box_02';
+
+/**
+ * What the default action calls itself.
+ *
+ * Not the conventional `idle`, because the panel prints exactly this: the viewer labels the status
+ * "Idle" for an action of that name and anything else by its own id, and "Idle" is a false caption
+ * for a figure throwing a one-two. Nothing else in the gallery keys off the string.
+ */
+export const BOXING_IDLE_ID = 'one-two';
 
 export const BOXING_ACTIONS: readonly BoxingAction[] = [
-  { id: 'one-two', label: 'One-Two', clip: 'preset:biped:box_02',
-    note: 'jab then cross 0.204 s later; the cross is the fastest hand event measured (3.75 H/s)' },
+  { id: 'jab', label: 'Jab', clip: 'preset:biped:box_01',
+    note: 'lead hand, one punch at 0.405 s — 2.64 H/s, stopped 82% inside 0.14 s' },
   { id: 'hook', label: 'Hook', clip: 'preset:biped:box_03',
     note: 'arc to the head line — contact at 0.713 H, the clip’s longest reach' },
   { id: 'body-shot', label: 'Body Shot Taken', clip: 'preset:biped:hit_to_body_01',

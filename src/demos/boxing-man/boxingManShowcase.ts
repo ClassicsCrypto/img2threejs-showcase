@@ -10,6 +10,7 @@ import {
   ABSORB_EVENTS,
   BOXING_ACTIONS,
   BOXING_IDLE_CLIP,
+  BOXING_IDLE_ID,
   CLIP_TRAIL_REFERENCE,
   FIGURE_HEIGHT,
   FOOTFALL_EVENTS,
@@ -90,7 +91,7 @@ export function createBoxingManShowcase(options: BoxingManOptions = {}): THREE.G
   root.add(vfx.group);
 
   let bound: Bound | null = null;
-  let activeId = 'idle';
+  let activeId = BOXING_IDLE_ID;
   let activeClip = BOXING_IDLE_CLIP;
   let pending: string | null = null;
   let clipTime = 0;
@@ -145,7 +146,7 @@ export function createBoxingManShowcase(options: BoxingManOptions = {}): THREE.G
       switchTo(action.id, action.clip, 0.22);
     },
     stop(): void {
-      switchTo('idle', BOXING_IDLE_CLIP, 0.30);
+      switchTo(BOXING_IDLE_ID, BOXING_IDLE_CLIP, 0.30);
     },
     subscribe(listener: (active: string) => void): () => void {
       listeners.add(listener);
@@ -437,7 +438,7 @@ export function createBoxingManShowcase(options: BoxingManOptions = {}): THREE.G
     pending = null;
     primed = false;
     clipTime = 0;
-    switchTo(requested?.id ?? 'idle', requested?.clip ?? BOXING_IDLE_CLIP, 0);
+    switchTo(requested?.id ?? BOXING_IDLE_ID, requested?.clip ?? BOXING_IDLE_CLIP, 0);
   }
 
   // Same task when the level is already in memory — the landing workbench reads the parts and
