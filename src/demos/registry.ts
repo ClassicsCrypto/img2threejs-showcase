@@ -73,6 +73,8 @@ import {
   createWarriorModel,
   prewarmWarrior,
 } from './warrior/createWarriorModel';
+import { createBoxingManShowcase, createRingsideLights } from './boxing-man/boxingManShowcase';
+import { prewarmBoxingMan } from './boxing-man/createBoxingManModel';
 import {
   createRegretWarriorLookDevLights,
   createRegretWarriorModel,
@@ -237,6 +239,54 @@ const authored: DemoEntry[] = [
     defaultAnimation: 'step-and-swing-arms',
     build: (scene) => {
       const group = createLeesinModel({ castShadow: true, receiveShadow: true });
+      scene.add(group);
+      return group;
+    },
+  },
+  {
+    id: 'boxing-man',
+    updatedAt: '2026-08-27',
+    title: 'Ringside Boxer — Measured-Impact VFX',
+    subjectClass: 'character',
+    blurb:
+      'A code-only measured reconstruction (97,592 triangles in one embedded surface stream) on its own '
+      + '41-bone rig with nineteen embedded clips, wearing an effects layer whose every timing was '
+      + 'measured rather than authored: all nineteen clips were swept at 400 samples to find where the '
+      + 'gloves actually stop at extension, where weight actually meets the canvas, and where the head is '
+      + 'driven by a blow the figure takes. A punch carries a windup charge, an air tear along the travel, '
+      + 'shock rings that expand down the punch axis, sweat spray under real gravity, rosin dust off the '
+      + 'canvas, a spiking impact light and 45-85 ms of hitstop. Nothing is fetched: geometry, per-vertex '
+      + 'colour and every keyframe are TypeScript.',
+    referenceImage: `${BASE}references/boxing-man/reference.jpg`,
+    sourcePath: 'src/demos/boxing-man/boxingVfx.ts',
+    sourceUrl: `${REPO}/src/demos/boxing-man/boxingVfx.ts`,
+    generatedWith: 'img2threejs playground · Tripo v3.1-20260211 measurement · GLB fast lane · measured-event VFX',
+    prompt: 'Full body Boxing character with T pose',
+    author: 'Hoài Nhớ',
+    authorUrl: 'https://github.com/hoainho',
+    status: 'placeholder',
+    /**
+     * Authored on the side the figure actually faces, which is not where the playground's own
+     * framing put it. Sweeping the shoulder line (signed by the ankle-to-toe vector) across every
+     * clip in the demo puts the facing at yaw 62-105 degrees — +X — so the download's +Z camera
+     * watched the punches from behind. This is a three-quarter view on that axis: the guard reads,
+     * and the cross travels towards the lens rather than away from it.
+     */
+    cameraPosition: [4.35, 1.14, 2.05],
+    cameraTarget: [0, 0.95, 0],
+    cameraFov: 30,
+    accent: '#ff8a34',
+    backgroundGradient: { inner: '#1d1a18', outer: '#08080a' },
+    exposure: 0.95,
+    environmentIntensity: 0.55,
+    toneMapping: 'aces',
+    // The level of detail lives in its own chunk, so it has to be fetched before build() runs.
+    prewarm: () => prewarmBoxingMan().then(() => undefined),
+    // Broadcast ring light: one hard warm key on a truss, a dimmer bank across the ring, two cool
+    // rims to hold the silhouette against black, and rosin haze for the key to catch.
+    installLights: (scene) => scene.add(createRingsideLights()),
+    build: (scene) => {
+      const group = createBoxingManShowcase({ castShadow: true, receiveShadow: true });
       scene.add(group);
       return group;
     },
