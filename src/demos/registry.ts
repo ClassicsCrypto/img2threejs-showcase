@@ -73,6 +73,8 @@ import {
   createWarriorModel,
   prewarmWarrior,
 } from './warrior/createWarriorModel';
+import { createBoxingManShowcase, createRingsideLights } from './boxing-man/boxingManShowcase';
+import { prewarmBoxingMan } from './boxing-man/createBoxingManModel';
 import {
   createRegretWarriorLookDevLights,
   createRegretWarriorModel,
@@ -83,6 +85,10 @@ import {
   createGirlCharacter3LookDevLights,
   prewarmGirlCharacter3,
 } from './girl-character-3/createGirlCharacter3Model';
+import {
+  createLeesinModel,
+  prewarmLeesin,
+} from './leesin/leesinDemo';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -175,6 +181,8 @@ export interface DemoEntry {
    * result is cached for the lifetime of the module, so any later `build` is fast too.
    */
   prewarm?: () => Promise<void>;
+  /** Action id to start automatically once the runtime lands. Skipped in capture mode. */
+  defaultAnimation?: string;
   /** Optional deterministic capture framing margin for source plates with tight bounds. */
   captureMargin?: number;
   /** Optional vertical framing correction as a fraction of the measured subject bbox height. */
@@ -229,6 +237,7 @@ const authored: DemoEntry[] = [
       + '\u0111\u00f4i m\u1eaft \u0111\u00e1ng s\u1ee3 hung d\u1eef, c\u00f3 r\u0103ng nanh v\u00e0 \u0111\u00f4i c\u00e1nh, v\u00e0 kh\u1ed5ng l\u1ed3. background l\u00e0 transparent.',
     author: 'Ho\u00e0i Nh\u1edb',
     authorUrl: 'https://github.com/hoainho',
+    tripoUrl: 'https://studio.tripo3d.ai/3d-model/7b81045c-10a9-4322-b329-0412d6f9f165?invite_code=PW9ZEA',
     status: 'placeholder',
     /**
      * Framed on the side the figure actually faces, which is not where the playground's own camera
@@ -251,6 +260,93 @@ const authored: DemoEntry[] = [
     installLights: (scene) => scene.add(createAbyssLights()),
     build: (scene) => {
       const group = createMonsterShowcase({ castShadow: true, receiveShadow: true });
+      scene.add(group);
+      return group;
+    },
+  },
+  {
+    id: 'leesin',
+    title: 'Lee Sin \u2014 Game Character',
+    subjectClass: 'character',
+    blurb:
+      'A game character rebuilt as pure Three.js: BufferGeometry, SkinnedMesh, Skeleton and '
+      + 'AnimationClip written in code, with no loader and nothing fetched while it runs. 69 meshes on '
+      + 'a 42-bone rig, 10 measured animation clips, and strike effects in four elements \u2014 wind, '
+      + 'fire, water and thunder \u2014 fired at the instant each hand finishes its travel. The '
+      + 'reference model is a build-time measurement instrument and never reaches the viewer.',
+    referenceImage: `${BASE}references/leesin/reference.jpg`,
+    referenceKind: 'model',
+    sourcePath: 'src/demos/leesin/createLeesinModel.ts',
+    sourceUrl: `${REPO}/src/demos/leesin/createLeesinModel.ts`,
+    generatedWith: 'img2threejs v1.5.1 \u00b7 pure Three.js, no loader, no runtime fetch',
+    prompt:
+      'Build the character in pure Three.js with no loader and no runtime fetch, using the reference '
+      + 'only as a build-time measurement, and prove the result against its accessors.',
+    author: 'Hoài Nhớ',
+    authorUrl: 'https://github.com/hoainho',
+    tripoUrl: 'https://studio.tripo3d.ai/3d-model/13f4f289-575c-403b-8dc0-fb6ee42b6e61?invite_code=PW9ZEA',
+    status: 'final',
+    updatedAt: '2026-08-28',
+    cameraPosition: [0, 0.624311570879072, 4.597228490604114],
+    cameraTarget: [0, 0.624311570879072, 0.007000002097338448],
+    cameraFov: 25,
+    accent: '#c5a56e',
+    backgroundGradient: { inner: '#24221f', outer: '#0d0e10' },
+    exposure: 0.9,
+    environmentIntensity: 0.45,
+    toneMapping: 'aces',
+    prewarm: prewarmLeesin,
+    defaultAnimation: 'step-and-swing-arms',
+    build: (scene) => {
+      const group = createLeesinModel({ castShadow: true, receiveShadow: true });
+      scene.add(group);
+      return group;
+    },
+  },
+  {
+    id: 'boxing-man',
+    updatedAt: '2026-08-27',
+    title: 'Ringside Boxer — Measured-Impact VFX',
+    subjectClass: 'character',
+    blurb:
+      'A code-only measured reconstruction (97,592 triangles in one embedded surface stream) on its own '
+      + '41-bone rig with nineteen embedded clips, wearing an effects layer whose every timing was '
+      + 'measured rather than authored: all nineteen clips were swept at 400 samples to find where the '
+      + 'gloves actually stop at extension, where weight actually meets the canvas, and where the head is '
+      + 'driven by a blow the figure takes. A punch carries a windup charge, an air tear along the travel, '
+      + 'shock rings that expand down the punch axis, sweat spray under real gravity, rosin dust off the '
+      + 'canvas, a spiking impact light and 45-85 ms of hitstop. Nothing is fetched: geometry, per-vertex '
+      + 'colour and every keyframe are TypeScript.',
+    referenceImage: `${BASE}references/boxing-man/reference.jpg`,
+    sourcePath: 'src/demos/boxing-man/boxingVfx.ts',
+    sourceUrl: `${REPO}/src/demos/boxing-man/boxingVfx.ts`,
+    generatedWith: 'img2threejs playground · Tripo v3.1-20260211 measurement · GLB fast lane · measured-event VFX',
+    prompt: 'Full body Boxing character with T pose',
+    author: 'Hoài Nhớ',
+    authorUrl: 'https://github.com/hoainho',
+    status: 'placeholder',
+    /**
+     * Authored on the side the figure actually faces, which is not where the playground's own
+     * framing put it. Sweeping the shoulder line (signed by the ankle-to-toe vector) across every
+     * clip in the demo puts the facing at yaw 62-105 degrees — +X — so the download's +Z camera
+     * watched the punches from behind. This is a three-quarter view on that axis: the guard reads,
+     * and the cross travels towards the lens rather than away from it.
+     */
+    cameraPosition: [4.35, 1.14, 2.05],
+    cameraTarget: [0, 0.95, 0],
+    cameraFov: 30,
+    accent: '#ff8a34',
+    backgroundGradient: { inner: '#1d1a18', outer: '#08080a' },
+    exposure: 0.95,
+    environmentIntensity: 0.55,
+    toneMapping: 'aces',
+    // The level of detail lives in its own chunk, so it has to be fetched before build() runs.
+    prewarm: () => prewarmBoxingMan().then(() => undefined),
+    // Broadcast ring light: one hard warm key on a truss, a dimmer bank across the ring, two cool
+    // rims to hold the silhouette against black, and rosin haze for the key to catch.
+    installLights: (scene) => scene.add(createRingsideLights()),
+    build: (scene) => {
+      const group = createBoxingManShowcase({ castShadow: true, receiveShadow: true });
       scene.add(group);
       return group;
     },
