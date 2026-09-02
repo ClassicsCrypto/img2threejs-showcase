@@ -90,9 +90,9 @@ import {
   prewarmLeesin,
 } from './leesin/leesinDemo';
 import {
-  createGlbsourceLookDevLights,
-  createGlbsourceModel,
-} from './glbsource/createGlbsourceModel';
+  createMarsCatLookDevLights,
+  createMarsCatModel,
+} from './mars-cat/createMarsCatModel';
 
 export interface DemoEntry {
   /** route id, e.g. 'crown-chest' */
@@ -212,18 +212,18 @@ const REPO = 'https://github.com/img2threejs/img2threejs-showcase/blob/main';
 
 const authored: DemoEntry[] = [
   {
-    id: 'glbsource',
+    id: 'mars-cat',
     updatedAt: '2026-09-02',
-    title: 'Marscat — Measured Procedural Surfaces',
+    title: 'Mars Cat — Measured Procedural Surfaces',
     subjectClass: 'character',
     blurb:
       'A code-bundled Surface Nets reconstruction of all 17 measured GLB regions, polished with '
       + 'measured masks for the eyes, ears, hoodie, shorts and shoes. High, medium and low streams '
       + 'ship without the reference GLB, binary surface files, texture images or UV atlas.',
-    referenceImage: `${BASE}references/glbsource.webp`,
+    referenceImage: `${BASE}references/mars-cat.webp`,
     referenceKind: 'model',
-    sourcePath: 'src/demos/glbsource/createGlbsourceModel.ts',
-    sourceUrl: `${REPO}/src/demos/glbsource/createGlbsourceModel.ts`,
+    sourcePath: 'src/demos/mars-cat/createMarsCatModel.ts',
+    sourceUrl: `${REPO}/src/demos/mars-cat/createMarsCatModel.ts`,
     generatedWith: 'img2threejs v1.5.1 · measured Surface Nets',
     prompt:
       'Reconstruct every multipart GLB surface at its measured per-node cell size and bake declared '
@@ -241,9 +241,9 @@ const authored: DemoEntry[] = [
     exposure: 1,
     environmentIntensity: 0.85,
     toneMapping: 'agx',
-    installLights: (scene) => scene.add(createGlbsourceLookDevLights()),
+    installLights: (scene) => scene.add(createMarsCatLookDevLights()),
     build: (scene) => {
-      const group = createGlbsourceModel({ castShadow: true, receiveShadow: true });
+      const group = createMarsCatModel({ castShadow: true, receiveShadow: true });
       scene.add(group);
       return group;
     },

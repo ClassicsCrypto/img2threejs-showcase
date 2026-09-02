@@ -11,7 +11,7 @@ const rigDefinition = rigDefinitionJson as RigDefinition;
 
 export function createMeasuredRigDebug(): THREE.Group {
   const group = new THREE.Group();
-  group.name = 'glbsource-measured-rig-debug';
+  group.name = 'mars-cat-measured-rig-debug';
   const bones = rigDefinition.names.map((name, index) => {
     const bone = new THREE.Bone();
     bone.name = name;
@@ -29,7 +29,7 @@ export function createMeasuredRigDebug(): THREE.Group {
   group.updateMatrixWorld(true);
 
   const helper = new THREE.SkeletonHelper(group);
-  helper.name = 'glbsource-measured-rig-lines';
+  helper.name = 'mars-cat-measured-rig-lines';
   const material = helper.material as THREE.LineBasicMaterial;
   material.color.setHex(0xff7a18);
   material.depthTest = false;

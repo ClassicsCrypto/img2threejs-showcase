@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-export const GLBSOURCE_RENDER_CONTRACT = {
+export const MARS_CAT_RENDER_CONTRACT = {
   target: [-1.4901161193847656e-7, 0.5757730114273727, -0.08574904501438141] as const,
   radius: 3.1026108186425119,
   fovDegrees: 25,
@@ -11,7 +11,7 @@ export const GLBSOURCE_RENDER_CONTRACT = {
   background: 0x0f0f0f,
 } as const;
 
-export function createGlbsourceLookDevLights(): THREE.Group {
+export function createMarsCatLookDevLights(): THREE.Group {
   const lights = new THREE.Group();
   const key = new THREE.DirectionalLight(0xfff5ee, 4);
   key.position.set(3, 5, 4);

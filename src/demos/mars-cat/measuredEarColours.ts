@@ -198,7 +198,7 @@ export function applyMeasuredEarFragmentPalette(material: THREE.MeshPhysicalMate
         );`,
       );
   };
-  material.customProgramCacheKey = () => 'glbsource-measured-ear-fragment-v4';
+  material.customProgramCacheKey = () => 'mars-cat-measured-ear-fragment-v4';
   material.needsUpdate = true;
   material.userData.measuredEarFragment = {
     sourceNode: 97,

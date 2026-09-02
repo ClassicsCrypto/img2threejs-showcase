@@ -79,7 +79,7 @@ export function applyMeasuredShoeShadingMaterial(material: THREE.MeshPhysicalMat
         '#include <beginnormal_vertex>\nobjectNormal = shoeShadingNormal;',
       );
   };
-  material.customProgramCacheKey = () => 'glbsource-shoe-separate-shading-normal-v1';
+  material.customProgramCacheKey = () => 'mars-cat-shoe-separate-shading-normal-v1';
   material.userData.measuredShoeShading = {
     method: 'shoeShadingNormal-replaces-objectNormal-for-lighting-only',
     secondRingBlend: SHOE_SECOND_RING_SHADING_BLEND,

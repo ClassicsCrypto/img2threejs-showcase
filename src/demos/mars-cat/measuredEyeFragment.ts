@@ -57,7 +57,7 @@ export function applyMeasuredEyeFragmentMask(material: THREE.MeshPhysicalMateria
         diffuseColor.rgb = mix(diffuseColor.rgb, measuredEyeColour, measuredCorridor);`,
       );
   };
-  material.customProgramCacheKey = () => 'glbsource-measured-eye-fragment-v1';
+  material.customProgramCacheKey = () => 'mars-cat-measured-eye-fragment-v1';
   material.needsUpdate = true;
   material.userData.measuredEyeFragment = {
     sourceNode: 101,

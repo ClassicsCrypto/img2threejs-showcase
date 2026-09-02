@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-// Node 106 world-space bounds measured from glbsource.glb by
+// Node 106 world-space bounds measured from mars-cat.glb by
 // extract_glb_node_geometry.py. Only these six measurements are transferred;
 // the reference vertex cloud, indices, UVs, normals, and textures are not.
 const REFERENCE_MIN = new THREE.Vector3(

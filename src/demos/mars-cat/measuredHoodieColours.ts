@@ -327,7 +327,7 @@ export function applyMeasuredHoodieFragmentMask(material: THREE.MeshPhysicalMate
         );`,
       );
   };
-  material.customProgramCacheKey = () => 'glbsource-measured-hoodie-fragment-v4';
+  material.customProgramCacheKey = () => 'mars-cat-measured-hoodie-fragment-v4';
   material.needsUpdate = true;
   material.userData.measuredHoodieFragment = {
     sourceNode: 102,

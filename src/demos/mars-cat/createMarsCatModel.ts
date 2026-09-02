@@ -38,12 +38,12 @@ import {
   applyMeasuredShoeColourRegions,
   createMeasuredOuterShoeTrianglePatch,
 } from './measuredShoeColours';
-export { createGlbsourceLookDevLights } from './renderContract';
+export { createMarsCatLookDevLights } from './renderContract';
 
-export type GlbsourceQuality = 'high' | 'medium' | 'low';
+export type MarsCatQuality = 'high' | 'medium' | 'low';
 
-export interface GlbsourceOptions {
-  quality?: GlbsourceQuality;
+export interface MarsCatOptions {
+  quality?: MarsCatQuality;
   tailMode?: 'surface-nets' | 'measured-sweep';
   noseMode?: 'surface-nets' | 'measured-calibration';
   earColourMode?: 'surface-transfer' | 'measured-palette' | 'measured-spatial';
@@ -69,14 +69,14 @@ export interface GlbsourceOptions {
   receiveShadow?: boolean;
 }
 
-function qualityFromUrl(): GlbsourceQuality {
+function qualityFromUrl(): MarsCatQuality {
   const value = typeof location === 'undefined'
     ? null
     : new URLSearchParams(location.search).get('quality');
   return value === 'high' || value === 'low' ? value : 'medium';
 }
 
-function level(quality: GlbsourceQuality) {
+function level(quality: MarsCatQuality) {
   if (quality === 'high') return { nodes: HIGH_NODES, stream: HIGH_STREAM };
   if (quality === 'low') return { nodes: LOW_NODES, stream: LOW_STREAM };
   return { nodes: MEDIUM_NODES, stream: MEDIUM_STREAM };
@@ -220,7 +220,7 @@ function rigDebugFromUrl(): boolean {
     && new URLSearchParams(location.search).get('rig-debug') === '1';
 }
 
-export function createGlbsourceModel(options: GlbsourceOptions = {}): THREE.Group {
+export function createMarsCatModel(options: MarsCatOptions = {}): THREE.Group {
   const quality = options.quality ?? qualityFromUrl();
   const tailMode = options.tailMode ?? tailModeFromUrl();
   const noseMode = options.noseMode ?? noseModeFromUrl();
@@ -331,7 +331,7 @@ export function createGlbsourceModel(options: GlbsourceOptions = {}): THREE.Grou
     }
   }
   const root = new THREE.Group();
-  root.name = 'glbsource-procedural';
+  root.name = 'mars-cat-procedural';
   const parts: Record<string, THREE.Mesh> = {};
   let vertexCount = 0;
 
