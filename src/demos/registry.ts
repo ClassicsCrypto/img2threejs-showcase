@@ -293,8 +293,8 @@ const authored: DemoEntry[] = [
       'A code-bundled Surface Nets reconstruction of all 17 measured GLB regions, now bound to the '
       + 'reference GLB\'s 95-joint skin order. The default medium stream retains the polished fidelity '
       + 'geometry; the separately frozen low/game tier has 406,452 triangles (90.39% fewer), conditioned '
-      + 'skin weights, and a measured repair for the source pocket-to-thumb misweight. Two conservative '
-      + 'motions are authored because the reference contains no clips. No reference GLB, binary surface '
+      + 'skin weights, and a measured repair for the source pocket-to-thumb misweight. One idle and a '
+      + '12-action Raz-compatible menu are authored because the reference contains no clips. No reference GLB, binary surface '
       + 'file, texture image or UV atlas is shipped or fetched.',
     referenceImage: `${BASE}references/mars-cat.webp`,
     referenceKind: 'model',
