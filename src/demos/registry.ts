@@ -477,6 +477,7 @@ const authored: DemoEntry[] = [
   },
   {
     id: 'starship-super-heavy',
+    updatedAt: '2026-09-03',
     title: 'Starship + Super Heavy',
     subjectClass: 'object',
     blurb:
