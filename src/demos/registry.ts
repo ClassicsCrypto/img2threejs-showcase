@@ -5,6 +5,11 @@ import {
   createM9DopplerLookDevLights,
   makeM9DopplerBackground,
 } from './m9-doppler/createM9DopplerModel';
+import {
+  createRazShowcase,
+  createRazLights,
+} from './raz/razShowcase';
+import { prewarmRaz } from './raz/createRazModel';
 import { createCrownChestModel } from './crown-chest/createCrownChestModel';
 import {
   createWarHaulerModel,
@@ -196,6 +201,70 @@ const BASE = import.meta.env.BASE_URL;
 const REPO = 'https://github.com/img2threejs/img2threejs-showcase/blob/main';
 
 const authored: DemoEntry[] = [
+  {
+    id: 'raz',
+    updatedAt: '2026-09-03',
+    title: 'Raz — Detonating Strike VFX',
+    subjectClass: 'character',
+    blurb:
+      'A code-only measured reconstruction (286,108 triangles in one embedded surface stream) on its '
+      + 'own 41-bone rig with twenty-five embedded clips, wearing an effects layer whose every timing '
+      + 'was measured rather than authored: the original twenty-four clips were swept at 400 samples to find '
+      + 'where the crystal knuckles and boot soles actually reach their extension apex at speed. The '
+      + 'four jade blocks the reference shows never stop burning — green fire and smoke pour off them '
+      + 'continuously, thickening with the limb\u2019s own live velocity — and a landed punch or kick '
+      + 'detonates that same fire all at once: a windup gather, shock rings pushed down the travel '
+      + 'axis, crystal shrapnel under real gravity, a smoke bloom, a spiking emerald light, a floor '
+      + 'ripple and 45-100 ms of hitstop. The Knockout uses a supplied uppercut retargeted into the '
+      + 'same rig: its fist loads close to the hip, rises 61 degrees to 0.812 figure heights at '
+      + '4.82 H/s, while the hip is still driving upward. The finish reads in four beats: a compact boxing guard, a 1.35x '
+      + 'run-in that smears into four reduced-mesh echoes, a 0.12-unit knee-loading crouch, then a 1.15x uppercut. The '
+      + 'fighter launches 0.42 units with the punch, then lets the measured follow-through unfold through one reverse '
+      + '360-degree turn while descending for 0.965 seconds onto the same mark before the '
+      + 'loop resets; three shock rings go out flat above his head '
+      + 'instead of two down a travel axis, and about 159 ms of powered hitstop holds it before the crystals roar. '
+      + 'Nothing is fetched: geometry, per-vertex colour and every keyframe are TypeScript.',
+    referenceImage: `${BASE}references/raz/reference.jpg`,
+    sourcePath: 'src/demos/raz/razVfx.ts',
+    sourceUrl: `${REPO}/src/demos/raz/razVfx.ts`,
+    generatedWith: 'img2threejs v1.5.2 \u00b7 playground \u00b7 Tripo measurement \u00b7 GLB fast lane \u00b7 measured-event VFX',
+    author: 'Ho\u00e0i Nh\u1edb',
+    authorUrl: 'https://github.com/hoainho',
+    status: 'final',
+    /**
+     * Authored on the side the figure actually punches towards, which is not where the playground's
+     * own framing put it. Sweeping the shoulder line (signed by the ankle-to-toe vector) at every
+     * measured contact puts the three punches of the default clip between yaw -30 and +30 degrees —
+     * +X — so the download's +Z camera watched the combination from the side. This is a
+     * three-quarter on that axis, at the download's own distance, so the crystals travel towards the
+     * lens. The kicks turn the figure the other way and land at yaw 117-156; they read as thrown
+     * away from camera, which is the cost of framing for the clip that plays by default.
+     */
+    cameraPosition: [4.78, 1.12, 2.68],
+    cameraTarget: [0, 1.10, 0],
+    cameraFov: 33,
+    accent: '#3dff8c',
+    backgroundGradient: { inner: '#0c1a14', outer: '#050807' },
+    /**
+     * Held just under neutral. The effects layer is additive and additive blending can only brighten
+     * what is behind it, so a bright stage leaves a detonation nowhere to go — but the first pass at
+     * 0.85 / 0.45 rendered the reference's brushed steel as a black silhouette with four green lamps
+     * on it. This is the balance point: the plates read, and a burst still doubles them.
+     */
+    exposure: 1.0,
+    environmentIntensity: 0.8,
+    toneMapping: 'aces',
+    // Both the level of detail and the 25-clip rig live in their own chunks, so they have to be
+    // fetched before build() runs.
+    prewarm: () => prewarmRaz().then(() => undefined),
+    // Cold raked key, two jade rims that read as the crystals' own spill, and drifting jade haze.
+    installLights: (scene) => scene.add(createRazLights()),
+    build: (scene) => {
+      const group = createRazShowcase({ castShadow: true, receiveShadow: true });
+      scene.add(group);
+      return group;
+    },
+  },
   {
     id: 'regret-warrior-reconstruction',
     updatedAt: '2026-08-25',
