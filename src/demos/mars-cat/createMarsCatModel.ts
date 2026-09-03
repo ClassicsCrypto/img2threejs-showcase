@@ -233,28 +233,28 @@ export function createMarsCatModel(options: MarsCatOptions = {}): THREE.Group {
   const noseMode = options.noseMode ?? noseModeFromUrl();
   const earColourMode = options.earColourMode ?? earColourModeFromUrl();
   const hoodieColourMode = options.hoodieColourMode ?? hoodieColourModeFromUrl();
-  const eyeQualityMode = options.eyeQualityMode ?? eyeQualityModeFromUrl();
-  const shoeQualityMode = options.shoeQualityMode ?? shoeQualityModeFromUrl();
+  const eyeQualityMode = options.eyeQualityMode ?? (quality === 'low' ? 'matched' : eyeQualityModeFromUrl());
+  const shoeQualityMode = options.shoeQualityMode ?? (quality === 'low' ? 'matched' : shoeQualityModeFromUrl());
   const shoeShadingMode = options.shoeShadingMode ?? shoeShadingModeFromUrl();
   const shoeColourMode = options.shoeColourMode ?? shoeColourModeFromUrl();
-  const shortsQualityMode = options.shortsQualityMode ?? shortsQualityModeFromUrl();
-  const shortsPocketQualityMode = options.shortsPocketQualityMode ?? shortsPocketQualityModeFromUrl();
-  const hoodieQualityMode = options.hoodieQualityMode ?? hoodieQualityModeFromUrl();
+  const shortsQualityMode = options.shortsQualityMode ?? (quality === 'low' ? 'matched' : shortsQualityModeFromUrl());
+  const shortsPocketQualityMode = options.shortsPocketQualityMode ?? (quality === 'low' ? 'matched' : shortsPocketQualityModeFromUrl());
+  const hoodieQualityMode = options.hoodieQualityMode ?? (quality === 'low' ? 'matched' : hoodieQualityModeFromUrl());
   const hoodieNormalMode = options.hoodieNormalMode ?? hoodieNormalModeFromUrl();
   const hoodieSpecularMode = options.hoodieSpecularMode ?? hoodieSpecularModeFromUrl();
   const hoodieRenderMode = options.hoodieRenderMode ?? hoodieRenderModeFromUrl();
-  const drawstringQualityMode = options.drawstringQualityMode ?? drawstringQualityModeFromUrl();
-  const earHairQualityMode = options.earHairQualityMode ?? earHairQualityModeFromUrl();
+  const drawstringQualityMode = options.drawstringQualityMode ?? (quality === 'low' ? 'matched' : drawstringQualityModeFromUrl());
+  const earHairQualityMode = options.earHairQualityMode ?? (quality === 'low' ? 'matched' : earHairQualityModeFromUrl());
   const earRenderMode = options.earRenderMode ?? earRenderModeFromUrl();
-  const bodyQualityMode = options.bodyQualityMode ?? bodyQualityModeFromUrl();
+  const bodyQualityMode = options.bodyQualityMode ?? (quality === 'low' ? 'matched' : bodyQualityModeFromUrl());
   const earNormalMode = options.earNormalMode ?? earNormalModeFromUrl();
   const eyeRenderMode = options.eyeRenderMode ?? eyeRenderModeFromUrl();
   const rigDebug = options.rigDebug ?? rigDebugFromUrl();
-  const rigged = options.rigged ?? (riggedFromUrl() && quality === 'medium');
+  const rigged = options.rigged ?? (riggedFromUrl() && quality !== 'high');
   const data = level(quality);
   const surfaces = decodeSurfaces(data.stream, data.nodes as readonly EncodedNode[]);
   const originalHoodieIndex = surfaces.findIndex((surface) => surface.node === 102);
-  if (originalHoodieIndex >= 0) {
+  if (originalHoodieIndex >= 0 && hoodieQualityMode === 'high') {
     surfaces.splice(
       originalHoodieIndex,
       1,
@@ -578,7 +578,8 @@ export function createMarsCatModel(options: MarsCatOptions = {}): THREE.Group {
     },
   };
   if (rigged) {
-    const rigRuntime = bindMarsCatRig(root);
+    const skinTier = quality === 'low' ? 'game' : 'fidelity';
+    const rigRuntime = bindMarsCatRig(root, skinTier);
     root.userData.sculptRuntime.rig = {
       kind: 'glb-referenced-skeleton-and-skin',
       sourceSkinIndex: 0,
@@ -586,6 +587,7 @@ export function createMarsCatModel(options: MarsCatOptions = {}): THREE.Group {
       jointOrder: 'GLB skin[0].joints order',
       sourceAnimationCount: 0,
       authoredAnimationCount: rigRuntime.clips.length,
+      skinTier,
       restCancellationResidualMax: 7.076254341897131e-7,
       meshParityFrozen: true,
     };

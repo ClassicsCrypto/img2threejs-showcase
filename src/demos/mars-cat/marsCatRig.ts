@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { MARS_CAT_RIG, MARS_CAT_SKIN } from './rig/rigData';
+import { MARS_CAT_GAME_SKIN } from './rig/rigDataGame';
 
 export interface MarsCatAnimationController {
   actions: ReadonlyArray<{ id: string; label: string; loop: boolean }>;
@@ -136,7 +137,10 @@ const createController = (
   };
 };
 
-export function bindMarsCatRig(root: THREE.Group): MarsCatRigRuntime {
+export function bindMarsCatRig(
+  root: THREE.Group,
+  skinTier: 'fidelity' | 'game' = 'fidelity',
+): MarsCatRigRuntime {
   const bones = MARS_CAT_RIG.runtimeNames.map((name, slot) => {
     const bone = new THREE.Bone();
     bone.name = name;
@@ -156,13 +160,19 @@ export function bindMarsCatRig(root: THREE.Group): MarsCatRigRuntime {
   );
   const skeleton = new THREE.Skeleton(bones, inverses);
 
+  const skinRecords: Record<string, {
+    readonly vertexCount: number;
+    readonly sourceNode: number;
+    readonly indicesBase64: string;
+    readonly weightsBase64: string;
+  }> = skinTier === 'game' ? MARS_CAT_GAME_SKIN : MARS_CAT_SKIN;
   const sourceMeshes: THREE.Mesh[] = [];
   root.traverse((object) => {
     if (object instanceof THREE.Mesh) sourceMeshes.push(object);
   });
   const parts = root.userData.parts as Record<string, THREE.Mesh> | undefined;
   for (const source of sourceMeshes) {
-    const record = MARS_CAT_SKIN[source.name as keyof typeof MARS_CAT_SKIN];
+    const record = skinRecords[source.name];
     if (!record) throw new Error(`Mars Cat rig has no measured skin record for ${source.name}`);
     const vertexCount = source.geometry.getAttribute('position').count;
     if (record.vertexCount !== vertexCount) {
