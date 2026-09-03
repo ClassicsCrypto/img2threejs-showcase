@@ -38,6 +38,7 @@ import {
   applyMeasuredShoeColourRegions,
   createMeasuredOuterShoeTrianglePatch,
 } from './measuredShoeColours';
+import { bindMarsCatRig } from './marsCatRig';
 export { createMarsCatLookDevLights } from './renderContract';
 
 export type MarsCatQuality = 'high' | 'medium' | 'low';
@@ -65,6 +66,7 @@ export interface MarsCatOptions {
   earNormalMode?: 'computed' | 'one-ring';
   eyeRenderMode?: 'vertex' | 'measured-fragment';
   rigDebug?: boolean;
+  rigged?: boolean;
   castShadow?: boolean;
   receiveShadow?: boolean;
 }
@@ -220,6 +222,11 @@ function rigDebugFromUrl(): boolean {
     && new URLSearchParams(location.search).get('rig-debug') === '1';
 }
 
+function riggedFromUrl(): boolean {
+  return typeof location === 'undefined'
+    || new URLSearchParams(location.search).get('rig') !== '0';
+}
+
 export function createMarsCatModel(options: MarsCatOptions = {}): THREE.Group {
   const quality = options.quality ?? qualityFromUrl();
   const tailMode = options.tailMode ?? tailModeFromUrl();
@@ -243,6 +250,7 @@ export function createMarsCatModel(options: MarsCatOptions = {}): THREE.Group {
   const earNormalMode = options.earNormalMode ?? earNormalModeFromUrl();
   const eyeRenderMode = options.eyeRenderMode ?? eyeRenderModeFromUrl();
   const rigDebug = options.rigDebug ?? rigDebugFromUrl();
+  const rigged = options.rigged ?? (riggedFromUrl() && quality === 'medium');
   const data = level(quality);
   const surfaces = decodeSurfaces(data.stream, data.nodes as readonly EncodedNode[]);
   const originalHoodieIndex = surfaces.findIndex((surface) => surface.node === 102);
@@ -569,5 +577,20 @@ export function createMarsCatModel(options: MarsCatOptions = {}): THREE.Group {
       measuredHighTierOverride: quality !== 'high' && earHairQualityMode === 'high',
     },
   };
+  if (rigged) {
+    const rigRuntime = bindMarsCatRig(root);
+    root.userData.sculptRuntime.rig = {
+      kind: 'glb-referenced-skeleton-and-skin',
+      sourceSkinIndex: 0,
+      jointCount: rigRuntime.bones.length,
+      jointOrder: 'GLB skin[0].joints order',
+      sourceAnimationCount: 0,
+      authoredAnimationCount: rigRuntime.clips.length,
+      restCancellationResidualMax: 7.076254341897131e-7,
+      meshParityFrozen: true,
+    };
+    root.userData.sculptRuntime.animationController = rigRuntime.animationController;
+    root.userData.tick = (deltaSeconds: number): void => rigRuntime.update(deltaSeconds);
+  }
   return root;
 }
