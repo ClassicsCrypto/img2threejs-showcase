@@ -166,6 +166,26 @@ export class Viewer {
   readonly camera: THREE.PerspectiveCamera;
   readonly controls: OrbitControls;
 
+  /**
+   * Per-frame updaters a demo exposes as `object.userData.tick`, resolved once and refreshable.
+   *
+   * Collecting them only inside `start()` misses every demo whose runtime arrives through `prewarm`:
+   * the walk happens before the geometry lands, so the ticker is never picked up and the mixer never
+   * advances -- the clips hold actions and play silently. Demos that build synchronously are
+   * unaffected, and the re-walk is idempotent.
+   */
+  private tickers: Array<(dt: number, elapsed: number) => void> = [];
+
+  /** Re-walk the scene for `userData.tick`. Call after late geometry lands. */
+  refreshTickers(): void {
+    const found: Array<(dt: number, elapsed: number) => void> = [];
+    this.scene.traverse((object) => {
+      const tick = (object.userData as { tick?: unknown }).tick;
+      if (typeof tick === 'function') found.push(tick as (dt: number, elapsed: number) => void);
+    });
+    this.tickers = found;
+  }
+
   private readonly mount: HTMLElement;
   private rafHandle = 0;
   private readonly onResize: () => void;
@@ -1149,14 +1169,7 @@ export class Viewer {
 
   start(): void {
     const clock = new THREE.Clock();
-    // Collect per-frame updaters exposed by demos via `object.userData.tick`.
-    const tickers: Array<(dt: number, elapsed: number) => void> = [];
-    this.scene.traverse((object) => {
-      const tick = (object.userData as { tick?: unknown }).tick;
-      if (typeof tick === 'function') {
-        tickers.push(tick as (dt: number, elapsed: number) => void);
-      }
-    });
+    this.refreshTickers();
 
     const loop = (): void => {
       this.rafHandle = requestAnimationFrame(loop);
@@ -1165,7 +1178,7 @@ export class Viewer {
       // Review captures must freeze the authored idle pose so repeated screenshots
       // compare the same pixels. The runtime hook remains active in the live viewer.
       if (!this.capture) {
-        for (const tick of tickers) tick(dt, elapsed);
+        for (const tick of this.tickers) tick(dt, elapsed);
       }
       // Ease toward the explode target, then hold the pose. Runs AFTER the demo tickers so
       // that on a demo which animates part positions (a rising lid, a turning crank) the
