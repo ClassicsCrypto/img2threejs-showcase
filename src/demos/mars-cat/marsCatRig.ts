@@ -92,11 +92,24 @@ const phaseTimes = (duration: number, fractions: readonly number[]): number[] =>
 );
 
 const createClips = (bones: readonly THREE.Bone[]): AuthoredAnimationClip[] => {
+  // Blender's measured arm chains run along each bone's local +Y. Shoulder
+  // lowering therefore uses local Z, while elbow flexion uses local X; local
+  // Y would only twist the sleeve around its length.
+  const shoulderLeftDown = -1.05;
+  const shoulderRightDown = 1.05;
+  const elbowNeutral = 0.75;
+  const hold = (count: number, x: number, y: number, z: number): Array<readonly [number, number, number]> => (
+    Array.from({ length: count }, () => [x, y, z] as const)
+  );
   const idleTimes = [0, 0.75, 1.5, 2.25, 3];
   const idleTracks: THREE.KeyframeTrack[] = [
     track(bones, 3, idleTimes, [[0, 0, 0], [0.006, 0.008, 0], [0, 0, 0], [-0.006, -0.008, 0], [0, 0, 0]]),
     track(bones, 4, idleTimes, [[0, 0, 0], [-0.004, 0.012, 0], [0, 0, 0], [0.004, -0.012, 0], [0, 0, 0]]),
     track(bones, 6, idleTimes, [[0, 0, 0], [0, 0.018, 0], [0, 0, 0], [0, -0.018, 0], [0, 0, 0]]),
+    track(bones, 9, idleTimes, hold(5, 0, 0, shoulderLeftDown)),
+    track(bones, 10, idleTimes, hold(5, elbowNeutral, 0, 0)),
+    track(bones, 37, idleTimes, hold(5, 0, 0, shoulderRightDown)),
+    track(bones, 38, idleTimes, hold(5, elbowNeutral, 0, 0)),
   ];
   for (let slot = 86; slot <= 93; slot += 1) {
     const amplitude = 0.012 + (slot - 86) * 0.004;
@@ -108,8 +121,10 @@ const createClips = (bones: readonly THREE.Bone[]): AuthoredAnimationClip[] => {
   const gestureTimes = [0, 0.4, 0.8, 1.2, 1.6, 2];
   const gestureTracks: THREE.KeyframeTrack[] = [
     track(bones, 3, gestureTimes, [[0, 0, 0], [0, 0.08, 0], [0, -0.18, 0], [0, -0.12, 0], [0, 0.04, 0], [0, 0, 0]]),
-    track(bones, 37, gestureTimes, [[0, 0, 0], [0, 0, 0.18], [0, 0, 0.08], [0, 0, 0.10], [0, 0, 0.05], [0, 0, 0]]),
-    track(bones, 38, gestureTimes, [[0, 0, 0], [0, 0.24, 0], [0, 0.84, 0], [0, 0.58, 0], [0, 0.18, 0], [0, 0, 0]]),
+    track(bones, 9, gestureTimes, hold(6, 0, 0, shoulderLeftDown)),
+    track(bones, 10, gestureTimes, hold(6, elbowNeutral, 0, 0)),
+    track(bones, 37, gestureTimes, [[0, 0, shoulderRightDown], [-0.18, 0, 0.92], [-0.52, 0, 0.62], [-0.34, 0, 0.78], [-0.10, 0, 0.96], [0, 0, shoulderRightDown]]),
+    track(bones, 38, gestureTimes, [[elbowNeutral, 0, 0], [0.48, 0, 0], [0.08, 0, 0], [0.28, 0, 0], [0.58, 0, 0], [elbowNeutral, 0, 0]]),
     track(bones, 39, gestureTimes, [[0, 0, 0], [0.10, 0, 0], [-0.08, 0, 0], [0.04, 0, 0], [0.02, 0, 0], [0, 0, 0]]),
   ];
 
@@ -122,8 +137,10 @@ const createClips = (bones: readonly THREE.Bone[]): AuthoredAnimationClip[] => {
     track(bones, 79, walkTimes, [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0.12, 0, 0], [0.24, 0, 0], [0.12, 0, 0], [0, 0, 0]]),
     track(bones, 73, walkTimes, [[0, 0, 0], [0.08, 0, 0], [0.16, 0, 0], [0.08, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]),
     track(bones, 80, walkTimes, [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0.08, 0, 0], [0.16, 0, 0], [0.08, 0, 0], [0, 0, 0]]),
-    track(bones, 10, walkTimes, [[0, 0, 0], [0, 0.08, 0], [0, 0.16, 0], [0, 0.08, 0], [0, 0, 0], [0, -0.08, 0], [0, -0.16, 0], [0, -0.08, 0], [0, 0, 0]]),
-    track(bones, 38, walkTimes, [[0, 0, 0], [0, -0.08, 0], [0, -0.16, 0], [0, -0.08, 0], [0, 0, 0], [0, 0.08, 0], [0, 0.16, 0], [0, 0.08, 0], [0, 0, 0]]),
+    track(bones, 9, walkTimes, [[0, 0, shoulderLeftDown], [0.08, 0, shoulderLeftDown], [0.16, 0, shoulderLeftDown], [0.08, 0, shoulderLeftDown], [0, 0, shoulderLeftDown], [-0.08, 0, shoulderLeftDown], [-0.16, 0, shoulderLeftDown], [-0.08, 0, shoulderLeftDown], [0, 0, shoulderLeftDown]]),
+    track(bones, 10, walkTimes, hold(9, 0.58, 0, 0)),
+    track(bones, 37, walkTimes, [[0, 0, shoulderRightDown], [-0.08, 0, shoulderRightDown], [-0.16, 0, shoulderRightDown], [-0.08, 0, shoulderRightDown], [0, 0, shoulderRightDown], [0.08, 0, shoulderRightDown], [0.16, 0, shoulderRightDown], [0.08, 0, shoulderRightDown], [0, 0, shoulderRightDown]]),
+    track(bones, 38, walkTimes, hold(9, 0.58, 0, 0)),
     track(bones, 1, walkTimes, [[0, 0, 0], [0, 0.009, 0], [0, 0.018, 0], [0, 0.009, 0], [0, 0, 0], [0, -0.009, 0], [0, -0.018, 0], [0, -0.009, 0], [0, 0, 0]]),
   ];
   const runTracks: THREE.KeyframeTrack[] = [
@@ -131,50 +148,62 @@ const createClips = (bones: readonly THREE.Bone[]): AuthoredAnimationClip[] => {
     track(bones, 79, runTimes, [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0.21, 0, 0], [0.42, 0, 0], [0.21, 0, 0], [0, 0, 0]]),
     track(bones, 73, runTimes, [[0, 0, 0], [0.19, 0, 0], [0.38, 0, 0], [0.19, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]),
     track(bones, 80, runTimes, [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0.19, 0, 0], [0.38, 0, 0], [0.19, 0, 0], [0, 0, 0]]),
-    track(bones, 10, runTimes, [[0, 0, 0], [0, 0.14, 0], [0, 0.28, 0], [0, 0.14, 0], [0, 0, 0], [0, -0.14, 0], [0, -0.28, 0], [0, -0.14, 0], [0, 0, 0]]),
-    track(bones, 38, runTimes, [[0, 0, 0], [0, -0.14, 0], [0, -0.28, 0], [0, -0.14, 0], [0, 0, 0], [0, 0.14, 0], [0, 0.28, 0], [0, 0.14, 0], [0, 0, 0]]),
+    track(bones, 9, runTimes, [[0, 0, shoulderLeftDown], [0.14, 0, shoulderLeftDown], [0.28, 0, shoulderLeftDown], [0.14, 0, shoulderLeftDown], [0, 0, shoulderLeftDown], [-0.14, 0, shoulderLeftDown], [-0.28, 0, shoulderLeftDown], [-0.14, 0, shoulderLeftDown], [0, 0, shoulderLeftDown]]),
+    track(bones, 10, runTimes, hold(9, 0.46, 0, 0)),
+    track(bones, 37, runTimes, [[0, 0, shoulderRightDown], [-0.14, 0, shoulderRightDown], [-0.28, 0, shoulderRightDown], [-0.14, 0, shoulderRightDown], [0, 0, shoulderRightDown], [0.14, 0, shoulderRightDown], [0.28, 0, shoulderRightDown], [0.14, 0, shoulderRightDown], [0, 0, shoulderRightDown]]),
+    track(bones, 38, runTimes, hold(9, 0.46, 0, 0)),
     track(bones, 2, runTimes, [[0, 0, 0], [0.0125, 0, 0], [0.025, 0, 0], [0.0125, 0, 0], [0, 0, 0], [0.0125, 0, 0], [0.025, 0, 0], [0.0125, 0, 0], [0, 0, 0]]),
   ];
 
   const jumpTimes = phaseTimes(1.25, cyclicFractions);
   const jumpTracks: THREE.KeyframeTrack[] = [
     track(bones, 1, jumpTimes, [[0, 0, 0], [0.10, 0, 0], [-0.04, 0, 0], [0.08, 0, 0], [0, 0, 0]]),
-    track(bones, 79, jumpTimes, [[0, 0, 0], [0.22, 0, 0], [-0.56, 0, 0], [-0.20, 0, 0], [0, 0, 0]]),
-    track(bones, 80, jumpTimes, [[0, 0, 0], [0.50, 0, 0], [0.12, 0, 0], [0.38, 0, 0], [0, 0, 0]]),
-    track(bones, 9, jumpTimes, [[0, 0, 0], [0, 0, -0.20], [0, 0, -0.42], [0, 0, -0.18], [0, 0, 0]]),
-    track(bones, 37, jumpTimes, [[0, 0, 0], [0, 0, 0.20], [0, 0, 0.42], [0, 0, 0.18], [0, 0, 0]]),
+    track(bones, 79, jumpTimes, [[0, 0, 0], [0.22, 0, 0], [-1.00, 0, 0], [-0.28, 0, 0], [0, 0, 0]]),
+    track(bones, 80, jumpTimes, [[0, 0, 0], [0.50, 0, 0], [0.32, 0, 0], [0.44, 0, 0], [0, 0, 0]]),
+    track(bones, 9, jumpTimes, [[0, 0, shoulderLeftDown], [-0.16, 0, -0.82], [-0.38, 0, -0.72], [-0.14, 0, -0.84], [0, 0, shoulderLeftDown]]),
+    track(bones, 10, jumpTimes, [[elbowNeutral, 0, 0], [0.82, 0, 0], [1.00, 0, 0], [0.84, 0, 0], [elbowNeutral, 0, 0]]),
+    track(bones, 37, jumpTimes, [[0, 0, shoulderRightDown], [-0.16, 0, 0.82], [-0.38, 0, 0.72], [-0.14, 0, 0.84], [0, 0, shoulderRightDown]]),
+    track(bones, 38, jumpTimes, [[elbowNeutral, 0, 0], [0.82, 0, 0], [1.00, 0, 0], [0.84, 0, 0], [elbowNeutral, 0, 0]]),
   ];
 
   const strikeFractions = [0, 0.22, 0.48, 0.68, 1];
   const leadPunchTimes = phaseTimes(1.1, strikeFractions);
   const leadPunchTracks: THREE.KeyframeTrack[] = [
     track(bones, 3, leadPunchTimes, [[0, 0, 0], [0, 0.08, 0], [0, -0.12, 0], [0, -0.08, 0], [0, 0, 0]]),
-    track(bones, 37, leadPunchTimes, [[0, 0, 0], [0, 0, 0.18], [0, 0, 0.08], [0, 0, 0.12], [0, 0, 0]]),
-    track(bones, 38, leadPunchTimes, [[0, 0, 0], [0, 0.18, 0], [0, 0.76, 0], [0, 0.44, 0], [0, 0, 0]]),
+    track(bones, 9, leadPunchTimes, hold(5, 0, 0, shoulderLeftDown)),
+    track(bones, 10, leadPunchTimes, hold(5, 1.05, 0, 0)),
+    track(bones, 37, leadPunchTimes, [[0, 0, shoulderRightDown], [-0.18, 0, 0.88], [-0.56, 0, 0.56], [-0.34, 0, 0.76], [0, 0, shoulderRightDown]]),
+    track(bones, 38, leadPunchTimes, [[elbowNeutral, 0, 0], [0.50, 0, 0], [0.04, 0, 0], [0.28, 0, 0], [elbowNeutral, 0, 0]]),
     track(bones, 39, leadPunchTimes, [[0, 0, 0], [0.12, 0, 0], [-0.06, 0, 0], [0.06, 0, 0], [0, 0, 0]]),
   ];
   const combinationTimes = phaseTimes(1.7, [0, 0.16, 0.32, 0.50, 0.68, 0.84, 1]);
   const combinationTracks: THREE.KeyframeTrack[] = [
     track(bones, 3, combinationTimes, [[0, 0, 0], [0, 0.08, 0], [0, -0.08, 0], [0, -0.04, 0], [0, 0.10, 0], [0, 0.04, 0], [0, 0, 0]]),
-    track(bones, 10, combinationTimes, [[0, 0, 0], [0, 0, 0], [0, -0.62, 0], [0, -0.18, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]),
-    track(bones, 38, combinationTimes, [[0, 0, 0], [0, 0.58, 0], [0, 0.16, 0], [0, 0, 0], [0, 0.66, 0], [0, 0.22, 0], [0, 0, 0]]),
+    track(bones, 9, combinationTimes, [[0, 0, shoulderLeftDown], [0, 0, -0.84], [-0.48, 0, -0.58], [0, 0, shoulderLeftDown], [0, 0, -0.88], [-0.38, 0, -0.64], [0, 0, shoulderLeftDown]]),
+    track(bones, 10, combinationTimes, [[elbowNeutral, 0, 0], [0.48, 0, 0], [0.05, 0, 0], [elbowNeutral, 0, 0], [0.54, 0, 0], [0.16, 0, 0], [elbowNeutral, 0, 0]]),
+    track(bones, 37, combinationTimes, [[0, 0, shoulderRightDown], [-0.44, 0, 0.60], [0, 0, 0.92], [0, 0, shoulderRightDown], [-0.52, 0, 0.56], [0, 0, 0.86], [0, 0, shoulderRightDown]]),
+    track(bones, 38, combinationTimes, [[elbowNeutral, 0, 0], [0.08, 0, 0], [0.48, 0, 0], [elbowNeutral, 0, 0], [0.04, 0, 0], [0.42, 0, 0], [elbowNeutral, 0, 0]]),
   ];
   const hookTimes = phaseTimes(1.2, strikeFractions);
   const hookTracks: THREE.KeyframeTrack[] = [
     track(bones, 3, hookTimes, [[0, 0, 0], [0, 0.14, 0], [0, -0.24, 0], [0, -0.10, 0], [0, 0, 0]]),
-    track(bones, 37, hookTimes, [[0, 0, 0], [0, 0, 0.22], [0, 0, 0.38], [0, 0, 0.20], [0, 0, 0]]),
-    track(bones, 38, hookTimes, [[0, 0, 0], [0, 0.20, 0], [0.08, 0.46, 0], [0, 0.20, 0], [0, 0, 0]]),
+    track(bones, 9, hookTimes, hold(5, 0, 0, shoulderLeftDown)),
+    track(bones, 10, hookTimes, hold(5, 1.0, 0, 0)),
+    track(bones, 37, hookTimes, [[0, 0, shoulderRightDown], [-0.28, 0, 0.74], [-0.10, 0.38, 0.42], [-0.18, 0.16, 0.72], [0, 0, shoulderRightDown]]),
+    track(bones, 38, hookTimes, [[elbowNeutral, 0, 0], [1.18, 0, 0], [1.42, 0, 0], [1.08, 0, 0], [elbowNeutral, 0, 0]]),
     track(bones, 39, hookTimes, [[0, 0, 0], [0.22, 0, 0], [0.38, 0, 0], [0.18, 0, 0], [0, 0, 0]]),
   ];
 
   const kickTimes = phaseTimes(1.35, [0, 0.20, 0.46, 0.66, 1]);
   const kickTracks: THREE.KeyframeTrack[] = [
     track(bones, 1, kickTimes, [[0, 0, 0], [0.08, 0, 0], [-0.06, 0, 0], [0.04, 0, 0], [0, 0, 0]]),
-    track(bones, 79, kickTimes, [[0, 0, 0], [0.18, 0, 0], [-0.58, 0, 0], [-0.18, 0, 0], [0, 0, 0]]),
-    track(bones, 80, kickTimes, [[0, 0, 0], [0.54, 0, 0], [0.12, 0, 0], [0.42, 0, 0], [0, 0, 0]]),
+    track(bones, 79, kickTimes, [[0, 0, 0], [0.18, 0, 0], [-1.10, 0, 0], [-0.30, 0, 0], [0, 0, 0]]),
+    track(bones, 80, kickTimes, [[0, 0, 0], [0.54, 0, 0], [0.35, 0, 0], [0.48, 0, 0], [0, 0, 0]]),
     track(bones, 81, kickTimes, [[0, 0, 0], [-0.10, 0, 0], [0.16, 0, 0], [0.04, 0, 0], [0, 0, 0]]),
-    track(bones, 10, kickTimes, [[0, 0, 0], [0, -0.18, 0], [0, 0.22, 0], [0, 0.08, 0], [0, 0, 0]]),
-    track(bones, 38, kickTimes, [[0, 0, 0], [0, 0.18, 0], [0, -0.22, 0], [0, -0.08, 0], [0, 0, 0]]),
+    track(bones, 9, kickTimes, [[0, 0, shoulderLeftDown], [0.12, 0, -0.92], [-0.18, 0, -0.78], [-0.08, 0, -0.94], [0, 0, shoulderLeftDown]]),
+    track(bones, 10, kickTimes, [[elbowNeutral, 0, 0], [0.92, 0, 0], [1.08, 0, 0], [0.88, 0, 0], [elbowNeutral, 0, 0]]),
+    track(bones, 37, kickTimes, [[0, 0, shoulderRightDown], [-0.12, 0, 0.92], [0.18, 0, 0.78], [0.08, 0, 0.94], [0, 0, shoulderRightDown]]),
+    track(bones, 38, kickTimes, [[elbowNeutral, 0, 0], [0.92, 0, 0], [1.08, 0, 0], [0.88, 0, 0], [elbowNeutral, 0, 0]]),
   ];
 
   const reactionTimes = phaseTimes(1.15, [0, 0.18, 0.44, 0.72, 1]);
@@ -182,41 +211,45 @@ const createClips = (bones: readonly THREE.Bone[]): AuthoredAnimationClip[] => {
     track(bones, 0, reactionTimes, [[0, 0, 0], [0.04, 0, 0], [-0.12, 0, 0.04], [0.04, 0, -0.02], [0, 0, 0]]),
     track(bones, 2, reactionTimes, [[0, 0, 0], [0.08, 0, 0], [-0.18, 0, 0.05], [0.06, 0, 0], [0, 0, 0]]),
     track(bones, 6, reactionTimes, [[0, 0, 0], [-0.06, 0.10, 0], [0.14, -0.12, 0], [-0.04, 0.04, 0], [0, 0, 0]]),
-    track(bones, 9, reactionTimes, [[0, 0, 0], [0, 0, -0.10], [0, 0, -0.24], [0, 0, -0.08], [0, 0, 0]]),
-    track(bones, 37, reactionTimes, [[0, 0, 0], [0, 0, 0.10], [0, 0, 0.24], [0, 0, 0.08], [0, 0, 0]]),
+    track(bones, 9, reactionTimes, [[0, 0, shoulderLeftDown], [0.12, 0, -1.00], [0.34, 0, -0.78], [0.08, 0, -0.96], [0, 0, shoulderLeftDown]]),
+    track(bones, 10, reactionTimes, [[elbowNeutral, 0, 0], [0.88, 0, 0], [1.18, 0, 0], [0.92, 0, 0], [elbowNeutral, 0, 0]]),
+    track(bones, 37, reactionTimes, [[0, 0, shoulderRightDown], [-0.12, 0, 1.00], [-0.34, 0, 0.78], [-0.08, 0, 0.96], [0, 0, shoulderRightDown]]),
+    track(bones, 38, reactionTimes, [[elbowNeutral, 0, 0], [0.88, 0, 0], [1.18, 0, 0], [0.92, 0, 0], [elbowNeutral, 0, 0]]),
   ];
 
   const rageTimes = phaseTimes(1.8, cyclicFractions);
   const rageTracks: THREE.KeyframeTrack[] = [
     track(bones, 2, rageTimes, [[0, 0, 0], [-0.06, 0, 0], [0.04, 0, 0], [-0.06, 0, 0], [0, 0, 0]]),
     track(bones, 6, rageTimes, [[0, 0, 0], [0, 0.08, 0], [0, -0.08, 0], [0, 0.08, 0], [0, 0, 0]]),
-    track(bones, 9, rageTimes, [[0, 0, 0], [0, 0, -0.52], [0, 0, -0.66], [0, 0, -0.52], [0, 0, 0]]),
-    track(bones, 37, rageTimes, [[0, 0, 0], [0, 0, 0.52], [0, 0, 0.66], [0, 0, 0.52], [0, 0, 0]]),
-    track(bones, 10, rageTimes, [[0, 0, 0], [0, -0.18, 0], [0, -0.28, 0], [0, -0.18, 0], [0, 0, 0]]),
-    track(bones, 38, rageTimes, [[0, 0, 0], [0, 0.18, 0], [0, 0.28, 0], [0, 0.18, 0], [0, 0, 0]]),
+    track(bones, 9, rageTimes, [[0, 0, shoulderLeftDown], [0, 0, -0.62], [0, 0, -0.38], [0, 0, -0.62], [0, 0, shoulderLeftDown]]),
+    track(bones, 37, rageTimes, [[0, 0, shoulderRightDown], [0, 0, 0.62], [0, 0, 0.38], [0, 0, 0.62], [0, 0, shoulderRightDown]]),
+    track(bones, 10, rageTimes, [[elbowNeutral, 0, 0], [1.00, 0, 0], [1.20, 0, 0], [1.00, 0, 0], [elbowNeutral, 0, 0]]),
+    track(bones, 38, rageTimes, [[elbowNeutral, 0, 0], [1.00, 0, 0], [1.20, 0, 0], [1.00, 0, 0], [elbowNeutral, 0, 0]]),
   ];
   const danceTimes = phaseTimes(2.2, cyclicFractions);
   const danceTracks: THREE.KeyframeTrack[] = [
     track(bones, 1, danceTimes, [[0, 0, 0], [0.05, 0, 0], [-0.04, 0, 0], [0.02, 0, 0], [0, 0, 0]]),
-    track(bones, 72, danceTimes, [[0, 0, 0], [0.20, 0, 0], [-0.48, 0, 0], [-0.16, 0, 0], [0, 0, 0]]),
-    track(bones, 73, danceTimes, [[0, 0, 0], [0.50, 0, 0], [0.10, 0, 0], [0.36, 0, 0], [0, 0, 0]]),
-    track(bones, 9, danceTimes, [[0, 0, 0], [0, 0, -0.16], [0, 0, -0.30], [0, 0, -0.12], [0, 0, 0]]),
-    track(bones, 37, danceTimes, [[0, 0, 0], [0, 0, 0.16], [0, 0, 0.30], [0, 0, 0.12], [0, 0, 0]]),
+    track(bones, 72, danceTimes, [[0, 0, 0], [0.20, 0, 0], [-0.95, 0, 0], [-0.26, 0, 0], [0, 0, 0]]),
+    track(bones, 73, danceTimes, [[0, 0, 0], [0.50, 0, 0], [0.30, 0, 0], [0.42, 0, 0], [0, 0, 0]]),
+    track(bones, 9, danceTimes, [[0, 0, shoulderLeftDown], [0.16, 0, -0.90], [-0.12, 0, -0.76], [0.08, 0, -0.92], [0, 0, shoulderLeftDown]]),
+    track(bones, 10, danceTimes, [[elbowNeutral, 0, 0], [0.92, 0, 0], [1.06, 0, 0], [0.88, 0, 0], [elbowNeutral, 0, 0]]),
+    track(bones, 37, danceTimes, [[0, 0, shoulderRightDown], [-0.16, 0, 0.90], [0.12, 0, 0.76], [-0.08, 0, 0.92], [0, 0, shoulderRightDown]]),
+    track(bones, 38, danceTimes, [[elbowNeutral, 0, 0], [0.92, 0, 0], [1.06, 0, 0], [0.88, 0, 0], [elbowNeutral, 0, 0]]),
   ];
   const guardTimes = phaseTimes(2.4, cyclicFractions);
   const guardTracks: THREE.KeyframeTrack[] = [
     track(bones, 2, guardTimes, [[0, 0, 0], [0.06, 0, 0], [0.08, 0, 0], [0.06, 0, 0], [0, 0, 0]]),
     track(bones, 6, guardTimes, [[0, 0, 0], [-0.04, 0, 0], [-0.06, 0, 0], [-0.04, 0, 0], [0, 0, 0]]),
-    track(bones, 9, guardTimes, [[0, 0, 0], [0, 0, 0.22], [0, 0, 0.30], [0, 0, 0.22], [0, 0, 0]]),
-    track(bones, 37, guardTimes, [[0, 0, 0], [0, 0, -0.22], [0, 0, -0.30], [0, 0, -0.22], [0, 0, 0]]),
-    track(bones, 10, guardTimes, [[0, 0, 0], [0, -0.42, 0], [0, -0.52, 0], [0, -0.42, 0], [0, 0, 0]]),
-    track(bones, 38, guardTimes, [[0, 0, 0], [0, 0.42, 0], [0, 0.52, 0], [0, 0.42, 0], [0, 0, 0]]),
+    track(bones, 9, guardTimes, [[0, 0, shoulderLeftDown], [-0.08, 0, -0.80], [-0.12, 0, -0.68], [-0.08, 0, -0.80], [0, 0, shoulderLeftDown]]),
+    track(bones, 37, guardTimes, [[0, 0, shoulderRightDown], [-0.08, 0, 0.80], [-0.12, 0, 0.68], [-0.08, 0, 0.80], [0, 0, shoulderRightDown]]),
+    track(bones, 10, guardTimes, [[elbowNeutral, 0, 0], [1.10, 0, 0], [1.35, 0, 0], [1.10, 0, 0], [elbowNeutral, 0, 0]]),
+    track(bones, 38, guardTimes, [[elbowNeutral, 0, 0], [1.10, 0, 0], [1.35, 0, 0], [1.10, 0, 0], [elbowNeutral, 0, 0]]),
   ];
 
   return [
     authoredClip('small-periodic-spine-tail-cycle', 3, idleTracks, {
       label: 'Idle - breathing and tail', loop: true, inferred: false,
-      measured: 'spine and tail deltas return exactly to the measured rest pose over 3.0 s',
+      measured: 'authored neutral has shoulders 65 deg down and elbows 43.3 deg flexed; spine/tail return over 3.0 s',
     }),
     authoredClip('dash-punch-motion', 2, gestureTracks, {
       label: 'Dash Punch', loop: false, inferred: true,
@@ -236,7 +269,7 @@ const createClips = (bones: readonly THREE.Bone[]): AuthoredAnimationClip[] => {
     }),
     authoredClip('lead-punch', 1.1, leadPunchTracks, {
       label: 'Lead Punch', loop: false, inferred: true,
-      measured: 'right arm reach with planted measured feet and rest-pose return',
+      measured: 'right hand travels 0.273 m, elbow extends to 5.2 deg, planted feet, authored-neutral return',
     }),
     authoredClip('three-hit-combination', 1.7, combinationTracks, {
       label: 'Combination', loop: false, inferred: true,
@@ -252,7 +285,7 @@ const createClips = (bones: readonly THREE.Bone[]): AuthoredAnimationClip[] => {
     }),
     authoredClip('knockout-reaction', 1.15, hitReactionTracks, {
       label: 'Knockout', loop: false, inferred: true,
-      measured: 'spine/head recoil with planted feet and exact rest-pose return',
+      measured: 'spine/head recoil with planted feet and exact authored-neutral return',
     }),
     authoredClip('rage-motion', 1.8, rageTracks, {
       label: 'Rage', loop: false, inferred: true,
