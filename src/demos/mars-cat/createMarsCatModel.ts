@@ -39,6 +39,7 @@ import {
   createMeasuredOuterShoeTrianglePatch,
 } from './measuredShoeColours';
 import { bindMarsCatRig } from './marsCatRig';
+import { MARS_CAT_SOURCE_ANIMATION_PROVENANCE } from './rig/sourceAnimationData';
 export { createMarsCatLookDevLights } from './renderContract';
 
 export type MarsCatQuality = 'high' | 'medium' | 'low';
@@ -585,8 +586,15 @@ export function createMarsCatModel(options: MarsCatOptions = {}): THREE.Group {
       sourceSkinIndex: 0,
       jointCount: rigRuntime.bones.length,
       jointOrder: 'GLB skin[0].joints order',
-      sourceAnimationCount: 0,
-      authoredAnimationCount: rigRuntime.clips.length,
+      sourceAnimationCount: MARS_CAT_SOURCE_ANIMATION_PROVENANCE.sourceClipCount,
+      authoredAnimationCount: 0,
+      sourceAnimationSha256: MARS_CAT_SOURCE_ANIMATION_PROVENANCE.sourceSha256,
+      sourceTrackCount: MARS_CAT_SOURCE_ANIMATION_PROVENANCE.sourceTrackCount,
+      retainedTranslationQuaternionTrackCount:
+        MARS_CAT_SOURCE_ANIMATION_PROVENANCE.retainedTranslationQuaternionTrackCount,
+      normalizedScaleTrackCount: MARS_CAT_SOURCE_ANIMATION_PROVENANCE.normalizedScaleTrackCount,
+      scaleNormalization: MARS_CAT_SOURCE_ANIMATION_PROVENANCE.scaleNormalization,
+      animationJointCorrespondence: MARS_CAT_SOURCE_ANIMATION_PROVENANCE.correspondence,
       skinTier,
       restCancellationResidualMax: 7.076254341897131e-7,
       meshParityFrozen: true,
